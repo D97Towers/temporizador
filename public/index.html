@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Temporizador de Juegos</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; background: #f7f9fa; }
+    h1 { color: #007acc; }
+    h2 { color: #222; margin-top: 2em; }
+    section { margin-bottom: 2em; background: #fff; padding: 1.5em 2em; border-radius: 8px; box-shadow: 0 2px 8px #0001; }
+    label { display: block; margin-top: 1em; }
+    input, select, button { margin-top: 0.5em; padding: 0.4em; border-radius: 4px; border: 1px solid #bbb; }
+    button { background: #007acc; color: #fff; border: none; cursor: pointer; }
+    button:disabled { background: #ccc; }
+    ul { padding-left: 1.2em; }
+    .item { margin-bottom: 0.5em; }
+    .active { color: #007acc; font-weight: bold; }
+    .end-btn { margin-left: 1em; background: #e74c3c; }
+    .flex { display: flex; gap: 1em; align-items: center; }
+    .success { color: #27ae60; }
+    .error { color: #e74c3c; }
+    .timer { font-weight: bold; color: #27ae60; margin-left: 1em; }
+    /* Modal styles */
+    #customModal { display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:#0008; z-index:1000; align-items:center; justify-content:center; }
+    #customModal .modal-content { background:#fff; padding:2em 2em 1em 2em; border-radius:10px; min-width:300px; text-align:center; box-shadow:0 4px 24px #0003; }
+    #customModal h2 { color:#007acc; }
+    #customModal button { margin-top:1em; }
+  </style>
+</head>
+<body>
+  <h1>Temporizador de Juegos</h1>
+
+  <section>
+    <h2>Registrar Niño</h2>
+    <div class="flex">
+      <input type="text" id="childName" placeholder="Nombre del niño">
+      <button onclick="addChild()">Agregar Niño</button>
+    </div>
+    <ul id="childrenList"></ul>
+  </section>
+
+  <section>
+    <h2>Registrar Juego</h2>
+    <div class="flex">
+      <input type="text" id="gameName" placeholder="Nombre del juego">
+      <button onclick="addGame()">Agregar Juego</button>
+    </div>
+    <ul id="gamesList"></ul>
+  </section>
+
+  <section>
+    <h2>Iniciar Sesión de Juego</h2>
+    <div class="flex">
+      <label>Niño:
+        <select id="childSelect"></select>
+      </label>
+      <label>Juego:
+        <select id="gameSelect"></select>
+      </label>
+      <label>Tiempo (minutos):
+        <input type="number" id="durationInput" min="1" max="180" value="15">
+      </label>
+      <button onclick="startSession()" id="startBtn">Iniciar Sesión</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Sesiones Activas</h2>
+    <ul id="activeSessions"></ul>
+  </section>
+
+  <section>
+    <h2>Historial de Sesiones</h2>
+    <ul id="sessionHistory"></ul>
+  </section>
+
+  <div id="msg"></div>
+
+  <!-- Modal personalizado -->
+  <div id="customModal">
+    <div class="modal-content">
+      <h2 id="modalTitle">¡Tiempo terminado!</h2>
+      <p id="modalMsg" style="font-size:1.2em; margin:1em 0;"></p>
+      <button onclick="closeModal()">Cerrar</button>
+    </div>
+  </div>
+
+  <script>
+    const api = '';
+
+    function showMsg(text, type = 'success') {
+      const msg = document.getElementById('msg');
+      msg.textContent = text;
+      msg.className = type;
+      setTimeout(() => { msg.textContent = ''; }, 2000);
+    }
+
+    function showCustomModal(msg) {
+      document.getElementById('modalMsg').textContent = msg;
+      document.getElementById('customModal').style.display = 'flex';
+    }
+    function closeModal() {
+      document.getElementById('customModal').style.display = 'none';
+    }
+
+    async function fetchChildren() {
+      const res = await fetch(api + '/children');
+      const children = await res.json();
+      const list = document.getElementById('childrenList');
+      const select = document.getElementById('childSelect');
+      list.innerHTML = '';
+      select.innerHTML = '<option value="">Seleccione</option>';
+      children.forEach(child => {
+        list.innerHTML += `<li class="item">${child.name}</li>`;
+        select.innerHTML += `<option value="${child.id}">${child.name}</option>`;
+      });
+    }
+
+    async function fetchGames() {
+      const res = await fetch(api + '/games');
+      const games = await res.json();
+      const list = document.getElementById('gamesList');
+      const select = document.getElementById('gameSelect');
+      list.innerHTML = '';
+      select.innerHTML = '<option value="">Seleccione</option>';
+      games.forEach(game => {
+        list.innerHTML += `<li class="item">${game.name}</li>`;
+        select.innerHTML += `<option value="${game.id}">${game.name}</option>`;
+      });
+    }
+
+    let activeSessionsData = [];
+    let childrenCache = [];
+    let gamesCache = [];
+
+    async function fetchActiveSessions() {
+      const res = await fetch(api + '/sessions/active');
+      activeSessionsData = await res.json();
+      childrenCache = await fetch(api + '/children').then(r => r.json());
+      gamesCache = await fetch(api + '/games').then(r => r.json());
+      renderActiveSessions();
+    }
+
+    function renderActiveSessions() {
+      const list = document.getElementById('activeSessions');
+      list.innerHTML = '';
+      activeSessionsData.forEach(s => {
+        const child = childrenCache.find(c => c.id === s.childId);
+        const game = gamesCache.find(g => g.id === s.gameId);
+        list.innerHTML += `<li class="item active" id="session-${s.id}">
+          ${child ? child.name : 'Niño'} jugando ${game ? game.name : 'Juego'}
+          <span class="timer" id="timer-${s.id}"></span>
+          <button class="end-btn" onclick="endSession(${s.id})">Finalizar</button>
+        </li>`;
+      });
+      startTimers();
+    }
+
+    function startTimers() {
+      activeSessionsData.forEach(s => {
+        updateTimer(s.id, s.start, s.duration);
+        if (!document.getElementById(`timer-interval-${s.id}`)) {
+          const interval = setInterval(() => updateTimer(s.id, s.start, s.duration), 1000);
+          document.getElementById(`timer-${s.id}`).setAttribute('data-interval', interval);
+        }
+      });
+    }
+
+    function updateTimer(sessionId, startTime, duration) {
+      const timerSpan = document.getElementById(`timer-${sessionId}`);
+      if (!timerSpan) return;
+      const now = Date.now();
+      const diff = Math.floor((now - startTime) / 1000);
+      const total = duration * 60;
+      const left = total - diff;
+      const h = String(Math.floor(left / 3600)).padStart(2, '0');
+      const m = String(Math.floor((left % 3600) / 60)).padStart(2, '0');
+      const s = String(left % 60).padStart(2, '0');
+      if (left > 0) {
+        timerSpan.textContent = `⏱️ ${h}:${m}:${s}`;
+      } else {
+        timerSpan.textContent = '⏰ ¡Tiempo terminado!';
+        if (!timerSpan.classList.contains('alerted')) {
+          timerSpan.classList.add('alerted');
+          // Buscar el nombre del niño
+          const session = activeSessionsData.find(s => s.id === sessionId);
+          const child = childrenCache.find(c => c.id === session.childId);
+          showCustomModal(`¡Se acabó el tiempo para ${child ? child.name : 'este niño'}!`);
+          endSession(sessionId);
+        }
+      }
+    }
+
+    async function fetchSessionHistory() {
+      const res = await fetch(api + '/sessions');
+      const sessions = await res.json();
+      const children = await fetch(api + '/children').then(r => r.json());
+      const games = await fetch(api + '/games').then(r => r.json());
+      const list = document.getElementById('sessionHistory');
+      list.innerHTML = '';
+      sessions.forEach(s => {
+        const child = children.find(c => c.id === s.childId);
+        const game = games.find(g => g.id === s.gameId);
+        list.innerHTML += `<li class="item">
+          ${child ? child.name : 'Niño'} jugó ${game ? game.name : 'Juego'} 
+          desde ${new Date(s.start).toLocaleTimeString()} 
+          hasta ${s.end ? new Date(s.end).toLocaleTimeString() : '<span class="active">En curso</span>'}
+        </li>`;
+      });
+    }
+
+    async function addChild() {
+      const name = document.getElementById('childName').value.trim();
+      if (!name) return showMsg('Ingrese el nombre del niño', 'error');
+      await fetch(api + '/children', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      });
+      document.getElementById('childName').value = '';
+      fetchChildren();
+      fetchActiveSessions();
+      fetchSessionHistory();
+      showMsg('Niño agregado');
+    }
+
+    async function addGame() {
+      const name = document.getElementById('gameName').value.trim();
+      if (!name) return showMsg('Ingrese el nombre del juego', 'error');
+      await fetch(api + '/games', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      });
+      document.getElementById('gameName').value = '';
+      fetchGames();
+      fetchActiveSessions();
+      fetchSessionHistory();
+      showMsg('Juego agregado');
+    }
+
+    async function startSession() {
+      const childId = document.getElementById('childSelect').value;
+      const gameId = document.getElementById('gameSelect').value;
+      const duration = document.getElementById('durationInput').value;
+      if (!childId || !gameId || !duration) return showMsg('Seleccione niño, juego y tiempo', 'error');
+      await fetch(api + '/sessions/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ childId: Number(childId), gameId: Number(gameId), duration: Number(duration) })
+      });
+      fetchActiveSessions();
+      fetchSessionHistory();
+      showMsg('Sesión iniciada');
+    }
+
+    async function endSession(sessionId) {
+      await fetch(api + '/sessions/end', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId })
+      });
+      fetchActiveSessions();
+      fetchSessionHistory();
+      showMsg('Sesión finalizada');
+    }
+
+    // Inicializar
+    fetchChildren();
+    fetchGames();
+    fetchActiveSessions();
+    fetchSessionHistory();
+    setInterval(fetchActiveSessions, 5000); // Actualiza sesiones activas cada 5 segundos
+  </script>
+</body>
+</html>
