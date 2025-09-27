@@ -87,13 +87,11 @@
     .form-row .form-group {
       flex: 1;
       min-width: 120px;
-      max-width: 300px;
     }
 
     .form-row .form-group:last-child {
       flex: 0 0 auto;
       min-width: 140px;
-      max-width: 200px;
     }
 
     label {
@@ -336,20 +334,28 @@
       }
 
       .form-row {
-        flex-direction: column;
+        flex-direction: column !important;
         gap: 10px;
+        align-items: stretch !important;
       }
 
       .form-row .form-group {
-        min-width: auto;
-        max-width: none;
-        flex: none;
+        min-width: auto !important;
+        max-width: none !important;
+        flex: none !important;
+        width: 100% !important;
       }
 
       .form-row .form-group:last-child {
-        min-width: auto;
-        max-width: none;
-        flex: none;
+        min-width: auto !important;
+        max-width: none !important;
+        flex: none !important;
+        width: 100% !important;
+      }
+
+      input, select, button {
+        width: 100% !important;
+        max-width: none !important;
       }
 
       .status-message {
@@ -374,6 +380,41 @@
 
       .modal-content {
         padding: 30px 20px;
+      }
+
+      .form-row {
+        flex-direction: column !important;
+        gap: 8px;
+      }
+
+      .form-row .form-group {
+        width: 100% !important;
+        flex: none !important;
+      }
+
+      input, select, button {
+        width: 100% !important;
+        padding: 10px 12px;
+        font-size: 14px;
+      }
+    }
+
+    /* Regla específica para pantallas muy pequeñas */
+    @media (max-width: 360px) {
+      .form-row {
+        flex-direction: column !important;
+        gap: 5px;
+      }
+
+      .form-row .form-group {
+        width: 100% !important;
+        margin-bottom: 10px;
+      }
+
+      input, select, button {
+        width: 100% !important;
+        padding: 8px 10px;
+        font-size: 13px;
       }
     }
   </style>
