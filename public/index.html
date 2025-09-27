@@ -502,7 +502,7 @@
         showStatusMessage('Por favor seleccione un juego', 'error');
         return false;
       }
-      if (!duration || duration < 1 || duration > 180) {
+      if (isNaN(duration) || duration < 1 || duration > 180) {
         showStatusMessage('El tiempo debe estar entre 1 y 180 minutos', 'error');
         return false;
       }
@@ -771,7 +771,8 @@
     async function startSession() {
       const childId = document.getElementById('childSelect').value;
       const gameId = document.getElementById('gameSelect').value;
-      const duration = parseInt(document.getElementById('durationInput').value);
+      const durationInput = document.getElementById('durationInput').value;
+      const duration = parseInt(durationInput);
       
       if (!validateSession(childId, gameId, duration)) return;
       
