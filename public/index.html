@@ -623,16 +623,22 @@
     }
 
     function startTimers() {
-      // Limpiar timers anteriores
+      // Solo limpiar timers de sesiones que ya no existen
+      const currentSessionIds = activeSessionsData.map(s => s.id);
       timerIntervals.forEach((interval, sessionId) => {
-        clearInterval(interval);
+        if (!currentSessionIds.includes(sessionId)) {
+          clearInterval(interval);
+          timerIntervals.delete(sessionId);
+        }
       });
-      timerIntervals.clear();
 
+      // Crear timers solo para sesiones nuevas
       activeSessionsData.forEach(s => {
-        updateTimer(s.id, s.start, s.duration);
-        const interval = setInterval(() => updateTimer(s.id, s.start, s.duration), 1000);
-        timerIntervals.set(s.id, interval);
+        if (!timerIntervals.has(s.id)) {
+          updateTimer(s.id, s.start, s.duration);
+          const interval = setInterval(() => updateTimer(s.id, s.start, s.duration), 1000);
+          timerIntervals.set(s.id, interval);
+        }
       });
     }
 
@@ -725,8 +731,8 @@
         if (!res.ok) throw new Error('Error al agregar niño');
         
         document.getElementById('childName').value = '';
+        await fetchChildren(); // Actualizar niños primero
         await Promise.all([
-          fetchChildren(),
           fetchActiveSessions(),
           fetchSessionHistory()
         ]);
@@ -754,8 +760,8 @@
         if (!res.ok) throw new Error('Error al agregar juego');
         
         document.getElementById('gameName').value = '';
+        await fetchGames(); // Actualizar juegos primero
         await Promise.all([
-          fetchGames(),
           fetchActiveSessions(),
           fetchSessionHistory()
         ]);
