@@ -62,5 +62,5 @@ app.get('/sessions', (_, res) => {
   res.json(sessions);
 });
 
-const PORT = 3010;
-app.listen(PORT, () => console.log(`Servidor corriendo en http://localhost:${PORT}`));
+const PORT = process.env.PORT || 3010;
+app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
