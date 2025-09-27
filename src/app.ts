@@ -184,5 +184,36 @@ app.get('/sessions', (_, res) => {
   }
 });
 
+// Extender tiempo de sesión
+app.post('/sessions/extend', (req, res) => {
+  try {
+    const { sessionId, additionalTime } = req.body;
+    
+    if (!sessionId || !additionalTime) {
+      return res.status(400).json({ error: 'Faltan datos requeridos' });
+    }
+    
+    if (additionalTime < 1 || additionalTime > 60) {
+      return res.status(400).json({ error: 'El tiempo adicional debe estar entre 1 y 60 minutos' });
+    }
+    
+    const session = sessions.find(s => s.id === sessionId && !s.end);
+    if (!session) {
+      return res.status(404).json({ error: 'Sesión no encontrada o ya finalizada' });
+    }
+    
+    // Extender la duración de la sesión
+    session.duration += additionalTime;
+    
+    res.json({ 
+      message: 'Tiempo extendido correctamente', 
+      session: session,
+      newDuration: session.duration 
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
 const PORT = process.env.PORT || 3010;
 app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));

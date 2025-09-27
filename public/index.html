@@ -143,6 +143,10 @@
       background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
     }
 
+    .btn-warning {
+      background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+    }
+
     .list {
       list-style: none;
       margin-top: 15px;
@@ -216,6 +220,10 @@
       background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
     }
 
+    .status-message.warning {
+      background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+    }
+
     .modal {
       display: none;
       position: fixed;
@@ -268,6 +276,17 @@
       color: #666;
     }
 
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .modal-buttons button {
+      flex: 1;
+      max-width: 120px;
+    }
+
     .loading {
       display: inline-block;
       width: 20px;
@@ -281,6 +300,13 @@
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
+    }
+
+    .extend-time {
+      background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+      margin-left: 5px;
+      padding: 5px 10px;
+      font-size: 12px;
     }
 
     /* Responsive Design */
@@ -429,6 +455,26 @@
     </div>
   </div>
 
+  <!-- Modal de Extensión de Tiempo -->
+  <div id="extendModal" class="modal">
+    <div class="modal-content">
+      <h2><i class="fas fa-clock"></i> Extender Tiempo</h2>
+      <p id="extendMsg"></p>
+      <div class="form-group">
+        <label>Tiempo adicional (minutos):</label>
+        <input type="number" id="extendTimeInput" min="1" max="60" value="5">
+      </div>
+      <div class="modal-buttons">
+        <button onclick="confirmExtendTime()" class="btn-success">
+          <i class="fas fa-plus"></i> Extender
+        </button>
+        <button onclick="closeExtendModal()" class="btn-danger">
+          <i class="fas fa-times"></i> Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const api = '';
 
@@ -438,6 +484,7 @@
     let childrenCache = [];
     let gamesCache = [];
     let timerIntervals = new Map();
+    let currentExtendSession = null;
 
     // Utilidades
     function showStatusMessage(text, type = 'success') {
@@ -474,6 +521,18 @@
 
     function closeModal() {
       document.getElementById('customModal').classList.remove('show');
+    }
+
+    function showExtendModal(sessionId, childName) {
+      currentExtendSession = sessionId;
+      document.getElementById('extendMsg').textContent = `¿Cuánto tiempo adicional quiere darle a ${childName}?`;
+      document.getElementById('extendTimeInput').value = 5;
+      document.getElementById('extendModal').classList.add('show');
+    }
+
+    function closeExtendModal() {
+      document.getElementById('extendModal').classList.remove('show');
+      currentExtendSession = null;
     }
 
     // Validaciones
@@ -620,9 +679,14 @@
           </div>
           <div style="text-align: right;">
             <div class="timer" id="timer-${s.id}"></div>
-            <button class="btn-danger" onclick="endSession(${s.id})" style="margin-top: 5px; padding: 5px 10px; font-size: 12px;">
-              <i class="fas fa-stop"></i> Finalizar
-            </button>
+            <div style="margin-top: 5px;">
+              <button class="btn-danger" onclick="endSession(${s.id})" style="padding: 5px 10px; font-size: 12px; margin-right: 5px;">
+                <i class="fas fa-stop"></i> Finalizar
+              </button>
+              <button class="extend-time" onclick="showExtendModal(${s.id}, '${child ? child.name : 'este niño'}')" style="padding: 5px 10px; font-size: 12px;">
+                <i class="fas fa-plus"></i> +5min
+              </button>
+            </div>
           </div>
         </li>`;
       }).join('');
@@ -678,6 +742,13 @@
       } else if (left <= 60) {
         timerSpan.textContent = `⚠️ ${m}:${s}`;
         timerSpan.classList.add('warning');
+        // Alerta cuando quedan 30 segundos
+        if (left <= 30 && !timerSpan.classList.contains('alerted-30')) {
+          timerSpan.classList.add('alerted-30');
+          const session = activeSessionsData.find(s => s.id === sessionId);
+          const child = childrenCache.find(c => c.id === session.childId);
+          showStatusMessage(`¡Atención! A ${child ? child.name : 'este niño'} le quedan solo ${left} segundos`, 'warning');
+        }
       } else {
         timerSpan.textContent = `⏱️ ${h}:${m}:${s}`;
       }
@@ -788,8 +859,6 @@
       const durationInput = document.getElementById('durationInput').value;
       const duration = parseInt(durationInput);
       
-      console.log('Debug - childId:', childId, 'gameId:', gameId, 'duration:', duration);
-      
       if (!validateSession(childId, gameId, duration)) return;
       
       showLoading('startBtn', true);
@@ -843,6 +912,37 @@
       } catch (error) {
         console.error('Error ending session:', error);
         showStatusMessage('Error al finalizar sesión', 'error');
+      }
+    }
+
+    // Función para extender tiempo
+    async function confirmExtendTime() {
+      if (!currentExtendSession) return;
+      
+      const additionalTime = parseInt(document.getElementById('extendTimeInput').value);
+      if (isNaN(additionalTime) || additionalTime < 1 || additionalTime > 60) {
+        showStatusMessage('El tiempo adicional debe estar entre 1 y 60 minutos', 'error');
+        return;
+      }
+      
+      try {
+        const res = await fetch(api + '/sessions/extend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            sessionId: currentExtendSession, 
+            additionalTime: additionalTime 
+          })
+        });
+        
+        if (!res.ok) throw new Error('Error al extender tiempo');
+        
+        closeExtendModal();
+        await fetchActiveSessions();
+        showStatusMessage(`Tiempo extendido ${additionalTime} minutos`, 'success');
+      } catch (error) {
+        console.error('Error extending time:', error);
+        showStatusMessage('Error al extender tiempo', 'error');
       }
     }
 
