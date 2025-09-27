@@ -2,275 +2,897 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Temporizador de Juegos</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
-    body { font-family: Arial, sans-serif; margin: 40px; background: #f7f9fa; }
-    h1 { color: #007acc; }
-    h2 { color: #222; margin-top: 2em; }
-    section { margin-bottom: 2em; background: #fff; padding: 1.5em 2em; border-radius: 8px; box-shadow: 0 2px 8px #0001; }
-    label { display: block; margin-top: 1em; }
-    input, select, button { margin-top: 0.5em; padding: 0.4em; border-radius: 4px; border: 1px solid #bbb; }
-    button { background: #007acc; color: #fff; border: none; cursor: pointer; }
-    button:disabled { background: #ccc; }
-    ul { padding-left: 1.2em; }
-    .item { margin-bottom: 0.5em; }
-    .active { color: #007acc; font-weight: bold; }
-    .end-btn { margin-left: 1em; background: #e74c3c; }
-    .flex { display: flex; gap: 1em; align-items: center; }
-    .success { color: #27ae60; }
-    .error { color: #e74c3c; }
-    .timer { font-weight: bold; color: #27ae60; margin-left: 1em; }
-    /* Modal styles */
-    #customModal { display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:#0008; z-index:1000; align-items:center; justify-content:center; }
-    #customModal .modal-content { background:#fff; padding:2em 2em 1em 2em; border-radius:10px; min-width:300px; text-align:center; box-shadow:0 4px 24px #0003; }
-    #customModal h2 { color:#007acc; }
-    #customModal button { margin-top:1em; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      color: white;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .header p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    }
+
+    .card h2 {
+      color: #4a5568;
+      margin-bottom: 20px;
+      font-size: 1.3rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 15px;
+      align-items: end;
+      flex-wrap: wrap;
+    }
+
+    .form-row .form-group {
+      flex: 1;
+      min-width: 150px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #4a5568;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      background: white;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    button:disabled {
+      background: #cbd5e0;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+    }
+
+    .list {
+      list-style: none;
+      margin-top: 15px;
+    }
+
+    .list-item {
+      background: #f7fafc;
+      padding: 12px 15px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s ease;
+    }
+
+    .list-item:hover {
+      background: #edf2f7;
+      transform: translateX(5px);
+    }
+
+    .list-item.active {
+      border-left-color: #38a169;
+      background: #f0fff4;
+    }
+
+    .timer {
+      font-weight: bold;
+      color: #38a169;
+      font-family: 'Courier New', monospace;
+      font-size: 1.1rem;
+    }
+
+    .timer.warning {
+      color: #f6ad55;
+    }
+
+    .timer.danger {
+      color: #e53e3e;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .status-message {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 20px;
+      border-radius: 10px;
+      color: white;
+      font-weight: 600;
+      z-index: 1000;
+      transform: translateX(400px);
+      transition: transform 0.3s ease;
+    }
+
+    .status-message.show {
+      transform: translateX(0);
+    }
+
+    .status-message.success {
+      background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+    }
+
+    .status-message.error {
+      background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.8);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(5px);
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 40px;
+      border-radius: 20px;
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      animation: modalSlideIn 0.3s ease;
+    }
+
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: scale(0.8) translateY(-50px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .modal h2 {
+      color: #4a5568;
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+    }
+
+    .modal p {
+      font-size: 1.1rem;
+      margin-bottom: 30px;
+      color: #666;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+
+      .header h1 {
+        font-size: 2rem;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+      }
+
+      .card {
+        padding: 20px;
+      }
+
+      .form-row {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .form-row .form-group {
+        min-width: auto;
+      }
+
+      .status-message {
+        right: 10px;
+        left: 10px;
+        transform: translateY(-100px);
+      }
+
+      .status-message.show {
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .header h1 {
+        font-size: 1.8rem;
+      }
+
+      .card {
+        padding: 15px;
+      }
+
+      .modal-content {
+        padding: 30px 20px;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>Temporizador de Juegos</h1>
-
-  <section>
-    <h2>Registrar Niño</h2>
-    <div class="flex">
-      <input type="text" id="childName" placeholder="Nombre del niño">
-      <button onclick="addChild()">Agregar Niño</button>
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-gamepad"></i> Temporizador de Juegos</h1>
+      <p>Controla el tiempo de juego de los niños de forma divertida</p>
     </div>
-    <ul id="childrenList"></ul>
-  </section>
 
-  <section>
-    <h2>Registrar Juego</h2>
-    <div class="flex">
-      <input type="text" id="gameName" placeholder="Nombre del juego">
-      <button onclick="addGame()">Agregar Juego</button>
+    <div class="grid">
+      <!-- Registrar Niño -->
+      <div class="card">
+        <h2><i class="fas fa-child"></i> Registrar Niño</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <input type="text" id="childName" placeholder="Nombre del niño" maxlength="50">
+          </div>
+          <div class="form-group">
+            <button onclick="addChild()" id="addChildBtn">
+              <i class="fas fa-plus"></i> Agregar Niño
+            </button>
+          </div>
+        </div>
+        <ul class="list" id="childrenList"></ul>
+      </div>
+
+      <!-- Registrar Juego -->
+      <div class="card">
+        <h2><i class="fas fa-dice"></i> Registrar Juego</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <input type="text" id="gameName" placeholder="Nombre del juego" maxlength="50">
+          </div>
+          <div class="form-group">
+            <button onclick="addGame()" id="addGameBtn">
+              <i class="fas fa-plus"></i> Agregar Juego
+            </button>
+          </div>
+        </div>
+        <ul class="list" id="gamesList"></ul>
+      </div>
+
+      <!-- Iniciar Sesión -->
+      <div class="card">
+        <h2><i class="fas fa-play-circle"></i> Iniciar Sesión de Juego</h2>
+        <div class="form-group">
+          <label><i class="fas fa-user"></i> Niño:</label>
+          <select id="childSelect">
+            <option value="">Seleccione un niño</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-gamepad"></i> Juego:</label>
+          <select id="gameSelect">
+            <option value="">Seleccione un juego</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-clock"></i> Tiempo (minutos):</label>
+          <input type="number" id="durationInput" min="1" max="180" value="15">
+        </div>
+        <button onclick="startSession()" id="startBtn">
+          <i class="fas fa-play"></i> Iniciar Sesión
+        </button>
+      </div>
+
+      <!-- Sesiones Activas -->
+      <div class="card">
+        <h2><i class="fas fa-stopwatch"></i> Sesiones Activas</h2>
+        <ul class="list" id="activeSessions"></ul>
+      </div>
+
+      <!-- Historial -->
+      <div class="card">
+        <h2><i class="fas fa-history"></i> Historial de Sesiones</h2>
+        <ul class="list" id="sessionHistory"></ul>
+      </div>
     </div>
-    <ul id="gamesList"></ul>
-  </section>
+  </div>
 
-  <section>
-    <h2>Iniciar Sesión de Juego</h2>
-    <div class="flex">
-      <label>Niño:
-        <select id="childSelect"></select>
-      </label>
-      <label>Juego:
-        <select id="gameSelect"></select>
-      </label>
-      <label>Tiempo (minutos):
-        <input type="number" id="durationInput" min="1" max="180" value="15">
-      </label>
-      <button onclick="startSession()" id="startBtn">Iniciar Sesión</button>
-    </div>
-  </section>
+  <!-- Status Message -->
+  <div id="statusMessage" class="status-message"></div>
 
-  <section>
-    <h2>Sesiones Activas</h2>
-    <ul id="activeSessions"></ul>
-  </section>
-
-  <section>
-    <h2>Historial de Sesiones</h2>
-    <ul id="sessionHistory"></ul>
-  </section>
-
-  <div id="msg"></div>
-
-  <!-- Modal personalizado -->
-  <div id="customModal">
+  <!-- Modal -->
+  <div id="customModal" class="modal">
     <div class="modal-content">
-      <h2 id="modalTitle">¡Tiempo terminado!</h2>
-      <p id="modalMsg" style="font-size:1.2em; margin:1em 0;"></p>
-      <button onclick="closeModal()">Cerrar</button>
+      <h2 id="modalTitle"><i class="fas fa-bell"></i> ¡Tiempo terminado!</h2>
+      <p id="modalMsg"></p>
+      <button onclick="closeModal()" class="btn-success">
+        <i class="fas fa-check"></i> Entendido
+      </button>
     </div>
   </div>
 
   <script>
     const api = '';
 
-    function showMsg(text, type = 'success') {
-      const msg = document.getElementById('msg');
+    // Estado de la aplicación
+    let isLoading = false;
+    let activeSessionsData = [];
+    let childrenCache = [];
+    let gamesCache = [];
+    let timerIntervals = new Map();
+
+    // Utilidades
+    function showStatusMessage(text, type = 'success') {
+      const msg = document.getElementById('statusMessage');
       msg.textContent = text;
-      msg.className = type;
-      setTimeout(() => { msg.textContent = ''; }, 2000);
+      msg.className = `status-message ${type} show`;
+      setTimeout(() => {
+        msg.classList.remove('show');
+      }, 3000);
+    }
+
+    function showLoading(buttonId, show = true) {
+      const button = document.getElementById(buttonId);
+      if (show) {
+        button.disabled = true;
+        button.innerHTML = '<div class="loading"></div> Procesando...';
+      } else {
+        button.disabled = false;
+        // Restaurar texto original basado en el botón
+        if (buttonId === 'addChildBtn') {
+          button.innerHTML = '<i class="fas fa-plus"></i> Agregar Niño';
+        } else if (buttonId === 'addGameBtn') {
+          button.innerHTML = '<i class="fas fa-plus"></i> Agregar Juego';
+        } else if (buttonId === 'startBtn') {
+          button.innerHTML = '<i class="fas fa-play"></i> Iniciar Sesión';
+        }
+      }
     }
 
     function showCustomModal(msg) {
       document.getElementById('modalMsg').textContent = msg;
-      document.getElementById('customModal').style.display = 'flex';
-    }
-    function closeModal() {
-      document.getElementById('customModal').style.display = 'none';
+      document.getElementById('customModal').classList.add('show');
     }
 
+    function closeModal() {
+      document.getElementById('customModal').classList.remove('show');
+    }
+
+    // Validaciones
+    function validateName(name, type) {
+      if (!name || name.trim().length === 0) {
+        showStatusMessage(`Por favor ingrese el ${type}`, 'error');
+        return false;
+      }
+      if (name.trim().length < 2) {
+        showStatusMessage(`El ${type} debe tener al menos 2 caracteres`, 'error');
+        return false;
+      }
+      if (name.trim().length > 50) {
+        showStatusMessage(`El ${type} no puede tener más de 50 caracteres`, 'error');
+        return false;
+      }
+      return true;
+    }
+
+    function validateSession(childId, gameId, duration) {
+      if (!childId) {
+        showStatusMessage('Por favor seleccione un niño', 'error');
+        return false;
+      }
+      if (!gameId) {
+        showStatusMessage('Por favor seleccione un juego', 'error');
+        return false;
+      }
+      if (!duration || duration < 1 || duration > 180) {
+        showStatusMessage('El tiempo debe estar entre 1 y 180 minutos', 'error');
+        return false;
+      }
+      return true;
+    }
+
+    // Funciones de fetch con manejo de errores
     async function fetchChildren() {
-      const res = await fetch(api + '/children');
-      const children = await res.json();
-      const list = document.getElementById('childrenList');
-      const select = document.getElementById('childSelect');
-      list.innerHTML = '';
-      select.innerHTML = '<option value="">Seleccione</option>';
-      children.forEach(child => {
-        list.innerHTML += `<li class="item">${child.name}</li>`;
-        select.innerHTML += `<option value="${child.id}">${child.name}</option>`;
-      });
+      try {
+        const res = await fetch(api + '/children');
+        if (!res.ok) throw new Error('Error al cargar niños');
+        const children = await res.json();
+        childrenCache = children;
+        renderChildrenList(children);
+        updateChildSelect(children);
+      } catch (error) {
+        console.error('Error fetching children:', error);
+        showStatusMessage('Error al cargar la lista de niños', 'error');
+      }
     }
 
     async function fetchGames() {
-      const res = await fetch(api + '/games');
-      const games = await res.json();
-      const list = document.getElementById('gamesList');
-      const select = document.getElementById('gameSelect');
-      list.innerHTML = '';
-      select.innerHTML = '<option value="">Seleccione</option>';
-      games.forEach(game => {
-        list.innerHTML += `<li class="item">${game.name}</li>`;
-        select.innerHTML += `<option value="${game.id}">${game.name}</option>`;
-      });
+      try {
+        const res = await fetch(api + '/games');
+        if (!res.ok) throw new Error('Error al cargar juegos');
+        const games = await res.json();
+        gamesCache = games;
+        renderGamesList(games);
+        updateGameSelect(games);
+      } catch (error) {
+        console.error('Error fetching games:', error);
+        showStatusMessage('Error al cargar la lista de juegos', 'error');
+      }
     }
 
-    let activeSessionsData = [];
-    let childrenCache = [];
-    let gamesCache = [];
+    function renderChildrenList(children) {
+      const list = document.getElementById('childrenList');
+      if (children.length === 0) {
+        list.innerHTML = '<li class="list-item">No hay niños registrados</li>';
+        return;
+      }
+      list.innerHTML = children.map(child => 
+        `<li class="list-item">
+          <span><i class="fas fa-child"></i> ${child.name}</span>
+          <button onclick="deleteChild(${child.id})" class="btn-danger" style="padding: 5px 10px; font-size: 12px;">
+            <i class="fas fa-trash"></i>
+          </button>
+        </li>`
+      ).join('');
+    }
 
+    function renderGamesList(games) {
+      const list = document.getElementById('gamesList');
+      if (games.length === 0) {
+        list.innerHTML = '<li class="list-item">No hay juegos registrados</li>';
+        return;
+      }
+      list.innerHTML = games.map(game => 
+        `<li class="list-item">
+          <span><i class="fas fa-dice"></i> ${game.name}</span>
+          <button onclick="deleteGame(${game.id})" class="btn-danger" style="padding: 5px 10px; font-size: 12px;">
+            <i class="fas fa-trash"></i>
+          </button>
+        </li>`
+      ).join('');
+    }
+
+    function updateChildSelect(children) {
+      const select = document.getElementById('childSelect');
+      select.innerHTML = '<option value="">Seleccione un niño</option>' +
+        children.map(child => `<option value="${child.id}">${child.name}</option>`).join('');
+    }
+
+    function updateGameSelect(games) {
+      const select = document.getElementById('gameSelect');
+      select.innerHTML = '<option value="">Seleccione un juego</option>' +
+        games.map(game => `<option value="${game.id}">${game.name}</option>`).join('');
+    }
+
+    // Funciones de sesiones activas
     async function fetchActiveSessions() {
-      const res = await fetch(api + '/sessions/active');
-      activeSessionsData = await res.json();
-      childrenCache = await fetch(api + '/children').then(r => r.json());
-      gamesCache = await fetch(api + '/games').then(r => r.json());
-      renderActiveSessions();
+      try {
+        const res = await fetch(api + '/sessions/active');
+        if (!res.ok) throw new Error('Error al cargar sesiones activas');
+        activeSessionsData = await res.json();
+        renderActiveSessions();
+      } catch (error) {
+        console.error('Error fetching active sessions:', error);
+        showStatusMessage('Error al cargar sesiones activas', 'error');
+      }
     }
 
     function renderActiveSessions() {
       const list = document.getElementById('activeSessions');
-      list.innerHTML = '';
-      activeSessionsData.forEach(s => {
+      if (activeSessionsData.length === 0) {
+        list.innerHTML = '<li class="list-item">No hay sesiones activas</li>';
+        return;
+      }
+      
+      list.innerHTML = activeSessionsData.map(s => {
         const child = childrenCache.find(c => c.id === s.childId);
         const game = gamesCache.find(g => g.id === s.gameId);
-        list.innerHTML += `<li class="item active" id="session-${s.id}">
-          ${child ? child.name : 'Niño'} jugando ${game ? game.name : 'Juego'}
-          <span class="timer" id="timer-${s.id}"></span>
-          <button class="end-btn" onclick="endSession(${s.id})">Finalizar</button>
+        return `<li class="list-item active" id="session-${s.id}">
+          <div>
+            <strong><i class="fas fa-child"></i> ${child ? child.name : 'Niño'}</strong><br>
+            <small><i class="fas fa-gamepad"></i> ${game ? game.name : 'Juego'}</small>
+          </div>
+          <div style="text-align: right;">
+            <div class="timer" id="timer-${s.id}"></div>
+            <button class="btn-danger" onclick="endSession(${s.id})" style="margin-top: 5px; padding: 5px 10px; font-size: 12px;">
+              <i class="fas fa-stop"></i> Finalizar
+            </button>
+          </div>
         </li>`;
-      });
+      }).join('');
+      
       startTimers();
     }
 
     function startTimers() {
+      // Limpiar timers anteriores
+      timerIntervals.forEach((interval, sessionId) => {
+        clearInterval(interval);
+      });
+      timerIntervals.clear();
+
       activeSessionsData.forEach(s => {
         updateTimer(s.id, s.start, s.duration);
-        if (!document.getElementById(`timer-interval-${s.id}`)) {
-          const interval = setInterval(() => updateTimer(s.id, s.start, s.duration), 1000);
-          document.getElementById(`timer-${s.id}`).setAttribute('data-interval', interval);
-        }
+        const interval = setInterval(() => updateTimer(s.id, s.start, s.duration), 1000);
+        timerIntervals.set(s.id, interval);
       });
     }
 
     function updateTimer(sessionId, startTime, duration) {
       const timerSpan = document.getElementById(`timer-${sessionId}`);
       if (!timerSpan) return;
+      
       const now = Date.now();
       const diff = Math.floor((now - startTime) / 1000);
       const total = duration * 60;
       const left = total - diff;
+      
       const h = String(Math.floor(left / 3600)).padStart(2, '0');
       const m = String(Math.floor((left % 3600) / 60)).padStart(2, '0');
       const s = String(left % 60).padStart(2, '0');
-      if (left > 0) {
-        timerSpan.textContent = `⏱️ ${h}:${m}:${s}`;
-      } else {
+      
+      // Actualizar clases según el tiempo restante
+      timerSpan.className = 'timer';
+      if (left <= 0) {
         timerSpan.textContent = '⏰ ¡Tiempo terminado!';
+        timerSpan.classList.add('danger');
         if (!timerSpan.classList.contains('alerted')) {
           timerSpan.classList.add('alerted');
-          // Buscar el nombre del niño
           const session = activeSessionsData.find(s => s.id === sessionId);
           const child = childrenCache.find(c => c.id === session.childId);
           showCustomModal(`¡Se acabó el tiempo para ${child ? child.name : 'este niño'}!`);
           endSession(sessionId);
         }
+      } else if (left <= 60) {
+        timerSpan.textContent = `⚠️ ${m}:${s}`;
+        timerSpan.classList.add('warning');
+      } else {
+        timerSpan.textContent = `⏱️ ${h}:${m}:${s}`;
       }
     }
 
     async function fetchSessionHistory() {
-      const res = await fetch(api + '/sessions');
-      const sessions = await res.json();
-      const children = await fetch(api + '/children').then(r => r.json());
-      const games = await fetch(api + '/games').then(r => r.json());
-      const list = document.getElementById('sessionHistory');
-      list.innerHTML = '';
-      sessions.forEach(s => {
-        const child = children.find(c => c.id === s.childId);
-        const game = games.find(g => g.id === s.gameId);
-        list.innerHTML += `<li class="item">
-          ${child ? child.name : 'Niño'} jugó ${game ? game.name : 'Juego'} 
-          desde ${new Date(s.start).toLocaleTimeString()} 
-          hasta ${s.end ? new Date(s.end).toLocaleTimeString() : '<span class="active">En curso</span>'}
-        </li>`;
-      });
+      try {
+        const res = await fetch(api + '/sessions');
+        if (!res.ok) throw new Error('Error al cargar historial');
+        const sessions = await res.json();
+        renderSessionHistory(sessions);
+      } catch (error) {
+        console.error('Error fetching session history:', error);
+        showStatusMessage('Error al cargar historial de sesiones', 'error');
+      }
     }
 
+    function renderSessionHistory(sessions) {
+      const list = document.getElementById('sessionHistory');
+      if (sessions.length === 0) {
+        list.innerHTML = '<li class="list-item">No hay sesiones registradas</li>';
+        return;
+      }
+      
+      list.innerHTML = sessions.map(s => {
+        const child = childrenCache.find(c => c.id === s.childId);
+        const game = gamesCache.find(g => g.id === s.gameId);
+        const startTime = new Date(s.start).toLocaleString();
+        const endTime = s.end ? new Date(s.end).toLocaleString() : 'En curso';
+        const duration = s.end ? Math.round((s.end - s.start) / 60000) : 'En curso';
+        
+        return `<li class="list-item">
+          <div>
+            <strong><i class="fas fa-child"></i> ${child ? child.name : 'Niño'}</strong><br>
+            <small><i class="fas fa-gamepad"></i> ${game ? game.name : 'Juego'}</small><br>
+            <small><i class="fas fa-clock"></i> ${duration} min</small>
+          </div>
+          <div style="text-align: right; font-size: 0.9em; color: #666;">
+            <div><i class="fas fa-play"></i> ${startTime}</div>
+            <div><i class="fas fa-stop"></i> ${endTime}</div>
+          </div>
+        </li>`;
+      }).join('');
+    }
+
+    // Funciones principales con validaciones y loading
     async function addChild() {
       const name = document.getElementById('childName').value.trim();
-      if (!name) return showMsg('Ingrese el nombre del niño', 'error');
-      await fetch(api + '/children', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name })
-      });
-      document.getElementById('childName').value = '';
-      fetchChildren();
-      fetchActiveSessions();
-      fetchSessionHistory();
-      showMsg('Niño agregado');
+      if (!validateName(name, 'nombre del niño')) return;
+      
+      showLoading('addChildBtn', true);
+      try {
+        const res = await fetch(api + '/children', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name })
+        });
+        
+        if (!res.ok) throw new Error('Error al agregar niño');
+        
+        document.getElementById('childName').value = '';
+        await Promise.all([
+          fetchChildren(),
+          fetchActiveSessions(),
+          fetchSessionHistory()
+        ]);
+        showStatusMessage('Niño agregado exitosamente', 'success');
+      } catch (error) {
+        console.error('Error adding child:', error);
+        showStatusMessage('Error al agregar niño', 'error');
+      } finally {
+        showLoading('addChildBtn', false);
+      }
     }
 
     async function addGame() {
       const name = document.getElementById('gameName').value.trim();
-      if (!name) return showMsg('Ingrese el nombre del juego', 'error');
-      await fetch(api + '/games', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name })
-      });
-      document.getElementById('gameName').value = '';
-      fetchGames();
-      fetchActiveSessions();
-      fetchSessionHistory();
-      showMsg('Juego agregado');
+      if (!validateName(name, 'nombre del juego')) return;
+      
+      showLoading('addGameBtn', true);
+      try {
+        const res = await fetch(api + '/games', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name })
+        });
+        
+        if (!res.ok) throw new Error('Error al agregar juego');
+        
+        document.getElementById('gameName').value = '';
+        await Promise.all([
+          fetchGames(),
+          fetchActiveSessions(),
+          fetchSessionHistory()
+        ]);
+        showStatusMessage('Juego agregado exitosamente', 'success');
+      } catch (error) {
+        console.error('Error adding game:', error);
+        showStatusMessage('Error al agregar juego', 'error');
+      } finally {
+        showLoading('addGameBtn', false);
+      }
     }
 
     async function startSession() {
       const childId = document.getElementById('childSelect').value;
       const gameId = document.getElementById('gameSelect').value;
-      const duration = document.getElementById('durationInput').value;
-      if (!childId || !gameId || !duration) return showMsg('Seleccione niño, juego y tiempo', 'error');
-      await fetch(api + '/sessions/start', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ childId: Number(childId), gameId: Number(gameId), duration: Number(duration) })
-      });
-      fetchActiveSessions();
-      fetchSessionHistory();
-      showMsg('Sesión iniciada');
+      const duration = parseInt(document.getElementById('durationInput').value);
+      
+      if (!validateSession(childId, gameId, duration)) return;
+      
+      showLoading('startBtn', true);
+      try {
+        const res = await fetch(api + '/sessions/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            childId: Number(childId), 
+            gameId: Number(gameId), 
+            duration: Number(duration) 
+          })
+        });
+        
+        if (!res.ok) throw new Error('Error al iniciar sesión');
+        
+        await Promise.all([
+          fetchActiveSessions(),
+          fetchSessionHistory()
+        ]);
+        showStatusMessage('Sesión iniciada exitosamente', 'success');
+      } catch (error) {
+        console.error('Error starting session:', error);
+        showStatusMessage('Error al iniciar sesión', 'error');
+      } finally {
+        showLoading('startBtn', false);
+      }
     }
 
     async function endSession(sessionId) {
-      await fetch(api + '/sessions/end', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId })
-      });
-      fetchActiveSessions();
-      fetchSessionHistory();
-      showMsg('Sesión finalizada');
+      try {
+        const res = await fetch(api + '/sessions/end', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId })
+        });
+        
+        if (!res.ok) throw new Error('Error al finalizar sesión');
+        
+        // Limpiar timer
+        if (timerIntervals.has(sessionId)) {
+          clearInterval(timerIntervals.get(sessionId));
+          timerIntervals.delete(sessionId);
+        }
+        
+        await Promise.all([
+          fetchActiveSessions(),
+          fetchSessionHistory()
+        ]);
+        showStatusMessage('Sesión finalizada', 'success');
+      } catch (error) {
+        console.error('Error ending session:', error);
+        showStatusMessage('Error al finalizar sesión', 'error');
+      }
     }
 
-    // Inicializar
-    fetchChildren();
-    fetchGames();
-    fetchActiveSessions();
-    fetchSessionHistory();
-    setInterval(fetchActiveSessions, 5000); // Actualiza sesiones activas cada 5 segundos
+    // Funciones de eliminación
+    async function deleteChild(childId) {
+      if (!confirm('¿Está seguro de que desea eliminar este niño?')) return;
+      
+      try {
+        const res = await fetch(`${api}/children/${childId}`, {
+          method: 'DELETE'
+        });
+        
+        if (!res.ok) throw new Error('Error al eliminar niño');
+        
+        await fetchChildren();
+        showStatusMessage('Niño eliminado', 'success');
+      } catch (error) {
+        console.error('Error deleting child:', error);
+        showStatusMessage('Error al eliminar niño', 'error');
+      }
+    }
+
+    async function deleteGame(gameId) {
+      if (!confirm('¿Está seguro de que desea eliminar este juego?')) return;
+      
+      try {
+        const res = await fetch(`${api}/games/${gameId}`, {
+          method: 'DELETE'
+        });
+        
+        if (!res.ok) throw new Error('Error al eliminar juego');
+        
+        await fetchGames();
+        showStatusMessage('Juego eliminado', 'success');
+      } catch (error) {
+        console.error('Error deleting game:', error);
+        showStatusMessage('Error al eliminar juego', 'error');
+      }
+    }
+
+    // Inicialización
+    async function initializeApp() {
+      try {
+        await Promise.all([
+          fetchChildren(),
+          fetchGames(),
+          fetchActiveSessions(),
+          fetchSessionHistory()
+        ]);
+        
+        // Actualizar sesiones activas cada 5 segundos
+        setInterval(fetchActiveSessions, 5000);
+        
+        // Limpiar timers al cerrar la página
+        window.addEventListener('beforeunload', () => {
+          timerIntervals.forEach(interval => clearInterval(interval));
+        });
+        
+        showStatusMessage('Aplicación cargada correctamente', 'success');
+      } catch (error) {
+        console.error('Error initializing app:', error);
+        showStatusMessage('Error al cargar la aplicación', 'error');
+      }
+    }
+
+    // Inicializar cuando se carga la página
+    document.addEventListener('DOMContentLoaded', initializeApp);
   </script>
 </body>
 </html>
