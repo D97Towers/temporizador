@@ -62,5 +62,5 @@ app.get('/sessions', (_, res) => {
   res.json(sessions);
 });
 
-const PORT = 3007;
+const PORT = 3010;
 app.listen(PORT, () => console.log(`Servidor corriendo en http://localhost:${PORT}`));
