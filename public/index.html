@@ -86,7 +86,14 @@
 
     .form-row .form-group {
       flex: 1;
-      min-width: 150px;
+      min-width: 120px;
+      max-width: 300px;
+    }
+
+    .form-row .form-group:last-child {
+      flex: 0 0 auto;
+      min-width: 140px;
+      max-width: 200px;
     }
 
     label {
@@ -335,6 +342,14 @@
 
       .form-row .form-group {
         min-width: auto;
+        max-width: none;
+        flex: none;
+      }
+
+      .form-row .form-group:last-child {
+        min-width: auto;
+        max-width: none;
+        flex: none;
       }
 
       .status-message {
@@ -859,21 +874,35 @@
       const durationInput = document.getElementById('durationInput').value;
       const duration = parseInt(durationInput);
       
+      console.log('Starting session:', { childId, gameId, duration });
+      
       if (!validateSession(childId, gameId, duration)) return;
       
       showLoading('startBtn', true);
       try {
+        const requestBody = { 
+          childId: Number(childId), 
+          gameId: Number(gameId), 
+          duration: Number(duration) 
+        };
+        
+        console.log('Request body:', requestBody);
+        
         const res = await fetch(api + '/sessions/start', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            childId: Number(childId), 
-            gameId: Number(gameId), 
-            duration: Number(duration) 
-          })
+          body: JSON.stringify(requestBody)
         });
         
-        if (!res.ok) throw new Error('Error al iniciar sesión');
+        console.log('Response status:', res.status);
+        
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({ error: 'Error desconocido' }));
+          throw new Error(errorData.error || 'Error al iniciar sesión');
+        }
+        
+        const result = await res.json();
+        console.log('Session started:', result);
         
         await Promise.all([
           fetchActiveSessions(),
@@ -882,7 +911,7 @@
         showStatusMessage('Sesión iniciada exitosamente', 'success');
       } catch (error) {
         console.error('Error starting session:', error);
-        showStatusMessage('Error al iniciar sesión', 'error');
+        showStatusMessage(`Error al iniciar sesión: ${error.message}`, 'error');
       } finally {
         showLoading('startBtn', false);
       }
