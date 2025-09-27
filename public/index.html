@@ -493,26 +493,29 @@
   <script>
     const api = '';
 
-    // Estado de la aplicación
+    // Estado de la aplicación - ROBUSTO
     let isLoading = false;
     let activeSessionsData = [];
     let childrenCache = [];
     let gamesCache = [];
     let timerIntervals = new Map();
     let currentExtendSession = null;
+    let isInitialized = false;
 
-    // Utilidades
+    // Utilidades mejoradas
     function showStatusMessage(text, type = 'success') {
       const msg = document.getElementById('statusMessage');
       msg.textContent = text;
       msg.className = `status-message ${type} show`;
       setTimeout(() => {
         msg.classList.remove('show');
-      }, 3000);
+      }, 4000);
     }
 
     function showLoading(buttonId, show = true) {
       const button = document.getElementById(buttonId);
+      if (!button) return;
+      
       if (show) {
         button.disabled = true;
         button.innerHTML = '<div class="loading"></div> Procesando...';
@@ -550,7 +553,7 @@
       currentExtendSession = null;
     }
 
-    // Validaciones
+    // Validaciones ROBUSTAS
     function validateName(name, type) {
       if (!name || name.trim().length === 0) {
         showStatusMessage(`Por favor ingrese el ${type}`, 'error');
@@ -591,38 +594,65 @@
       return true;
     }
 
-    // Funciones de fetch con manejo de errores
+    // Funciones de fetch ROBUSTAS con reintentos
+    async function fetchWithRetry(url, options = {}, retries = 3) {
+      for (let i = 0; i < retries; i++) {
+        try {
+          const res = await fetch(url, options);
+          if (res.ok) {
+            return res;
+          }
+          if (i === retries - 1) {
+            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+          }
+        } catch (error) {
+          if (i === retries - 1) {
+            throw error;
+          }
+          await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+        }
+      }
+    }
+
     async function fetchChildren() {
       try {
-        const res = await fetch(api + '/children');
-        if (!res.ok) throw new Error('Error al cargar niños');
+        const res = await fetchWithRetry(api + '/children');
         const children = await res.json();
-        childrenCache = children;
-        renderChildrenList(children);
-        updateChildSelect(children);
+        childrenCache = children || [];
+        renderChildrenList(childrenCache);
+        updateChildSelect(childrenCache);
+        console.log('Children loaded:', childrenCache);
       } catch (error) {
         console.error('Error fetching children:', error);
         showStatusMessage('Error al cargar la lista de niños', 'error');
+        childrenCache = [];
+        renderChildrenList([]);
+        updateChildSelect([]);
       }
     }
 
     async function fetchGames() {
       try {
-        const res = await fetch(api + '/games');
-        if (!res.ok) throw new Error('Error al cargar juegos');
+        const res = await fetchWithRetry(api + '/games');
         const games = await res.json();
-        gamesCache = games;
-        renderGamesList(games);
-        updateGameSelect(games);
+        gamesCache = games || [];
+        renderGamesList(gamesCache);
+        updateGameSelect(gamesCache);
+        console.log('Games loaded:', gamesCache);
       } catch (error) {
         console.error('Error fetching games:', error);
         showStatusMessage('Error al cargar la lista de juegos', 'error');
+        gamesCache = [];
+        renderGamesList([]);
+        updateGameSelect([]);
       }
     }
 
     function renderChildrenList(children) {
       const list = document.getElementById('childrenList');
-      if (children.length === 0) {
+      if (!list) return;
+      
+      if (!children || children.length === 0) {
         list.innerHTML = '<li class="list-item">No hay niños registrados</li>';
         return;
       }
@@ -638,7 +668,9 @@
 
     function renderGamesList(games) {
       const list = document.getElementById('gamesList');
-      if (games.length === 0) {
+      if (!list) return;
+      
+      if (!games || games.length === 0) {
         list.innerHTML = '<li class="list-item">No hay juegos registrados</li>';
         return;
       }
@@ -654,32 +686,40 @@
 
     function updateChildSelect(children) {
       const select = document.getElementById('childSelect');
+      if (!select) return;
+      
       select.innerHTML = '<option value="">Seleccione un niño</option>' +
-        children.map(child => `<option value="${child.id}">${child.name}</option>`).join('');
+        (children || []).map(child => `<option value="${child.id}">${child.name}</option>`).join('');
     }
 
     function updateGameSelect(games) {
       const select = document.getElementById('gameSelect');
+      if (!select) return;
+      
       select.innerHTML = '<option value="">Seleccione un juego</option>' +
-        games.map(game => `<option value="${game.id}">${game.name}</option>`).join('');
+        (games || []).map(game => `<option value="${game.id}">${game.name}</option>`).join('');
     }
 
-    // Funciones de sesiones activas
+    // Funciones de sesiones activas ROBUSTAS
     async function fetchActiveSessions() {
       try {
-        const res = await fetch(api + '/sessions/active');
-        if (!res.ok) throw new Error('Error al cargar sesiones activas');
-        activeSessionsData = await res.json();
+        const res = await fetchWithRetry(api + '/sessions/active');
+        activeSessionsData = await res.json() || [];
         renderActiveSessions();
+        console.log('Active sessions loaded:', activeSessionsData);
       } catch (error) {
         console.error('Error fetching active sessions:', error);
         showStatusMessage('Error al cargar sesiones activas', 'error');
+        activeSessionsData = [];
+        renderActiveSessions();
       }
     }
 
     function renderActiveSessions() {
       const list = document.getElementById('activeSessions');
-      if (activeSessionsData.length === 0) {
+      if (!list) return;
+      
+      if (!activeSessionsData || activeSessionsData.length === 0) {
         list.innerHTML = '<li class="list-item">No hay sesiones activas</li>';
         return;
       }
@@ -710,7 +750,7 @@
     }
 
     function startTimers() {
-      // Solo limpiar timers de sesiones que ya no existen
+      // Limpiar timers de sesiones que ya no existen
       const currentSessionIds = activeSessionsData.map(s => s.id);
       timerIntervals.forEach((interval, sessionId) => {
         if (!currentSessionIds.includes(sessionId)) {
@@ -771,19 +811,22 @@
 
     async function fetchSessionHistory() {
       try {
-        const res = await fetch(api + '/sessions');
-        if (!res.ok) throw new Error('Error al cargar historial');
-        const sessions = await res.json();
+        const res = await fetchWithRetry(api + '/sessions');
+        const sessions = await res.json() || [];
         renderSessionHistory(sessions);
+        console.log('Session history loaded:', sessions);
       } catch (error) {
         console.error('Error fetching session history:', error);
         showStatusMessage('Error al cargar historial de sesiones', 'error');
+        renderSessionHistory([]);
       }
     }
 
     function renderSessionHistory(sessions) {
       const list = document.getElementById('sessionHistory');
-      if (sessions.length === 0) {
+      if (!list) return;
+      
+      if (!sessions || sessions.length === 0) {
         list.innerHTML = '<li class="list-item">No hay sesiones registradas</li>';
         return;
       }
@@ -809,20 +852,23 @@
       }).join('');
     }
 
-    // Funciones principales con validaciones y loading
+    // Funciones principales ROBUSTAS
     async function addChild() {
       const name = document.getElementById('childName').value.trim();
       if (!validateName(name, 'nombre del niño')) return;
       
       showLoading('addChildBtn', true);
       try {
-        const res = await fetch(api + '/children', {
+        const res = await fetchWithRetry(api + '/children', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name })
         });
         
-        if (!res.ok) throw new Error('Error al agregar niño');
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({ error: 'Error desconocido' }));
+          throw new Error(errorData.error || 'Error al agregar niño');
+        }
         
         document.getElementById('childName').value = '';
         await fetchChildren(); // Actualizar niños primero
@@ -833,7 +879,7 @@
         showStatusMessage('Niño agregado exitosamente', 'success');
       } catch (error) {
         console.error('Error adding child:', error);
-        showStatusMessage('Error al agregar niño', 'error');
+        showStatusMessage(`Error al agregar niño: ${error.message}`, 'error');
       } finally {
         showLoading('addChildBtn', false);
       }
@@ -845,13 +891,16 @@
       
       showLoading('addGameBtn', true);
       try {
-        const res = await fetch(api + '/games', {
+        const res = await fetchWithRetry(api + '/games', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name })
         });
         
-        if (!res.ok) throw new Error('Error al agregar juego');
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({ error: 'Error desconocido' }));
+          throw new Error(errorData.error || 'Error al agregar juego');
+        }
         
         document.getElementById('gameName').value = '';
         await fetchGames(); // Actualizar juegos primero
@@ -862,7 +911,7 @@
         showStatusMessage('Juego agregado exitosamente', 'success');
       } catch (error) {
         console.error('Error adding game:', error);
-        showStatusMessage('Error al agregar juego', 'error');
+        showStatusMessage(`Error al agregar juego: ${error.message}`, 'error');
       } finally {
         showLoading('addGameBtn', false);
       }
@@ -878,6 +927,22 @@
       
       if (!validateSession(childId, gameId, duration)) return;
       
+      // Verificar que el niño y juego existen en el caché
+      const child = childrenCache.find(c => c.id == childId);
+      const game = gamesCache.find(g => g.id == gameId);
+      
+      if (!child) {
+        showStatusMessage('Error: Niño no encontrado en la lista', 'error');
+        await fetchChildren(); // Recargar datos
+        return;
+      }
+      
+      if (!game) {
+        showStatusMessage('Error: Juego no encontrado en la lista', 'error');
+        await fetchGames(); // Recargar datos
+        return;
+      }
+      
       showLoading('startBtn', true);
       try {
         const requestBody = { 
@@ -888,7 +953,7 @@
         
         console.log('Request body:', requestBody);
         
-        const res = await fetch(api + '/sessions/start', {
+        const res = await fetchWithRetry(api + '/sessions/start', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(requestBody)
@@ -919,13 +984,16 @@
 
     async function endSession(sessionId) {
       try {
-        const res = await fetch(api + '/sessions/end', {
+        const res = await fetchWithRetry(api + '/sessions/end', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sessionId })
         });
         
-        if (!res.ok) throw new Error('Error al finalizar sesión');
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({ error: 'Error desconocido' }));
+          throw new Error(errorData.error || 'Error al finalizar sesión');
+        }
         
         // Limpiar timer
         if (timerIntervals.has(sessionId)) {
@@ -940,11 +1008,11 @@
         showStatusMessage('Sesión finalizada', 'success');
       } catch (error) {
         console.error('Error ending session:', error);
-        showStatusMessage('Error al finalizar sesión', 'error');
+        showStatusMessage(`Error al finalizar sesión: ${error.message}`, 'error');
       }
     }
 
-    // Función para extender tiempo
+    // Función para extender tiempo ROBUSTA
     async function confirmExtendTime() {
       if (!currentExtendSession) return;
       
@@ -955,7 +1023,7 @@
       }
       
       try {
-        const res = await fetch(api + '/sessions/extend', {
+        const res = await fetchWithRetry(api + '/sessions/extend', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
@@ -964,33 +1032,39 @@
           })
         });
         
-        if (!res.ok) throw new Error('Error al extender tiempo');
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({ error: 'Error desconocido' }));
+          throw new Error(errorData.error || 'Error al extender tiempo');
+        }
         
         closeExtendModal();
         await fetchActiveSessions();
         showStatusMessage(`Tiempo extendido ${additionalTime} minutos`, 'success');
       } catch (error) {
         console.error('Error extending time:', error);
-        showStatusMessage('Error al extender tiempo', 'error');
+        showStatusMessage(`Error al extender tiempo: ${error.message}`, 'error');
       }
     }
 
-    // Funciones de eliminación
+    // Funciones de eliminación ROBUSTAS
     async function deleteChild(childId) {
       if (!confirm('¿Está seguro de que desea eliminar este niño?')) return;
       
       try {
-        const res = await fetch(`${api}/children/${childId}`, {
+        const res = await fetchWithRetry(`${api}/children/${childId}`, {
           method: 'DELETE'
         });
         
-        if (!res.ok) throw new Error('Error al eliminar niño');
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({ error: 'Error desconocido' }));
+          throw new Error(errorData.error || 'Error al eliminar niño');
+        }
         
         await fetchChildren();
         showStatusMessage('Niño eliminado', 'success');
       } catch (error) {
         console.error('Error deleting child:', error);
-        showStatusMessage('Error al eliminar niño', 'error');
+        showStatusMessage(`Error al eliminar niño: ${error.message}`, 'error');
       }
     }
 
@@ -998,29 +1072,39 @@
       if (!confirm('¿Está seguro de que desea eliminar este juego?')) return;
       
       try {
-        const res = await fetch(`${api}/games/${gameId}`, {
+        const res = await fetchWithRetry(`${api}/games/${gameId}`, {
           method: 'DELETE'
         });
         
-        if (!res.ok) throw new Error('Error al eliminar juego');
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({ error: 'Error desconocido' }));
+          throw new Error(errorData.error || 'Error al eliminar juego');
+        }
         
         await fetchGames();
         showStatusMessage('Juego eliminado', 'success');
       } catch (error) {
         console.error('Error deleting game:', error);
-        showStatusMessage('Error al eliminar juego', 'error');
+        showStatusMessage(`Error al eliminar juego: ${error.message}`, 'error');
       }
     }
 
-    // Inicialización
+    // Inicialización ROBUSTA
     async function initializeApp() {
+      if (isInitialized) return;
+      
       try {
-        await Promise.all([
-          fetchChildren(),
-          fetchGames(),
-          fetchActiveSessions(),
-          fetchSessionHistory()
-        ]);
+        console.log('Initializing app...');
+        
+        // Cargar datos en paralelo pero con manejo de errores individual
+        const promises = [
+          fetchChildren().catch(e => console.error('Error loading children:', e)),
+          fetchGames().catch(e => console.error('Error loading games:', e)),
+          fetchActiveSessions().catch(e => console.error('Error loading active sessions:', e)),
+          fetchSessionHistory().catch(e => console.error('Error loading session history:', e))
+        ];
+        
+        await Promise.allSettled(promises);
         
         // Actualizar sesiones activas cada 5 segundos
         setInterval(fetchActiveSessions, 5000);
@@ -1030,7 +1114,9 @@
           timerIntervals.forEach(interval => clearInterval(interval));
         });
         
+        isInitialized = true;
         showStatusMessage('Aplicación cargada correctamente', 'success');
+        console.log('App initialized successfully');
       } catch (error) {
         console.error('Error initializing app:', error);
         showStatusMessage('Error al cargar la aplicación', 'error');
