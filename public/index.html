@@ -502,8 +502,16 @@
         showStatusMessage('Por favor seleccione un juego', 'error');
         return false;
       }
-      if (isNaN(duration) || duration < 1 || duration > 180) {
-        showStatusMessage('El tiempo debe estar entre 1 y 180 minutos', 'error');
+      if (isNaN(duration)) {
+        showStatusMessage('El tiempo debe ser un número válido', 'error');
+        return false;
+      }
+      if (duration < 1) {
+        showStatusMessage('El tiempo mínimo es 1 minuto', 'error');
+        return false;
+      }
+      if (duration > 180) {
+        showStatusMessage('El tiempo máximo es 180 minutos', 'error');
         return false;
       }
       return true;
@@ -779,6 +787,8 @@
       const gameId = document.getElementById('gameSelect').value;
       const durationInput = document.getElementById('durationInput').value;
       const duration = parseInt(durationInput);
+      
+      console.log('Debug - childId:', childId, 'gameId:', gameId, 'duration:', duration);
       
       if (!validateSession(childId, gameId, duration)) return;
       
