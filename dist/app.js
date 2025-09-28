@@ -92,8 +92,9 @@ function getPersistentData() {
                 nextGameId: 3,
                 nextSessionId: 1
             };
-            console.log('Initialized global data for Vercel:', globalData);
+            console.log('Initialized global data for Vercel:', JSON.stringify(globalData, null, 2));
         }
+        console.log('Current data state:', JSON.stringify(globalData, null, 2));
         return globalData;
     }
     else {
@@ -196,15 +197,22 @@ app.delete('/children/:id', (req, res) => {
     try {
         const currentData = getPersistentData();
         const id = parseInt(req.params.id);
+        console.log(`Attempting to delete child with ID: ${id}`);
+        console.log(`Available children:`, currentData.children.map((c) => ({ id: c.id, name: c.name })));
         const index = currentData.children.findIndex((c) => c.id === id);
+        console.log(`Found child at index: ${index}`);
         if (index === -1) {
+            console.log(`Child with ID ${id} not found`);
             return res.status(404).json({ error: 'Niño no encontrado' });
         }
+        const deletedChild = currentData.children[index];
         currentData.children.splice(index, 1);
         saveData(currentData);
+        console.log(`Successfully deleted child:`, deletedChild);
         res.json({ message: 'Niño eliminado correctamente' });
     }
     catch (error) {
+        console.error('Error deleting child:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
@@ -234,15 +242,22 @@ app.delete('/games/:id', (req, res) => {
     try {
         const currentData = getPersistentData();
         const id = parseInt(req.params.id);
+        console.log(`Attempting to delete game with ID: ${id}`);
+        console.log(`Available games:`, currentData.games.map((g) => ({ id: g.id, name: g.name })));
         const index = currentData.games.findIndex((g) => g.id === id);
+        console.log(`Found game at index: ${index}`);
         if (index === -1) {
+            console.log(`Game with ID ${id} not found`);
             return res.status(404).json({ error: 'Juego no encontrado' });
         }
+        const deletedGame = currentData.games[index];
         currentData.games.splice(index, 1);
         saveData(currentData);
+        console.log(`Successfully deleted game:`, deletedGame);
         res.json({ message: 'Juego eliminado correctamente' });
     }
     catch (error) {
+        console.error('Error deleting game:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
@@ -376,7 +391,24 @@ app.get('/admin/status', (req, res) => {
             environment: process.env.VERCEL ? 'Vercel' : 'Local',
             nextChildId: currentData.nextChildId,
             nextGameId: currentData.nextGameId,
-            nextSessionId: currentData.nextSessionId
+            nextSessionId: currentData.nextSessionId,
+            childrenList: currentData.children,
+            gamesList: currentData.games
+        });
+    }
+    catch (error) {
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+// Endpoint para debug completo
+app.get('/admin/debug', (req, res) => {
+    try {
+        const currentData = getPersistentData();
+        res.json({
+            environment: process.env.VERCEL ? 'Vercel' : 'Local',
+            globalDataExists: !!globalData,
+            currentData: currentData,
+            timestamp: new Date().toISOString()
         });
     }
     catch (error) {
