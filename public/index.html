@@ -657,35 +657,55 @@
 
     async function fetchChildren() {
       try {
+        console.log('Fetching children from:', api + '/children');
         const res = await fetchWithRetry(api + '/children');
+        console.log('Children response status:', res.status);
+        
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        
         const children = await res.json();
+        console.log('Children data received:', children);
+        
         childrenCache = children || [];
         renderChildrenList(childrenCache);
         updateChildSelect(childrenCache);
-        console.log('Children loaded:', childrenCache);
+        console.log('Children loaded successfully:', childrenCache);
       } catch (error) {
         console.error('Error fetching children:', error);
         showStatusMessage('Error al cargar la lista de niños', 'error');
         childrenCache = [];
         renderChildrenList([]);
         updateChildSelect([]);
+        throw error; // Re-throw para que initializeApp pueda manejarlo
       }
     }
 
     async function fetchGames() {
       try {
+        console.log('Fetching games from:', api + '/games');
         const res = await fetchWithRetry(api + '/games');
+        console.log('Games response status:', res.status);
+        
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        
         const games = await res.json();
+        console.log('Games data received:', games);
+        
         gamesCache = games || [];
         renderGamesList(gamesCache);
         updateGameSelect(gamesCache);
-        console.log('Games loaded:', gamesCache);
+        console.log('Games loaded successfully:', gamesCache);
       } catch (error) {
         console.error('Error fetching games:', error);
         showStatusMessage('Error al cargar la lista de juegos', 'error');
         gamesCache = [];
         renderGamesList([]);
         updateGameSelect([]);
+        throw error; // Re-throw para que initializeApp pueda manejarlo
       }
     }
 
@@ -744,8 +764,16 @@
     // Funciones de sesiones activas ROBUSTAS
     async function fetchActiveSessions() {
       try {
+        console.log('Fetching active sessions from:', api + '/sessions/active');
         const res = await fetchWithRetry(api + '/sessions/active');
+        console.log('Active sessions response status:', res.status);
+        
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        
         const newActiveSessionsData = await res.json() || [];
+        console.log('Active sessions data received:', newActiveSessionsData);
         
         // Solo actualizar si hay cambios reales en los datos
         const hasChanges = JSON.stringify(newActiveSessionsData) !== JSON.stringify(activeSessionsData);
@@ -763,6 +791,7 @@
         showStatusMessage('Error al cargar sesiones activas', 'error');
         activeSessionsData = [];
         renderActiveSessions();
+        throw error; // Re-throw para que initializeApp pueda manejarlo
       }
     }
 
@@ -882,14 +911,24 @@
 
     async function fetchSessionHistory() {
       try {
+        console.log('Fetching session history from:', api + '/sessions');
         const res = await fetchWithRetry(api + '/sessions');
+        console.log('Session history response status:', res.status);
+        
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        
         const sessions = await res.json() || [];
+        console.log('Session history data received:', sessions);
+        
         renderSessionHistory(sessions);
-        console.log('Session history loaded:', sessions);
+        console.log('Session history loaded successfully:', sessions);
       } catch (error) {
         console.error('Error fetching session history:', error);
         showStatusMessage('Error al cargar historial de sesiones', 'error');
         renderSessionHistory([]);
+        throw error; // Re-throw para que initializeApp pueda manejarlo
       }
     }
 
@@ -1174,15 +1213,34 @@
       try {
         console.log('Initializing app...');
         
-        // Cargar datos en paralelo pero con manejo de errores individual
-        const promises = [
-          fetchChildren().catch(e => console.error('Error loading children:', e)),
-          fetchGames().catch(e => console.error('Error loading games:', e)),
-          fetchActiveSessions().catch(e => console.error('Error loading active sessions:', e)),
-          fetchSessionHistory().catch(e => console.error('Error loading session history:', e))
-        ];
+        // Cargar datos secuencialmente para mejor debugging
+        try {
+          console.log('Loading children...');
+          await fetchChildren();
+        } catch (error) {
+          console.error('Failed to load children, continuing...', error);
+        }
         
-        await Promise.allSettled(promises);
+        try {
+          console.log('Loading games...');
+          await fetchGames();
+        } catch (error) {
+          console.error('Failed to load games, continuing...', error);
+        }
+        
+        try {
+          console.log('Loading active sessions...');
+          await fetchActiveSessions();
+        } catch (error) {
+          console.error('Failed to load active sessions, continuing...', error);
+        }
+        
+        try {
+          console.log('Loading session history...');
+          await fetchSessionHistory();
+        } catch (error) {
+          console.error('Failed to load session history, continuing...', error);
+        }
         
         // Actualizar sesiones activas cada 10 segundos (menos agresivo)
         setInterval(fetchActiveSessions, 10000);
@@ -1196,13 +1254,29 @@
         showStatusMessage('Aplicación cargada correctamente', 'success');
         console.log('App initialized successfully');
       } catch (error) {
-        console.error('Error initializing app:', error);
-        showStatusMessage('Error al cargar la aplicación', 'error');
+        console.error('Critical error initializing app:', error);
+        showStatusMessage('Error crítico al cargar la aplicación', 'error');
+      }
+    }
+
+    // Función de recuperación automática
+    async function recoverFromErrors() {
+      console.log('Attempting to recover from errors...');
+      try {
+        await initializeApp();
+      } catch (error) {
+        console.error('Recovery failed:', error);
+        setTimeout(recoverFromErrors, 5000); // Reintentar en 5 segundos
       }
     }
 
     // Inicializar cuando se carga la página
-    document.addEventListener('DOMContentLoaded', initializeApp);
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeApp().catch(() => {
+        console.log('Initial initialization failed, starting recovery...');
+        setTimeout(recoverFromErrors, 2000);
+      });
+    });
   </script>
 </body>
 </html>
