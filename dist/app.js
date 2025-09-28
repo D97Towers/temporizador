@@ -6,42 +6,52 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const path_1 = __importDefault(require("path"));
-const better_sqlite3_1 = __importDefault(require("better-sqlite3"));
+const fs_1 = __importDefault(require("fs"));
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
 // Servir archivos estáticos de la carpeta public
 app.use(express_1.default.static(path_1.default.join(__dirname, '../public')));
-// Inicializar base de datos
-const db = new better_sqlite3_1.default(path_1.default.join(__dirname, '../data.db'));
-// Crear tablas si no existen
-db.exec(`
-  CREATE TABLE IF NOT EXISTS children (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
-`);
-db.exec(`
-  CREATE TABLE IF NOT EXISTS games (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
-`);
-db.exec(`
-  CREATE TABLE IF NOT EXISTS sessions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    child_id INTEGER NOT NULL,
-    game_id INTEGER NOT NULL,
-    start_time INTEGER NOT NULL,
-    end_time INTEGER,
-    duration INTEGER NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (child_id) REFERENCES children (id),
-    FOREIGN KEY (game_id) REFERENCES games (id)
-  )
-`);
+// Sistema de persistencia con JSON
+const dataFile = path_1.default.join(__dirname, '../data.json');
+// Función para cargar datos
+function loadData() {
+    try {
+        if (fs_1.default.existsSync(dataFile)) {
+            const data = JSON.parse(fs_1.default.readFileSync(dataFile, 'utf8'));
+            return {
+                children: data.children || [],
+                games: data.games || [],
+                sessions: data.sessions || [],
+                nextChildId: data.nextChildId || 1,
+                nextGameId: data.nextGameId || 1,
+                nextSessionId: data.nextSessionId || 1
+            };
+        }
+    }
+    catch (error) {
+        console.error('Error loading data:', error);
+    }
+    return {
+        children: [],
+        games: [],
+        sessions: [],
+        nextChildId: 1,
+        nextGameId: 1,
+        nextSessionId: 1
+    };
+}
+// Función para guardar datos
+function saveData(data) {
+    try {
+        fs_1.default.writeFileSync(dataFile, JSON.stringify(data, null, 2));
+    }
+    catch (error) {
+        console.error('Error saving data:', error);
+    }
+}
+// Cargar datos iniciales
+let data = loadData();
 // Middleware de validación
 const validateChild = (req, res, next) => {
     const { name } = req.body;
@@ -70,9 +80,9 @@ const validateSession = (req, res, next) => {
 // CRUD Niños
 app.post('/children', validateChild, (req, res) => {
     try {
-        const stmt = db.prepare('INSERT INTO children (name) VALUES (?)');
-        const result = stmt.run(req.body.name.trim());
-        const child = { id: result.lastInsertRowid, name: req.body.name.trim() };
+        const child = { id: data.nextChildId++, name: req.body.name.trim() };
+        data.children.push(child);
+        saveData(data);
         res.status(201).json(child);
     }
     catch (error) {
@@ -81,8 +91,7 @@ app.post('/children', validateChild, (req, res) => {
 });
 app.get('/children', (_, res) => {
     try {
-        const children = db.prepare('SELECT id, name FROM children ORDER BY created_at DESC').all();
-        res.json(children);
+        res.json(data.children);
     }
     catch (error) {
         res.status(500).json({ error: 'Error interno del servidor' });
@@ -91,11 +100,12 @@ app.get('/children', (_, res) => {
 app.delete('/children/:id', (req, res) => {
     try {
         const id = parseInt(req.params.id);
-        const stmt = db.prepare('DELETE FROM children WHERE id = ?');
-        const result = stmt.run(id);
-        if (result.changes === 0) {
+        const index = data.children.findIndex((c) => c.id === id);
+        if (index === -1) {
             return res.status(404).json({ error: 'Niño no encontrado' });
         }
+        data.children.splice(index, 1);
+        saveData(data);
         res.json({ message: 'Niño eliminado correctamente' });
     }
     catch (error) {
@@ -105,9 +115,9 @@ app.delete('/children/:id', (req, res) => {
 // CRUD Juegos
 app.post('/games', validateGame, (req, res) => {
     try {
-        const stmt = db.prepare('INSERT INTO games (name) VALUES (?)');
-        const result = stmt.run(req.body.name.trim());
-        const game = { id: result.lastInsertRowid, name: req.body.name.trim() };
+        const game = { id: data.nextGameId++, name: req.body.name.trim() };
+        data.games.push(game);
+        saveData(data);
         res.status(201).json(game);
     }
     catch (error) {
@@ -116,8 +126,7 @@ app.post('/games', validateGame, (req, res) => {
 });
 app.get('/games', (_, res) => {
     try {
-        const games = db.prepare('SELECT id, name FROM games ORDER BY created_at DESC').all();
-        res.json(games);
+        res.json(data.games);
     }
     catch (error) {
         res.status(500).json({ error: 'Error interno del servidor' });
@@ -126,11 +135,12 @@ app.get('/games', (_, res) => {
 app.delete('/games/:id', (req, res) => {
     try {
         const id = parseInt(req.params.id);
-        const stmt = db.prepare('DELETE FROM games WHERE id = ?');
-        const result = stmt.run(id);
-        if (result.changes === 0) {
+        const index = data.games.findIndex((g) => g.id === id);
+        if (index === -1) {
             return res.status(404).json({ error: 'Juego no encontrado' });
         }
+        data.games.splice(index, 1);
+        saveData(data);
         res.json({ message: 'Juego eliminado correctamente' });
     }
     catch (error) {
@@ -142,8 +152,8 @@ app.post('/sessions/start', validateSession, (req, res) => {
     try {
         const { childId, gameId, duration } = req.body;
         // Verificar que el niño y el juego existen
-        const child = db.prepare('SELECT id FROM children WHERE id = ?').get(childId);
-        const game = db.prepare('SELECT id FROM games WHERE id = ?').get(gameId);
+        const child = data.children.find((c) => c.id === childId);
+        const game = data.games.find((g) => g.id === gameId);
         if (!child) {
             return res.status(404).json({ error: 'Niño no encontrado' });
         }
@@ -151,19 +161,19 @@ app.post('/sessions/start', validateSession, (req, res) => {
             return res.status(404).json({ error: 'Juego no encontrado' });
         }
         // Verificar si el niño ya tiene una sesión activa
-        const activeSession = db.prepare('SELECT id FROM sessions WHERE child_id = ? AND end_time IS NULL').get(childId);
+        const activeSession = data.sessions.find((s) => s.childId === childId && !s.end);
         if (activeSession) {
             return res.status(400).json({ error: 'El niño ya tiene una sesión activa' });
         }
-        const stmt = db.prepare('INSERT INTO sessions (child_id, game_id, start_time, duration) VALUES (?, ?, ?, ?)');
-        const result = stmt.run(childId, gameId, Date.now(), Number(duration));
         const session = {
-            id: result.lastInsertRowid,
+            id: data.nextSessionId++,
             childId,
             gameId,
             start: Date.now(),
             duration: Number(duration)
         };
+        data.sessions.push(session);
+        saveData(data);
         res.status(201).json(session);
     }
     catch (error) {
@@ -174,20 +184,13 @@ app.post('/sessions/start', validateSession, (req, res) => {
 app.post('/sessions/end', (req, res) => {
     try {
         const { sessionId: sid } = req.body;
-        const stmt = db.prepare('UPDATE sessions SET end_time = ? WHERE id = ? AND end_time IS NULL');
-        const result = stmt.run(Date.now(), sid);
-        if (result.changes === 0) {
+        const session = data.sessions.find((s) => s.id === sid && !s.end);
+        if (!session) {
             return res.status(404).json({ error: 'Sesión no encontrada o ya finalizada' });
         }
-        const session = db.prepare('SELECT * FROM sessions WHERE id = ?').get(sid);
-        res.json({
-            id: session.id,
-            childId: session.child_id,
-            gameId: session.game_id,
-            start: session.start_time,
-            end: session.end_time,
-            duration: session.duration
-        });
+        session.end = Date.now();
+        saveData(data);
+        res.json(session);
     }
     catch (error) {
         res.status(500).json({ error: 'Error interno del servidor' });
@@ -196,12 +199,7 @@ app.post('/sessions/end', (req, res) => {
 // Ver sesiones activas
 app.get('/sessions/active', (_, res) => {
     try {
-        const sessions = db.prepare(`
-      SELECT id, child_id as childId, game_id as gameId, start_time as start, duration 
-      FROM sessions 
-      WHERE end_time IS NULL 
-      ORDER BY start_time DESC
-    `).all();
+        const sessions = data.sessions.filter((s) => !s.end);
         res.json(sessions);
     }
     catch (error) {
@@ -211,11 +209,7 @@ app.get('/sessions/active', (_, res) => {
 // Ver historial de sesiones
 app.get('/sessions', (_, res) => {
     try {
-        const sessions = db.prepare(`
-      SELECT id, child_id as childId, game_id as gameId, start_time as start, end_time as end, duration 
-      FROM sessions 
-      ORDER BY start_time DESC
-    `).all();
+        const sessions = data.sessions.sort((a, b) => b.start - a.start);
         res.json(sessions);
     }
     catch (error) {
@@ -232,24 +226,17 @@ app.post('/sessions/extend', (req, res) => {
         if (additionalTime < 1 || additionalTime > 60) {
             return res.status(400).json({ error: 'El tiempo adicional debe estar entre 1 y 60 minutos' });
         }
-        const session = db.prepare('SELECT * FROM sessions WHERE id = ? AND end_time IS NULL').get(sessionId);
+        const session = data.sessions.find((s) => s.id === sessionId && !s.end);
         if (!session) {
             return res.status(404).json({ error: 'Sesión no encontrada o ya finalizada' });
         }
         // Extender la duración de la sesión
-        const stmt = db.prepare('UPDATE sessions SET duration = duration + ? WHERE id = ?');
-        stmt.run(additionalTime, sessionId);
-        const updatedSession = db.prepare('SELECT * FROM sessions WHERE id = ?').get(sessionId);
+        session.duration += additionalTime;
+        saveData(data);
         res.json({
             message: 'Tiempo extendido correctamente',
-            session: {
-                id: updatedSession.id,
-                childId: updatedSession.child_id,
-                gameId: updatedSession.game_id,
-                start: updatedSession.start_time,
-                duration: updatedSession.duration
-            },
-            newDuration: updatedSession.duration
+            session: session,
+            newDuration: session.duration
         });
     }
     catch (error) {
