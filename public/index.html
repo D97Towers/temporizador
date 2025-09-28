@@ -745,9 +745,19 @@
     async function fetchActiveSessions() {
       try {
         const res = await fetchWithRetry(api + '/sessions/active');
-        activeSessionsData = await res.json() || [];
-        renderActiveSessions();
-        console.log('Active sessions loaded:', activeSessionsData);
+        const newActiveSessionsData = await res.json() || [];
+        
+        // Solo actualizar si hay cambios reales en los datos
+        const hasChanges = JSON.stringify(newActiveSessionsData) !== JSON.stringify(activeSessionsData);
+        
+        if (hasChanges) {
+          activeSessionsData = newActiveSessionsData;
+          renderActiveSessions();
+          console.log('Active sessions updated:', activeSessionsData);
+        } else {
+          // Solo actualizar timers sin recrear DOM
+          updateExistingTimers();
+        }
       } catch (error) {
         console.error('Error fetching active sessions:', error);
         showStatusMessage('Error al cargar sesiones activas', 'error');
@@ -760,12 +770,25 @@
       const list = document.getElementById('activeSessions');
       if (!list) return;
       
+      // Evitar parpadeo: solo actualizar si hay cambios reales
+      const currentContent = list.innerHTML;
+      const newContent = generateActiveSessionsHTML();
+      
+      if (currentContent !== newContent) {
+        list.innerHTML = newContent;
+        startTimers();
+      } else {
+        // Si no hay cambios en el contenido, solo actualizar timers
+        updateExistingTimers();
+      }
+    }
+    
+    function generateActiveSessionsHTML() {
       if (!activeSessionsData || activeSessionsData.length === 0) {
-        list.innerHTML = '<li class="list-item">No hay sesiones activas</li>';
-        return;
+        return '<li class="list-item">No hay sesiones activas</li>';
       }
       
-      list.innerHTML = activeSessionsData.map(s => {
+      return activeSessionsData.map(s => {
         const child = childrenCache.find(c => c.id === s.childId);
         const game = gamesCache.find(g => g.id === s.gameId);
         return `<li class="list-item active" id="session-${s.id}">
@@ -786,8 +809,15 @@
           </div>
         </li>`;
       }).join('');
-      
-      startTimers();
+    }
+    
+    function updateExistingTimers() {
+      // Solo actualizar timers existentes sin recrear el DOM
+      activeSessionsData.forEach(s => {
+        if (timerIntervals.has(s.id)) {
+          updateTimer(s.id, s.start, s.duration);
+        }
+      });
     }
 
     function startTimers() {
@@ -962,9 +992,16 @@
       const childId = document.getElementById('childSelect').value;
       const gameId = document.getElementById('gameSelect').value;
       const durationInput = document.getElementById('durationInput').value;
-      const duration = parseInt(durationInput);
       
-      console.log('Starting session:', { childId, gameId, duration });
+      // Validar que el input no esté vacío y parsear correctamente
+      if (!durationInput || durationInput.trim() === '') {
+        showStatusMessage('Por favor ingrese un tiempo válido', 'error');
+        return;
+      }
+      
+      const duration = parseInt(durationInput.trim());
+      
+      console.log('Starting session:', { childId, gameId, duration, originalInput: durationInput });
       
       if (!validateSession(childId, gameId, duration)) return;
       
@@ -1147,8 +1184,8 @@
         
         await Promise.allSettled(promises);
         
-        // Actualizar sesiones activas cada 5 segundos
-        setInterval(fetchActiveSessions, 5000);
+        // Actualizar sesiones activas cada 10 segundos (menos agresivo)
+        setInterval(fetchActiveSessions, 10000);
         
         // Limpiar timers al cerrar la página
         window.addEventListener('beforeunload', () => {
