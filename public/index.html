@@ -29,12 +29,36 @@
       text-align: center;
       margin-bottom: 30px;
       color: white;
+      position: relative;
     }
 
     .header h1 {
       font-size: 2.5rem;
       margin-bottom: 10px;
       text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .sync-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+    
+    .sync-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: rotate(180deg);
+    }
+    
+    .sync-btn:active {
+      transform: rotate(360deg);
     }
 
     .header p {
@@ -531,6 +555,9 @@
     <div class="header">
       <h1><i class="fas fa-gamepad"></i> Temporizador de Juegos</h1>
       <p>Controla el tiempo de juego de los niños de forma divertida</p>
+      <button class="sync-btn" onclick="forceSync()" title="Sincronizar datos">
+        <i class="fas fa-sync-alt"></i>
+      </button>
     </div>
 
     <div class="grid">
@@ -1428,11 +1455,17 @@
           console.error('Failed to load session history, continuing...', error);
         }
         
-        // Actualizar sesiones activas cada 5 segundos para mejor sincronización multi-dispositivo
-        setInterval(fetchActiveSessions, 5000);
+        // Actualizar sesiones activas cada 3 segundos para mejor sincronización multi-dispositivo
+        setInterval(fetchActiveSessions, 3000);
         
-        // Actualizar historial cada 30 segundos para mantener sincronización
-        setInterval(fetchSessionHistory, 30000);
+        // Actualizar historial cada 15 segundos para mantener sincronización
+        setInterval(fetchSessionHistory, 15000);
+        
+        // Actualizar niños y juegos cada 30 segundos
+        setInterval(() => {
+          fetchChildren();
+          fetchGames();
+        }, 30000);
         
         // Limpiar timers al cerrar la página
         window.addEventListener('beforeunload', () => {
@@ -1458,6 +1491,36 @@
         setTimeout(recoverFromErrors, 5000); // Reintentar en 5 segundos
       }
     }
+    
+    // Función para forzar sincronización completa
+    async function forceSync() {
+      console.log('Forcing complete sync...');
+      try {
+        await Promise.all([
+          fetchChildren(),
+          fetchGames(),
+          fetchActiveSessions(),
+          fetchSessionHistory()
+        ]);
+        console.log('Complete sync successful');
+      } catch (error) {
+        console.error('Force sync failed:', error);
+      }
+    }
+    
+    // Sincronización automática cuando la página vuelve a ser visible
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        console.log('Page became visible, forcing sync...');
+        forceSync();
+      }
+    });
+    
+    // Sincronización cuando se enfoca la ventana
+    window.addEventListener('focus', () => {
+      console.log('Window focused, forcing sync...');
+      forceSync();
+    });
 
     // Inicializar cuando se carga la página
     document.addEventListener('DOMContentLoaded', () => {
