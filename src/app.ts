@@ -16,17 +16,38 @@ const dataFile = path.join(__dirname, '../data.json');
 // Función para cargar datos desde variables de entorno (Vercel) o archivo (local)
 function loadData() {
   try {
-    // En Vercel, intentar cargar desde variables de entorno
-    if (process.env.VERCEL && process.env.APP_DATA) {
-      const data = JSON.parse(process.env.APP_DATA);
-      return {
-        children: data.children || [],
-        games: data.games || [],
-        sessions: data.sessions || [],
-        nextChildId: data.nextChildId || 1,
-        nextGameId: data.nextGameId || 1,
-        nextSessionId: data.nextSessionId || 1
-      };
+    if (process.env.VERCEL) {
+      // En Vercel, intentar cargar desde /tmp primero
+      try {
+        const tmpFile = '/tmp/temporizador-data.json';
+        if (fs.existsSync(tmpFile)) {
+          const data = JSON.parse(fs.readFileSync(tmpFile, 'utf8'));
+          console.log('Data loaded from /tmp:', data);
+          return {
+            children: data.children || [],
+            games: data.games || [],
+            sessions: data.sessions || [],
+            nextChildId: data.nextChildId || 1,
+            nextGameId: data.nextGameId || 1,
+            nextSessionId: data.nextSessionId || 1
+          };
+        }
+      } catch (tmpError) {
+        console.log('Could not load from /tmp:', (tmpError as Error).message);
+      }
+      
+      // Si no hay archivo en /tmp, intentar desde variables de entorno
+      if (process.env.APP_DATA) {
+        const data = JSON.parse(process.env.APP_DATA);
+        return {
+          children: data.children || [],
+          games: data.games || [],
+          sessions: data.sessions || [],
+          nextChildId: data.nextChildId || 1,
+          nextGameId: data.nextGameId || 1,
+          nextSessionId: data.nextSessionId || 1
+        };
+      }
     }
     
     // En local, cargar desde archivo
@@ -60,9 +81,18 @@ function loadData() {
 function saveData(newData: any) {
   try {
     if (process.env.VERCEL) {
-      // En Vercel, actualizar memoria global
+      // En Vercel, usar tanto memoria global como intentar guardar en /tmp
       globalData = newData;
-      console.log('Data updated in global memory (Vercel):', JSON.stringify(newData, null, 2));
+      
+      // Intentar guardar en /tmp para persistencia temporal
+      try {
+        const tmpFile = '/tmp/temporizador-data.json';
+        fs.writeFileSync(tmpFile, JSON.stringify(newData, null, 2));
+        console.log('Data saved to /tmp and global memory (Vercel)');
+      } catch (tmpError) {
+        console.log('Could not save to /tmp, using global memory only:', (tmpError as Error).message);
+      }
+      
       return;
     }
     
@@ -79,24 +109,17 @@ let globalData: any = null;
 // Función para obtener datos persistentes
 function getPersistentData() {
   if (process.env.VERCEL) {
-    // En Vercel, usar memoria global si existe, sino inicializar
+    // En Vercel, intentar cargar desde /tmp o memoria global
+    const loadedData = loadData();
+    
     if (!globalData) {
-      globalData = {
-        children: [
-          { id: 1, name: 'David' },
-          { id: 2, name: 'Santiago' }
-        ],
-        games: [
-          { id: 1, name: 'bici' },
-          { id: 2, name: 'videojuegos' }
-        ],
-        sessions: [],
-        nextChildId: 3,
-        nextGameId: 3,
-        nextSessionId: 1
-      };
-      console.log('Initialized global data for Vercel:', JSON.stringify(globalData, null, 2));
+      globalData = loadedData;
+      console.log('Loaded data into global memory:', JSON.stringify(globalData, null, 2));
+    } else {
+      // Sincronizar memoria global con datos cargados
+      globalData = loadedData;
     }
+    
     console.log('Current data state:', JSON.stringify(globalData, null, 2));
     return globalData;
   } else {
@@ -451,4 +474,15 @@ app.get('/admin/debug', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3010;
+// Endpoint para forzar recarga de datos
+app.post('/admin/reload', (req, res) => {
+  try {
+    data = getPersistentData();
+    res.json({ message: 'Datos recargados correctamente', data });
+  } catch (error) {
+    console.error('Error reloading data:', error);
+    res.status(500).json({ error: 'Error al recargar datos' });
+  }
+});
+
 app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
