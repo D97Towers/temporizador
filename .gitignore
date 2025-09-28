@@ -6,3 +6,5 @@ dist/
 .env.development
 *.log
 .DS_Store
+data.db
+*.db
