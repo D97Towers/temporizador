@@ -56,22 +56,53 @@ function loadData() {
     };
 }
 // Función para guardar datos
-function saveData(data) {
+function saveData(newData) {
     try {
-        // En Vercel, no podemos guardar archivos, solo log para debug
         if (process.env.VERCEL) {
-            console.log('Data updated (Vercel):', JSON.stringify(data, null, 2));
+            // En Vercel, actualizar memoria global
+            globalData = newData;
+            console.log('Data updated in global memory (Vercel):', JSON.stringify(newData, null, 2));
             return;
         }
         // En local, guardar en archivo
-        fs_1.default.writeFileSync(dataFile, JSON.stringify(data, null, 2));
+        fs_1.default.writeFileSync(dataFile, JSON.stringify(newData, null, 2));
     }
     catch (error) {
         console.error('Error saving data:', error);
     }
 }
+// Memoria global persistente para Vercel
+let globalData = null;
+// Función para obtener datos persistentes
+function getPersistentData() {
+    if (process.env.VERCEL) {
+        // En Vercel, usar memoria global si existe, sino inicializar
+        if (!globalData) {
+            globalData = {
+                children: [
+                    { id: 1, name: 'David' },
+                    { id: 2, name: 'Santiago' }
+                ],
+                games: [
+                    { id: 1, name: 'bici' },
+                    { id: 2, name: 'videojuegos' }
+                ],
+                sessions: [],
+                nextChildId: 3,
+                nextGameId: 3,
+                nextSessionId: 1
+            };
+            console.log('Initialized global data for Vercel:', globalData);
+        }
+        return globalData;
+    }
+    else {
+        // En local, usar sistema de archivos
+        return loadData();
+    }
+}
 // Cargar datos iniciales
-let data = loadData();
+let data = getPersistentData();
 // Función para inicializar datos de prueba en Vercel si no hay datos
 function initializeDefaultData() {
     if (process.env.VERCEL && data.children.length === 0) {
@@ -88,6 +119,28 @@ function initializeDefaultData() {
         data.nextGameId = 3;
         data.nextSessionId = 1;
         saveData(data);
+    }
+}
+// Función para cargar datos desde variable de entorno persistente
+function loadPersistentData() {
+    try {
+        if (process.env.VERCEL && process.env.PERSISTENT_DATA) {
+            const persistentData = JSON.parse(process.env.PERSISTENT_DATA);
+            console.log('Loading persistent data from environment:', persistentData);
+            return persistentData;
+        }
+    }
+    catch (error) {
+        console.error('Error loading persistent data:', error);
+    }
+    return null;
+}
+// Función para guardar datos en variable de entorno (simulado)
+function savePersistentData(data) {
+    if (process.env.VERCEL) {
+        console.log('Saving persistent data (simulated):', JSON.stringify(data, null, 2));
+        // En un entorno real, aquí se actualizaría la variable de entorno
+        // Por ahora, solo log para debug
     }
 }
 // Inicializar datos por defecto
@@ -120,9 +173,10 @@ const validateSession = (req, res, next) => {
 // CRUD Niños
 app.post('/children', validateChild, (req, res) => {
     try {
-        const child = { id: data.nextChildId++, name: req.body.name.trim() };
-        data.children.push(child);
-        saveData(data);
+        const currentData = getPersistentData();
+        const child = { id: currentData.nextChildId++, name: req.body.name.trim() };
+        currentData.children.push(child);
+        saveData(currentData);
         res.status(201).json(child);
     }
     catch (error) {
@@ -131,7 +185,8 @@ app.post('/children', validateChild, (req, res) => {
 });
 app.get('/children', (_, res) => {
     try {
-        res.json(data.children);
+        const currentData = getPersistentData();
+        res.json(currentData.children);
     }
     catch (error) {
         res.status(500).json({ error: 'Error interno del servidor' });
@@ -139,13 +194,14 @@ app.get('/children', (_, res) => {
 });
 app.delete('/children/:id', (req, res) => {
     try {
+        const currentData = getPersistentData();
         const id = parseInt(req.params.id);
-        const index = data.children.findIndex((c) => c.id === id);
+        const index = currentData.children.findIndex((c) => c.id === id);
         if (index === -1) {
             return res.status(404).json({ error: 'Niño no encontrado' });
         }
-        data.children.splice(index, 1);
-        saveData(data);
+        currentData.children.splice(index, 1);
+        saveData(currentData);
         res.json({ message: 'Niño eliminado correctamente' });
     }
     catch (error) {
@@ -155,9 +211,10 @@ app.delete('/children/:id', (req, res) => {
 // CRUD Juegos
 app.post('/games', validateGame, (req, res) => {
     try {
-        const game = { id: data.nextGameId++, name: req.body.name.trim() };
-        data.games.push(game);
-        saveData(data);
+        const currentData = getPersistentData();
+        const game = { id: currentData.nextGameId++, name: req.body.name.trim() };
+        currentData.games.push(game);
+        saveData(currentData);
         res.status(201).json(game);
     }
     catch (error) {
@@ -166,7 +223,8 @@ app.post('/games', validateGame, (req, res) => {
 });
 app.get('/games', (_, res) => {
     try {
-        res.json(data.games);
+        const currentData = getPersistentData();
+        res.json(currentData.games);
     }
     catch (error) {
         res.status(500).json({ error: 'Error interno del servidor' });
@@ -174,13 +232,14 @@ app.get('/games', (_, res) => {
 });
 app.delete('/games/:id', (req, res) => {
     try {
+        const currentData = getPersistentData();
         const id = parseInt(req.params.id);
-        const index = data.games.findIndex((g) => g.id === id);
+        const index = currentData.games.findIndex((g) => g.id === id);
         if (index === -1) {
             return res.status(404).json({ error: 'Juego no encontrado' });
         }
-        data.games.splice(index, 1);
-        saveData(data);
+        currentData.games.splice(index, 1);
+        saveData(currentData);
         res.json({ message: 'Juego eliminado correctamente' });
     }
     catch (error) {
@@ -190,10 +249,11 @@ app.delete('/games/:id', (req, res) => {
 // Iniciar sesión de juego con duración personalizada
 app.post('/sessions/start', validateSession, (req, res) => {
     try {
+        const currentData = getPersistentData();
         const { childId, gameId, duration } = req.body;
         // Verificar que el niño y el juego existen
-        const child = data.children.find((c) => c.id === childId);
-        const game = data.games.find((g) => g.id === gameId);
+        const child = currentData.children.find((c) => c.id === childId);
+        const game = currentData.games.find((g) => g.id === gameId);
         if (!child) {
             return res.status(404).json({ error: 'Niño no encontrado' });
         }
@@ -201,19 +261,19 @@ app.post('/sessions/start', validateSession, (req, res) => {
             return res.status(404).json({ error: 'Juego no encontrado' });
         }
         // Verificar si el niño ya tiene una sesión activa
-        const activeSession = data.sessions.find((s) => s.childId === childId && !s.end);
+        const activeSession = currentData.sessions.find((s) => s.childId === childId && !s.end);
         if (activeSession) {
             return res.status(400).json({ error: 'El niño ya tiene una sesión activa' });
         }
         const session = {
-            id: data.nextSessionId++,
+            id: currentData.nextSessionId++,
             childId,
             gameId,
             start: Date.now(),
             duration: Number(duration)
         };
-        data.sessions.push(session);
-        saveData(data);
+        currentData.sessions.push(session);
+        saveData(currentData);
         res.status(201).json(session);
     }
     catch (error) {
@@ -223,13 +283,14 @@ app.post('/sessions/start', validateSession, (req, res) => {
 // Finalizar sesión de juego
 app.post('/sessions/end', (req, res) => {
     try {
+        const currentData = getPersistentData();
         const { sessionId: sid } = req.body;
-        const session = data.sessions.find((s) => s.id === sid && !s.end);
+        const session = currentData.sessions.find((s) => s.id === sid && !s.end);
         if (!session) {
             return res.status(404).json({ error: 'Sesión no encontrada o ya finalizada' });
         }
         session.end = Date.now();
-        saveData(data);
+        saveData(currentData);
         res.json(session);
     }
     catch (error) {
@@ -239,7 +300,8 @@ app.post('/sessions/end', (req, res) => {
 // Ver sesiones activas
 app.get('/sessions/active', (_, res) => {
     try {
-        const sessions = data.sessions.filter((s) => !s.end);
+        const currentData = getPersistentData();
+        const sessions = currentData.sessions.filter((s) => !s.end);
         res.json(sessions);
     }
     catch (error) {
@@ -249,7 +311,8 @@ app.get('/sessions/active', (_, res) => {
 // Ver historial de sesiones
 app.get('/sessions', (_, res) => {
     try {
-        const sessions = data.sessions.sort((a, b) => b.start - a.start);
+        const currentData = getPersistentData();
+        const sessions = currentData.sessions.sort((a, b) => b.start - a.start);
         res.json(sessions);
     }
     catch (error) {
@@ -259,6 +322,7 @@ app.get('/sessions', (_, res) => {
 // Extender tiempo de sesión
 app.post('/sessions/extend', (req, res) => {
     try {
+        const currentData = getPersistentData();
         const { sessionId, additionalTime } = req.body;
         if (!sessionId || !additionalTime) {
             return res.status(400).json({ error: 'Faltan datos requeridos' });
@@ -266,13 +330,13 @@ app.post('/sessions/extend', (req, res) => {
         if (additionalTime < 1 || additionalTime > 60) {
             return res.status(400).json({ error: 'El tiempo adicional debe estar entre 1 y 60 minutos' });
         }
-        const session = data.sessions.find((s) => s.id === sessionId && !s.end);
+        const session = currentData.sessions.find((s) => s.id === sessionId && !s.end);
         if (!session) {
             return res.status(404).json({ error: 'Sesión no encontrada o ya finalizada' });
         }
         // Extender la duración de la sesión
         session.duration += additionalTime;
-        saveData(data);
+        saveData(currentData);
         res.json({
             message: 'Tiempo extendido correctamente',
             session: session,
@@ -286,7 +350,7 @@ app.post('/sessions/extend', (req, res) => {
 // Endpoint para resetear datos (solo para desarrollo)
 app.post('/admin/reset', (req, res) => {
     try {
-        data = {
+        const resetData = {
             children: [],
             games: [],
             sessions: [],
@@ -294,7 +358,7 @@ app.post('/admin/reset', (req, res) => {
             nextGameId: 1,
             nextSessionId: 1
         };
-        saveData(data);
+        saveData(resetData);
         res.json({ message: 'Datos reseteados correctamente' });
     }
     catch (error) {
@@ -304,14 +368,15 @@ app.post('/admin/reset', (req, res) => {
 // Endpoint para obtener estado de datos
 app.get('/admin/status', (req, res) => {
     try {
+        const currentData = getPersistentData();
         res.json({
-            children: data.children.length,
-            games: data.games.length,
-            sessions: data.sessions.length,
+            children: currentData.children.length,
+            games: currentData.games.length,
+            sessions: currentData.sessions.length,
             environment: process.env.VERCEL ? 'Vercel' : 'Local',
-            nextChildId: data.nextChildId,
-            nextGameId: data.nextGameId,
-            nextSessionId: data.nextSessionId
+            nextChildId: currentData.nextChildId,
+            nextGameId: currentData.nextGameId,
+            nextSessionId: currentData.nextSessionId
         });
     }
     catch (error) {
