@@ -315,6 +315,85 @@
     }
 
     /* Responsive Design */
+    /* Sistema de alertas persistentes */
+    .alert-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10000;
+      max-width: 400px;
+      pointer-events: none;
+    }
+    
+    .persistent-alert {
+      background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+      color: white;
+      border-radius: 12px;
+      padding: 0;
+      margin-bottom: 10px;
+      box-shadow: 0 8px 32px rgba(255, 107, 107, 0.3);
+      transform: translateX(0);
+      opacity: 1;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: auto;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+    }
+    
+    .alert-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+    }
+    
+    .alert-message {
+      flex: 1;
+      font-weight: 600;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    
+    .alert-close {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      padding: 4px;
+      margin-left: 12px;
+      border-radius: 6px;
+      transition: background-color 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+    }
+    
+    .alert-close:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .alert-close i {
+      font-size: 12px;
+    }
+    
+    /* Animación de entrada */
+    .persistent-alert {
+      animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    @keyframes slideInRight {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
     @media (max-width: 768px) {
       body {
         padding: 10px;
@@ -356,6 +435,34 @@
       input, select, button {
         width: 100% !important;
         max-width: none !important;
+        font-size: 16px; /* Evita zoom en iOS */
+      }
+      
+      /* Mejorar alertas en móviles */
+      .alert-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+      }
+      
+      .persistent-alert {
+        margin-bottom: 8px;
+      }
+      
+      .alert-content {
+        padding: 12px 16px;
+      }
+      
+      .alert-message {
+        font-size: 13px;
+      }
+      
+      /* Mejorar botones en móviles */
+      .list-item .btn {
+        padding: 8px 12px;
+        font-size: 12px;
+        margin: 2px;
       }
 
       .status-message {
@@ -573,9 +680,51 @@
       }
     }
 
+    // Sistema de alertas mejorado
     function showCustomModal(msg) {
-      document.getElementById('modalMsg').textContent = msg;
-      document.getElementById('customModal').classList.add('show');
+      // Crear alerta persistente en la esquina
+      const alertContainer = document.getElementById('alertContainer') || createAlertContainer();
+      
+      const alertId = 'alert-' + Date.now();
+      const alert = document.createElement('div');
+      alert.id = alertId;
+      alert.className = 'persistent-alert';
+      alert.innerHTML = `
+        <div class="alert-content">
+          <span class="alert-message">${msg}</span>
+          <button class="alert-close" onclick="closeAlert('${alertId}')">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      `;
+      
+      alertContainer.appendChild(alert);
+      
+      // Auto-remover después de 30 segundos si no se cierra manualmente
+      setTimeout(() => {
+        if (document.getElementById(alertId)) {
+          closeAlert(alertId);
+        }
+      }, 30000);
+    }
+    
+    function createAlertContainer() {
+      const container = document.createElement('div');
+      container.id = 'alertContainer';
+      container.className = 'alert-container';
+      document.body.appendChild(container);
+      return container;
+    }
+    
+    function closeAlert(alertId) {
+      const alert = document.getElementById(alertId);
+      if (alert) {
+        alert.style.opacity = '0';
+        alert.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+          alert.remove();
+        }, 300);
+      }
     }
 
     function closeModal() {
@@ -941,17 +1090,32 @@
         return;
       }
       
+      // Asegurar que tenemos datos de niños y juegos antes de renderizar
+      if (childrenCache.length === 0 || gamesCache.length === 0) {
+        console.log('Missing cache data, refreshing...');
+        fetchChildren().then(() => fetchGames()).then(() => {
+          // Re-renderizar con datos actualizados
+          renderSessionHistory(sessions);
+        });
+        return;
+      }
+      
       list.innerHTML = sessions.map(s => {
         const child = childrenCache.find(c => c.id === s.childId);
         const game = gamesCache.find(g => g.id === s.gameId);
+        
+        // Si no encontramos el niño o juego, usar IDs como fallback
+        const childName = child ? child.name : `Niño ID:${s.childId}`;
+        const gameName = game ? game.name : `Juego ID:${s.gameId}`;
+        
         const startTime = new Date(s.start).toLocaleString();
         const endTime = s.end ? new Date(s.end).toLocaleString() : 'En curso';
         const duration = s.end ? Math.round((s.end - s.start) / 60000) : 'En curso';
         
         return `<li class="list-item">
           <div>
-            <strong><i class="fas fa-child"></i> ${child ? child.name : 'Niño'}</strong><br>
-            <small><i class="fas fa-gamepad"></i> ${game ? game.name : 'Juego'}</small><br>
+            <strong><i class="fas fa-child"></i> ${childName}</strong><br>
+            <small><i class="fas fa-gamepad"></i> ${gameName}</small><br>
             <small><i class="fas fa-clock"></i> ${duration} min</small>
           </div>
           <div style="text-align: right; font-size: 0.9em; color: #666;">
@@ -981,8 +1145,10 @@
         }
         
         document.getElementById('childName').value = '';
-        await fetchChildren(); // Actualizar niños primero
+        // Actualizar todos los datos después de agregar niño
         await Promise.all([
+          fetchChildren(),
+          fetchGames(),
           fetchActiveSessions(),
           fetchSessionHistory()
         ]);
@@ -1013,8 +1179,10 @@
         }
         
         document.getElementById('gameName').value = '';
-        await fetchGames(); // Actualizar juegos primero
+        // Actualizar todos los datos después de agregar juego
         await Promise.all([
+          fetchChildren(),
+          fetchGames(),
           fetchActiveSessions(),
           fetchSessionHistory()
         ]);
@@ -1086,9 +1254,12 @@
         const result = await res.json();
         console.log('Session started:', result);
         
+        // Actualizar datos inmediatamente después de iniciar sesión
         await Promise.all([
           fetchActiveSessions(),
-          fetchSessionHistory()
+          fetchSessionHistory(),
+          fetchChildren(), // Asegurar datos actualizados
+          fetchGames()
         ]);
         showStatusMessage('Sesión iniciada exitosamente', 'success');
       } catch (error) {
@@ -1118,9 +1289,12 @@
           timerIntervals.delete(sessionId);
         }
         
+        // Actualizar datos inmediatamente después de finalizar sesión
         await Promise.all([
           fetchActiveSessions(),
-          fetchSessionHistory()
+          fetchSessionHistory(),
+          fetchChildren(), // Asegurar datos actualizados
+          fetchGames()
         ]);
         showStatusMessage('Sesión finalizada', 'success');
       } catch (error) {
@@ -1177,7 +1351,13 @@
           throw new Error(errorData.error || 'Error al eliminar niño');
         }
         
-        await fetchChildren();
+        // Actualizar todos los datos después de eliminar niño
+        await Promise.all([
+          fetchChildren(),
+          fetchGames(),
+          fetchActiveSessions(),
+          fetchSessionHistory()
+        ]);
         showStatusMessage('Niño eliminado', 'success');
       } catch (error) {
         console.error('Error deleting child:', error);
@@ -1198,7 +1378,13 @@
           throw new Error(errorData.error || 'Error al eliminar juego');
         }
         
-        await fetchGames();
+        // Actualizar todos los datos después de eliminar juego
+        await Promise.all([
+          fetchChildren(),
+          fetchGames(),
+          fetchActiveSessions(),
+          fetchSessionHistory()
+        ]);
         showStatusMessage('Juego eliminado', 'success');
       } catch (error) {
         console.error('Error deleting game:', error);
@@ -1242,8 +1428,11 @@
           console.error('Failed to load session history, continuing...', error);
         }
         
-        // Actualizar sesiones activas cada 10 segundos (menos agresivo)
-        setInterval(fetchActiveSessions, 10000);
+        // Actualizar sesiones activas cada 5 segundos para mejor sincronización multi-dispositivo
+        setInterval(fetchActiveSessions, 5000);
+        
+        // Actualizar historial cada 30 segundos para mantener sincronización
+        setInterval(fetchSessionHistory, 30000);
         
         // Limpiar timers al cerrar la página
         window.addEventListener('beforeunload', () => {
