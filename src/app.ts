@@ -10,12 +10,26 @@ app.use(express.json());
 // Servir archivos estáticos de la carpeta public
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Sistema de persistencia con JSON
+// Sistema de persistencia híbrido: JSON local + variables de entorno para Vercel
 const dataFile = path.join(__dirname, '../data.json');
 
-// Función para cargar datos
+// Función para cargar datos desde variables de entorno (Vercel) o archivo (local)
 function loadData() {
   try {
+    // En Vercel, intentar cargar desde variables de entorno
+    if (process.env.VERCEL && process.env.APP_DATA) {
+      const data = JSON.parse(process.env.APP_DATA);
+      return {
+        children: data.children || [],
+        games: data.games || [],
+        sessions: data.sessions || [],
+        nextChildId: data.nextChildId || 1,
+        nextGameId: data.nextGameId || 1,
+        nextSessionId: data.nextSessionId || 1
+      };
+    }
+    
+    // En local, cargar desde archivo
     if (fs.existsSync(dataFile)) {
       const data = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
       return {
@@ -30,6 +44,8 @@ function loadData() {
   } catch (error) {
     console.error('Error loading data:', error);
   }
+  
+  // Datos por defecto
   return {
     children: [],
     games: [],
@@ -43,6 +59,13 @@ function loadData() {
 // Función para guardar datos
 function saveData(data: any) {
   try {
+    // En Vercel, no podemos guardar archivos, solo log para debug
+    if (process.env.VERCEL) {
+      console.log('Data updated (Vercel):', JSON.stringify(data, null, 2));
+      return;
+    }
+    
+    // En local, guardar en archivo
     fs.writeFileSync(dataFile, JSON.stringify(data, null, 2));
   } catch (error) {
     console.error('Error saving data:', error);
@@ -51,6 +74,28 @@ function saveData(data: any) {
 
 // Cargar datos iniciales
 let data = loadData();
+
+// Función para inicializar datos de prueba en Vercel si no hay datos
+function initializeDefaultData() {
+  if (process.env.VERCEL && data.children.length === 0) {
+    console.log('Initializing default data for Vercel...');
+    data.children = [
+      { id: 1, name: 'David' },
+      { id: 2, name: 'Santiago' }
+    ];
+    data.games = [
+      { id: 1, name: 'bici' },
+      { id: 2, name: 'videojuegos' }
+    ];
+    data.nextChildId = 3;
+    data.nextGameId = 3;
+    data.nextSessionId = 1;
+    saveData(data);
+  }
+}
+
+// Inicializar datos por defecto
+initializeDefaultData();
 
 type Child = { id: number; name: string };
 type Game = { id: number; name: string };
@@ -255,6 +300,41 @@ app.post('/sessions/extend', (req, res) => {
       message: 'Tiempo extendido correctamente', 
       session: session,
       newDuration: session.duration 
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// Endpoint para resetear datos (solo para desarrollo)
+app.post('/admin/reset', (req, res) => {
+  try {
+    data = {
+      children: [],
+      games: [],
+      sessions: [],
+      nextChildId: 1,
+      nextGameId: 1,
+      nextSessionId: 1
+    };
+    saveData(data);
+    res.json({ message: 'Datos reseteados correctamente' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// Endpoint para obtener estado de datos
+app.get('/admin/status', (req, res) => {
+  try {
+    res.json({
+      children: data.children.length,
+      games: data.games.length,
+      sessions: data.sessions.length,
+      environment: process.env.VERCEL ? 'Vercel' : 'Local',
+      nextChildId: data.nextChildId,
+      nextGameId: data.nextGameId,
+      nextSessionId: data.nextSessionId
     });
   } catch (error) {
     res.status(500).json({ error: 'Error interno del servidor' });
