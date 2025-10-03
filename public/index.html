@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Temporizador de Juegos</title>
-  <!-- Deployment trigger: v1.4 - ELIMINATED FLICKERING: Hash-based rendering + reduced intervals -->
+  <!-- Deployment trigger: v1.5 - FIXED ALERTS: No more overlapping alerts + proper cleanup -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
     * {
@@ -52,6 +52,12 @@
       cursor: pointer;
       transition: all 0.3s ease;
       backdrop-filter: blur(10px);
+      z-index: 100;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     
     .sync-btn:hover {
@@ -700,10 +706,16 @@
     let currentExtendSession = null;
     let isInitialized = false;
     let isFirstLoad = true;
+    let alertedSessions = new Set(); // Para evitar alertas duplicadas
 
     // Utilidades mejoradas
-    function showStatusMessage(text, type = 'success') {
+    function showStatusMessage(text, type = 'success', sessionId = null) {
       const msg = document.getElementById('statusMessage');
+      
+      // Si es una alerta de sesión, verificar si ya se mostró
+      if (sessionId && alertedSessions.has(sessionId)) {
+        return; // No mostrar alerta duplicada
+      }
       
       // Limpiar cualquier timeout anterior
       if (msg.timeoutId) {
@@ -713,11 +725,23 @@
       msg.textContent = text;
       msg.className = `status-message ${type} show`;
       
-      // Auto-ocultar después de 4 segundos
+      // Marcar sesión como alertada si es una alerta de sesión
+      if (sessionId) {
+        alertedSessions.add(sessionId);
+      }
+      
+      // Auto-ocultar después de 3 segundos (reducido)
       msg.timeoutId = setTimeout(() => {
         msg.classList.remove('show');
         msg.timeoutId = null;
-      }, 4000);
+        
+        // Limpiar alerta de sesión después de mostrar
+        if (sessionId) {
+          setTimeout(() => {
+            alertedSessions.delete(sessionId);
+          }, 1000);
+        }
+      }, 3000);
     }
 
     function showLoading(buttonId, show = true) {
@@ -737,6 +761,17 @@
         } else if (buttonId === 'startBtn') {
           button.innerHTML = '<i class="fas fa-play"></i> Iniciar Sesión';
         }
+      }
+    }
+
+    // Función para limpiar todas las alertas de sesiones
+    function clearAllSessionAlerts() {
+      alertedSessions.clear();
+      const msg = document.getElementById('statusMessage');
+      if (msg && msg.timeoutId) {
+        clearTimeout(msg.timeoutId);
+        msg.classList.remove('show');
+        msg.timeoutId = null;
       }
     }
 
@@ -1164,7 +1199,7 @@
           timerSpan.classList.add('alerted-30');
           const session = activeSessionsData.find(s => s.id === sessionId);
           const child = childrenCache.find(c => c.id === session.childId);
-          showStatusMessage(`¡Atención! A ${child ? child.name : 'este niño'} le quedan solo ${left} segundos`, 'warning');
+          showStatusMessage(`¡Atención! A ${child ? child.name : 'este niño'} le quedan solo ${left} segundos`, 'warning', sessionId);
         }
       } else {
         timerSpan.innerHTML = `⏱️ <strong>Restante:</strong> ${h}:${m}:${s}<br><small>Transcurrido: ${elapsed}:${String(elapsedSeconds).padStart(2, '0')}</small>`;
@@ -1412,6 +1447,9 @@
           fetchGames()
         ]);
         showStatusMessage('Sesión iniciada exitosamente', 'success');
+        
+        // Limpiar alertas de sesiones anteriores
+        clearAllSessionAlerts();
       } catch (error) {
         console.error('Error starting session:', error);
         showStatusMessage(`Error al iniciar sesión: ${error.message}`, 'error');
@@ -1447,6 +1485,9 @@
           fetchGames()
         ]);
         showStatusMessage('Sesión finalizada', 'success');
+        
+        // Limpiar alertas de esta sesión
+        alertedSessions.delete(sessionId);
       } catch (error) {
         console.error('Error ending session:', error);
         showStatusMessage(`Error al finalizar sesión: ${error.message}`, 'error');
