@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Temporizador de Juegos</title>
-  <!-- Deployment trigger: v1.5 - FIXED ALERTS: No more overlapping alerts + proper cleanup -->
+  <!-- Deployment trigger: v1.6 - REDESIGNED HISTORY: Modern compact design + responsive + better UX -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
     * {
@@ -209,6 +209,164 @@
     .list-item.active {
       border-left-color: #38a169;
       background: #f0fff4;
+    }
+
+    /* Historial compacto y responsive */
+    .history-item {
+      background: white;
+      margin-bottom: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 12px;
+      align-items: center;
+      transition: all 0.2s ease;
+      border-left: 4px solid transparent;
+    }
+
+    .history-item:hover {
+      transform: translateX(2px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .history-item.active {
+      border-left-color: #4CAF50;
+      background: linear-gradient(135deg, #f8fff8, #ffffff);
+    }
+
+    .history-item.completed {
+      border-left-color: #2196F3;
+      opacity: 0.8;
+    }
+
+    .history-item.expired {
+      border-left-color: #f44336;
+      background: linear-gradient(135deg, #fff5f5, #ffffff);
+    }
+
+    .history-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: white;
+    }
+
+    .history-icon.active {
+      background: linear-gradient(135deg, #4CAF50, #45a049);
+    }
+
+    .history-icon.completed {
+      background: linear-gradient(135deg, #2196F3, #1976D2);
+    }
+
+    .history-icon.expired {
+      background: linear-gradient(135deg, #f44336, #d32f2f);
+    }
+
+    .history-content {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .history-title {
+      font-weight: 600;
+      color: #333;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .history-subtitle {
+      font-size: 12px;
+      color: #666;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .history-meta {
+      text-align: right;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 80px;
+    }
+
+    .history-duration {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: white;
+    }
+
+    .history-duration.active {
+      background: #4CAF50;
+    }
+
+    .history-duration.completed {
+      background: #2196F3;
+    }
+
+    .history-duration.expired {
+      background: #f44336;
+    }
+
+    .history-time {
+      font-size: 11px;
+      color: #999;
+    }
+
+    /* Responsive design para historial */
+    @media (max-width: 768px) {
+      .history-item {
+        grid-template-columns: auto 1fr;
+        gap: 8px;
+      }
+
+      .history-meta {
+        grid-column: 1 / -1;
+        text-align: left;
+        flex-direction: row;
+        justify-content: space-between;
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #eee;
+      }
+
+      .history-content {
+        grid-column: 2;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .history-item {
+        padding: 10px;
+        margin-bottom: 6px;
+      }
+
+      .history-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+      }
+
+      .history-title {
+        font-size: 13px;
+      }
+
+      .history-subtitle {
+        font-size: 11px;
+      }
     }
 
     .timer {
@@ -1239,7 +1397,7 @@
       if (!list) return;
       
       if (!sessions || sessions.length === 0) {
-        list.innerHTML = '<li class="list-item">No hay sesiones registradas</li>';
+        list.innerHTML = '<div class="history-item" style="text-align: center; padding: 20px; color: #666;"><i class="fas fa-history" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>No hay sesiones registradas</div>';
         return;
       }
       
@@ -1253,7 +1411,10 @@
         return;
       }
       
-      list.innerHTML = sessions.map(s => {
+      // Limitar a las últimas 10 sesiones para mejor performance
+      const recentSessions = sessions.slice(0, 10);
+      
+      list.innerHTML = recentSessions.map(s => {
         const child = childrenCache.find(c => c.id === s.childId);
         const game = gamesCache.find(g => g.id === s.gameId);
         
@@ -1261,54 +1422,77 @@
         const childName = child ? child.name : 'Niño desconocido';
         const gameName = game ? game.name : 'Juego desconocido';
         
-        const startTime = new Date(s.start).toLocaleString('es-ES', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
+        const startTime = new Date(s.start);
+        const timeStr = startTime.toLocaleTimeString('es-ES', {
           hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit'
+          minute: '2-digit'
+        });
+        const dateStr = startTime.toLocaleDateString('es-ES', {
+          day: '2-digit',
+          month: '2-digit'
         });
         
-        let endTime, duration, statusClass, statusText;
+        let statusClass, iconClass, durationText, durationClass;
         
         if (s.end) {
           // Sesión finalizada
-          endTime = new Date(s.end).toLocaleString('es-ES', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-          });
-          duration = Math.round((s.end - s.start) / 60000);
-          statusClass = '';
-          statusText = `${duration} min`;
+          const duration = Math.round((s.end - s.start) / 60000);
+          statusClass = 'completed';
+          iconClass = 'completed';
+          durationText = `${duration}min`;
+          durationClass = 'completed';
         } else {
           // Sesión en curso
           const currentTime = Date.now();
           const elapsedMinutes = Math.round((currentTime - s.start) / 60000);
-          const totalMinutes = s.duration || 15; // Usar duración programada o 15 por defecto
+          const totalMinutes = s.duration || 15;
           const remainingMinutes = Math.max(0, totalMinutes - elapsedMinutes);
           
-          endTime = 'En curso';
-          statusClass = 'active';
-          statusText = `${elapsedMinutes}/${totalMinutes} min`;
+          if (remainingMinutes <= 0) {
+            statusClass = 'expired';
+            iconClass = 'expired';
+            durationText = 'Agotado';
+            durationClass = 'expired';
+          } else {
+            statusClass = 'active';
+            iconClass = 'active';
+            durationText = `${elapsedMinutes}/${totalMinutes}min`;
+            durationClass = 'active';
+          }
         }
         
-        return `<li class="list-item ${statusClass}">
-          <div>
-            <strong><i class="fas fa-child"></i> ${childName}</strong><br>
-            <small><i class="fas fa-gamepad"></i> ${gameName}</small><br>
-            <small><i class="fas fa-clock"></i> ${statusText}</small>
+        return `
+        <div class="history-item ${statusClass}">
+          <div class="history-icon ${iconClass}">
+            <i class="fas fa-${s.end ? 'check' : (statusClass === 'expired' ? 'exclamation' : 'play')}"></i>
           </div>
-          <div style="text-align: right; font-size: 0.9em; color: #666;">
-            <div><i class="fas fa-play"></i> ${startTime}</div>
-            <div><i class="fas fa-stop"></i> ${endTime}</div>
+          <div class="history-content">
+            <div class="history-title">
+              <i class="fas fa-child"></i>
+              ${childName}
+            </div>
+            <div class="history-subtitle">
+              <i class="fas fa-gamepad"></i>
+              ${gameName}
+            </div>
           </div>
-        </li>`;
+          <div class="history-meta">
+            <div class="history-duration ${durationClass}">
+              ${durationText}
+            </div>
+            <div class="history-time">
+              ${dateStr} ${timeStr}
+            </div>
+          </div>
+        </div>`;
       }).join('');
+      
+      // Mostrar indicador si hay más sesiones
+      if (sessions.length > 10) {
+        list.innerHTML += `<div class="history-item" style="text-align: center; padding: 12px; color: #666; font-style: italic;">
+          <i class="fas fa-ellipsis-h"></i> ${sessions.length - 10} sesiones más...
+        </div>`;
+      }
     }
 
     // Funciones principales ROBUSTAS
