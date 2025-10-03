@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Temporizador de Juegos</title>
-  <!-- Deployment trigger: v1.3 - Fixed all UI issues: flickering, alerts, title overlay, mobile sync -->
+  <!-- Deployment trigger: v1.4 - ELIMINATED FLICKERING: Hash-based rendering + reduced intervals -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
     * {
@@ -1012,23 +1012,23 @@
       const list = document.getElementById('activeSessions');
       if (!list) return;
       
-      // Solo actualizar si cambió el número de sesiones o la estructura
-      const currentSessionCount = list.children.length;
-      const newSessionCount = activeSessionsData.length;
+      // Crear un hash simple de las sesiones para detectar cambios estructurales
+      const sessionHash = activeSessionsData.map(s => `${s.id}-${s.childId}-${s.gameId}-${s.duration}`).join('|');
       
       // Si no hay sesiones, mostrar mensaje
-      if (newSessionCount === 0) {
-        if (currentSessionCount !== 1 || !list.children[0]?.textContent?.includes('No hay')) {
+      if (activeSessionsData.length === 0) {
+        if (list.innerHTML !== '<li class="list-item">No hay sesiones activas</li>') {
           list.innerHTML = '<li class="list-item">No hay sesiones activas</li>';
         }
         return;
       }
       
-      // Si cambió el número de sesiones, re-renderizar completamente
-      if (currentSessionCount !== newSessionCount) {
+      // Solo re-renderizar si cambió la estructura (IDs, duración, etc.)
+      if (list.dataset.sessionHash !== sessionHash) {
         list.innerHTML = generateActiveSessionsHTML();
+        list.dataset.sessionHash = sessionHash;
         startTimers();
-        console.log('Active sessions structure updated:', newSessionCount, 'sessions');
+        console.log('Active sessions structure updated:', activeSessionsData.length, 'sessions');
       } else {
         // Solo actualizar timers sin cambiar el DOM
         updateExistingTimers();
@@ -1048,7 +1048,7 @@
         const childName = child ? child.name : 'Niño desconocido';
         const gameName = game ? game.name : 'Juego desconocido';
         
-        return `<li class="list-item active" id="session-${s.id}">
+        return `<li class="list-item active" data-session-id="${s.id}" id="session-${s.id}">
           <div>
             <strong><i class="fas fa-child"></i> ${childName}</strong><br>
             <small><i class="fas fa-gamepad"></i> ${gameName}</small><br>
@@ -1071,9 +1071,38 @@
     
     function updateExistingTimers() {
       // Solo actualizar timers existentes sin recrear el DOM
+      const list = document.getElementById('activeSessions');
+      if (!list) return;
+      
       activeSessionsData.forEach(s => {
-        if (timerIntervals.has(s.id)) {
-          updateTimer(s.id, s.start, s.duration);
+        const timerElement = list.querySelector(`[data-session-id="${s.id}"] .timer`);
+        if (timerElement) {
+          // Actualizar directamente el contenido del timer sin recrear el elemento
+          const now = Date.now();
+          const elapsed = Math.floor((now - s.start) / 1000);
+          const remaining = (s.duration * 60) - elapsed;
+          
+          if (remaining <= 0) {
+            timerElement.innerHTML = '⏰ <strong>Tiempo agotado</strong>';
+            timerElement.className = 'timer danger';
+          } else {
+            const h = Math.floor(remaining / 3600);
+            const m = Math.floor((remaining % 3600) / 60);
+            const s = remaining % 60;
+            const elapsedMin = Math.floor(elapsed / 60);
+            const elapsedSec = elapsed % 60;
+            
+            timerElement.innerHTML = `⏱️ <strong>Restante:</strong> ${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}<br><small>Transcurrido: ${elapsedMin}:${elapsedSec.toString().padStart(2, '0')}</small>`;
+            
+            // Cambiar color según tiempo restante
+            if (remaining <= 60) {
+              timerElement.className = 'timer danger';
+            } else if (remaining <= 300) {
+              timerElement.className = 'timer warning';
+            } else {
+              timerElement.className = 'timer';
+            }
+          }
         }
       });
     }
@@ -1588,12 +1617,12 @@
           console.error('Failed to load session history, continuing...', error);
         }
         
-        // Configurar intervalos de actualización
-        // Actualizar sesiones activas cada 15 segundos
-        setInterval(fetchActiveSessions, 15000);
+        // Configurar intervalos de actualización - MUY REDUCIDOS para evitar parpadeo
+        // Actualizar sesiones activas cada 60 segundos (solo para cambios estructurales)
+        setInterval(fetchActiveSessions, 60000);
         
-        // Actualizar historial cada 30 segundos
-        setInterval(fetchSessionHistory, 30000);
+        // Actualizar historial cada 120 segundos
+        setInterval(fetchSessionHistory, 120000);
         
         // Actualizar niños y juegos cada 60 segundos
         setInterval(() => {
