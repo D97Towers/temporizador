@@ -635,7 +635,9 @@
       <!-- Sesiones Activas -->
       <div class="card">
         <h2><i class="fas fa-stopwatch"></i> Sesiones Activas</h2>
-        <ul class="list" id="activeSessions"></ul>
+        <ul class="list" id="activeSessions">
+          <li class="list-item">Cargando sesiones activas...</li>
+        </ul>
       </div>
 
       <!-- Historial -->
@@ -691,6 +693,7 @@
     let timerIntervals = new Map();
     let currentExtendSession = null;
     let isInitialized = false;
+    let isFirstLoad = true;
 
     // Utilidades mejoradas
     function showStatusMessage(text, type = 'success') {
@@ -969,20 +972,32 @@
         // Solo actualizar si hay cambios reales en los datos
         const hasChanges = JSON.stringify(newActiveSessionsData) !== JSON.stringify(activeSessionsData);
         
-        if (hasChanges) {
+        if (hasChanges || isFirstLoad) {
           activeSessionsData = newActiveSessionsData;
           renderActiveSessions();
-          console.log('Active sessions updated:', activeSessionsData);
+          console.log('Active sessions updated:', activeSessionsData.length, 'sessions');
+          isFirstLoad = false;
         } else {
           // Solo actualizar timers sin recrear DOM
           updateExistingTimers();
         }
       } catch (error) {
         console.error('Error fetching active sessions:', error);
-        showStatusMessage('Error al cargar sesiones activas', 'error');
-        activeSessionsData = [];
-        renderActiveSessions();
-        throw error; // Re-throw para que initializeApp pueda manejarlo
+        
+        // NO resetear las sesiones activas en caso de error
+        // Solo mostrar un mensaje de error discreto
+        console.warn('Failed to fetch active sessions, keeping current data');
+        
+        // Solo actualizar timers con datos existentes
+        if (activeSessionsData.length > 0) {
+          updateExistingTimers();
+        }
+        
+        // No mostrar error al usuario para evitar confusión
+        // showStatusMessage('Error al cargar sesiones activas', 'error');
+        
+        // No re-throw para evitar que se resetee todo
+        // throw error;
       }
     }
 
@@ -995,8 +1010,12 @@
       const newContent = generateActiveSessionsHTML();
       
       if (currentContent !== newContent) {
-        list.innerHTML = newContent;
-        startTimers();
+        // Usar requestAnimationFrame para suavizar la actualización
+        requestAnimationFrame(() => {
+          list.innerHTML = newContent;
+          startTimers();
+          console.log('Active sessions rendered:', activeSessionsData.length, 'sessions');
+        });
       } else {
         // Si no hay cambios en el contenido, solo actualizar timers
         updateExistingTimers();
@@ -1495,6 +1514,7 @@
           console.error('Failed to load games, continuing...', error);
         }
         
+        // Cargar sesiones activas PRIMERO para evitar parpadeo
         try {
           console.log('Loading active sessions...');
           await fetchActiveSessions();
@@ -1509,17 +1529,18 @@
           console.error('Failed to load session history, continuing...', error);
         }
         
-        // Actualizar sesiones activas cada 3 segundos para mejor sincronización multi-dispositivo
-        setInterval(fetchActiveSessions, 3000);
+        // Configurar intervalos de actualización
+        // Actualizar sesiones activas cada 5 segundos (menos frecuente para evitar parpadeo)
+        setInterval(fetchActiveSessions, 5000);
         
-        // Actualizar historial cada 15 segundos para mantener sincronización
-        setInterval(fetchSessionHistory, 15000);
+        // Actualizar historial cada 20 segundos
+        setInterval(fetchSessionHistory, 20000);
         
-        // Actualizar niños y juegos cada 30 segundos
+        // Actualizar niños y juegos cada 60 segundos (menos frecuente)
         setInterval(() => {
           fetchChildren();
           fetchGames();
-        }, 30000);
+        }, 60000);
         
         // Limpiar timers al cerrar la página
         window.addEventListener('beforeunload', () => {
