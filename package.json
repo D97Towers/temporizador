@@ -5,8 +5,8 @@
   "main": "src/app.ts",
   "scripts": {
     "dev": "nodemon src/app.ts",
-    "build": "tsc",
-    "start": "node dist/app.js"
+    "build": "echo 'Build completed - using api/index.js'",
+    "start": "node api/index.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
