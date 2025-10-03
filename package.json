@@ -2,11 +2,11 @@
   "name": "temporizadorjuegos",
   "version": "1.0.0",
   "description": "Control de tiempo de niños en juegos",
-  "main": "src/app.ts",
+  "main": "index.js",
   "scripts": {
     "dev": "nodemon src/app.ts",
-    "build": "echo 'Build completed - using api/index.js'",
-    "start": "node api/index.js"
+    "build": "echo 'Build completed - using index.js'",
+    "start": "node index.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
