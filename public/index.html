@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Temporizador de Juegos</title>
-  <!-- Deployment trigger: v1.6 - REDESIGNED HISTORY: Modern compact design + responsive + better UX -->
+  <!-- Deployment trigger: v1.7 - FIXED ALERTS + IMPROVED HISTORY: Collapsible history + alert cleanup -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
     * {
@@ -326,6 +326,50 @@
       color: #999;
     }
 
+    /* Botón para expandir/colapsar historial */
+    .history-toggle {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      margin: 10px 0;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .history-toggle:hover {
+      background: linear-gradient(135deg, #5a6fd8, #6a4190);
+      transform: translateY(-1px);
+    }
+
+    .history-toggle i {
+      transition: transform 0.3s ease;
+    }
+
+    .history-toggle.expanded i {
+      transform: rotate(180deg);
+    }
+
+    .history-hidden {
+      display: none;
+    }
+
+    .history-summary {
+      background: #f8f9fa;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin: 8px 0;
+      font-size: 12px;
+      color: #666;
+      text-align: center;
+      border: 1px solid #e9ecef;
+    }
+
     /* Responsive design para historial */
     @media (max-width: 768px) {
       .history-item {
@@ -365,6 +409,11 @@
       }
 
       .history-subtitle {
+        font-size: 11px;
+      }
+
+      .history-toggle {
+        padding: 6px 12px;
         font-size: 11px;
       }
     }
@@ -926,10 +975,29 @@
     function clearAllSessionAlerts() {
       alertedSessions.clear();
       const msg = document.getElementById('statusMessage');
-      if (msg && msg.timeoutId) {
-        clearTimeout(msg.timeoutId);
+      if (msg) {
+        if (msg.timeoutId) {
+          clearTimeout(msg.timeoutId);
+          msg.timeoutId = null;
+        }
         msg.classList.remove('show');
-        msg.timeoutId = null;
+        msg.textContent = '';
+        msg.className = 'status-message';
+      }
+    }
+
+    // Función para limpiar alerta específica de sesión
+    function clearSessionAlert(sessionId) {
+      alertedSessions.delete(sessionId);
+      const msg = document.getElementById('statusMessage');
+      if (msg && msg.textContent.includes('quedan solo') && msg.textContent.includes('segundos')) {
+        if (msg.timeoutId) {
+          clearTimeout(msg.timeoutId);
+          msg.timeoutId = null;
+        }
+        msg.classList.remove('show');
+        msg.textContent = '';
+        msg.className = 'status-message';
       }
     }
 
@@ -1411,10 +1479,22 @@
         return;
       }
       
-      // Limitar a las últimas 10 sesiones para mejor performance
-      const recentSessions = sessions.slice(0, 10);
+      // Mostrar las últimas 5 sesiones por defecto, resto colapsado
+      const recentSessions = sessions.slice(0, 5);
+      const hiddenSessions = sessions.slice(5);
       
-      list.innerHTML = recentSessions.map(s => {
+      let html = '';
+      
+      // Botón para expandir/colapsar si hay más de 5 sesiones
+      if (sessions.length > 5) {
+        html += `
+        <button class="history-toggle" onclick="toggleHistoryView()" id="historyToggle">
+          <i class="fas fa-chevron-down"></i>
+          Ver ${hiddenSessions.length} sesiones anteriores
+        </button>`;
+      }
+      
+      html += recentSessions.map(s => {
         const child = childrenCache.find(c => c.id === s.childId);
         const game = gamesCache.find(g => g.id === s.gameId);
         
@@ -1487,11 +1567,101 @@
         </div>`;
       }).join('');
       
-      // Mostrar indicador si hay más sesiones
-      if (sessions.length > 10) {
-        list.innerHTML += `<div class="history-item" style="text-align: center; padding: 12px; color: #666; font-style: italic;">
-          <i class="fas fa-ellipsis-h"></i> ${sessions.length - 10} sesiones más...
-        </div>`;
+      // Agregar sesiones ocultas si las hay
+      if (hiddenSessions.length > 0) {
+        html += `<div id="hiddenSessions" class="history-hidden">`;
+        html += hiddenSessions.map(s => {
+          const child = childrenCache.find(c => c.id === s.childId);
+          const game = gamesCache.find(g => g.id === s.gameId);
+          
+          const childName = child ? child.name : 'Niño desconocido';
+          const gameName = game ? game.name : 'Juego desconocido';
+          
+          const startTime = new Date(s.start);
+          const timeStr = startTime.toLocaleTimeString('es-ES', {
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+          const dateStr = startTime.toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: '2-digit'
+          });
+          
+          let statusClass, iconClass, durationText, durationClass;
+          
+          if (s.end) {
+            const duration = Math.round((s.end - s.start) / 60000);
+            statusClass = 'completed';
+            iconClass = 'completed';
+            durationText = `${duration}min`;
+            durationClass = 'completed';
+          } else {
+            const currentTime = Date.now();
+            const elapsedMinutes = Math.round((currentTime - s.start) / 60000);
+            const totalMinutes = s.duration || 15;
+            const remainingMinutes = Math.max(0, totalMinutes - elapsedMinutes);
+            
+            if (remainingMinutes <= 0) {
+              statusClass = 'expired';
+              iconClass = 'expired';
+              durationText = 'Agotado';
+              durationClass = 'expired';
+            } else {
+              statusClass = 'active';
+              iconClass = 'active';
+              durationText = `${elapsedMinutes}/${totalMinutes}min`;
+              durationClass = 'active';
+            }
+          }
+          
+          return `
+          <div class="history-item ${statusClass}">
+            <div class="history-icon ${iconClass}">
+              <i class="fas fa-${s.end ? 'check' : (statusClass === 'expired' ? 'exclamation' : 'play')}"></i>
+            </div>
+            <div class="history-content">
+              <div class="history-title">
+                <i class="fas fa-child"></i>
+                ${childName}
+              </div>
+              <div class="history-subtitle">
+                <i class="fas fa-gamepad"></i>
+                ${gameName}
+              </div>
+            </div>
+            <div class="history-meta">
+              <div class="history-duration ${durationClass}">
+                ${durationText}
+              </div>
+              <div class="history-time">
+                ${dateStr} ${timeStr}
+              </div>
+            </div>
+          </div>`;
+        }).join('');
+        html += `</div>`;
+      }
+      
+      list.innerHTML = html;
+    }
+
+    // Función para alternar vista del historial
+    function toggleHistoryView() {
+      const hiddenSessions = document.getElementById('hiddenSessions');
+      const toggleBtn = document.getElementById('historyToggle');
+      
+      if (hiddenSessions && toggleBtn) {
+        if (hiddenSessions.classList.contains('history-hidden')) {
+          // Expandir
+          hiddenSessions.classList.remove('history-hidden');
+          toggleBtn.innerHTML = '<i class="fas fa-chevron-up"></i> Ocultar sesiones anteriores';
+          toggleBtn.classList.add('expanded');
+        } else {
+          // Colapsar
+          hiddenSessions.classList.add('history-hidden');
+          toggleBtn.innerHTML = '<i class="fas fa-chevron-down"></i> Ver sesiones anteriores';
+          toggleBtn.classList.remove('expanded');
+        }
       }
     }
 
@@ -1671,7 +1841,7 @@
         showStatusMessage('Sesión finalizada', 'success');
         
         // Limpiar alertas de esta sesión
-        alertedSessions.delete(sessionId);
+        clearSessionAlert(sessionId);
       } catch (error) {
         console.error('Error ending session:', error);
         showStatusMessage(`Error al finalizar sesión: ${error.message}`, 'error');
