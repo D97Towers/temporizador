@@ -208,6 +208,9 @@
       color: #38a169;
       font-family: 'Courier New', monospace;
       font-size: 1.1rem;
+      line-height: 1.3;
+      text-align: center;
+      min-width: 120px;
     }
 
     .timer.warning {
@@ -217,6 +220,18 @@
     .timer.danger {
       color: #e53e3e;
       animation: pulse 1s infinite;
+    }
+
+    .timer strong {
+      display: block;
+      font-size: 1.2rem;
+      margin-bottom: 2px;
+    }
+
+    .timer small {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      font-weight: normal;
     }
 
     @keyframes pulse {
@@ -996,18 +1011,24 @@
       return activeSessionsData.map(s => {
         const child = childrenCache.find(c => c.id === s.childId);
         const game = gamesCache.find(g => g.id === s.gameId);
+        
+        // Usar nombres reales, si no se encuentran, mostrar "Desconocido"
+        const childName = child ? child.name : 'Niño desconocido';
+        const gameName = game ? game.name : 'Juego desconocido';
+        
         return `<li class="list-item active" id="session-${s.id}">
           <div>
-            <strong><i class="fas fa-child"></i> ${child ? child.name : 'Niño'}</strong><br>
-            <small><i class="fas fa-gamepad"></i> ${game ? game.name : 'Juego'}</small>
+            <strong><i class="fas fa-child"></i> ${childName}</strong><br>
+            <small><i class="fas fa-gamepad"></i> ${gameName}</small><br>
+            <small><i class="fas fa-clock"></i> Duración: ${s.duration} min</small>
           </div>
           <div style="text-align: right;">
-            <div class="timer" id="timer-${s.id}"></div>
+            <div class="timer" id="timer-${s.id}">Calculando...</div>
             <div style="margin-top: 5px;">
               <button class="btn-danger" onclick="endSession(${s.id})" style="padding: 5px 10px; font-size: 12px; margin-right: 5px;">
                 <i class="fas fa-stop"></i> Finalizar
               </button>
-              <button class="extend-time" onclick="showExtendModal(${s.id}, '${child ? child.name : 'este niño'}')" style="padding: 5px 10px; font-size: 12px;">
+              <button class="extend-time" onclick="showExtendModal(${s.id}, '${childName}')" style="padding: 5px 10px; font-size: 12px;">
                 <i class="fas fa-plus"></i> +5min
               </button>
             </div>
@@ -1058,6 +1079,10 @@
       const m = String(Math.floor((left % 3600) / 60)).padStart(2, '0');
       const s = String(left % 60).padStart(2, '0');
       
+      // Calcular tiempo transcurrido para mostrar también
+      const elapsed = Math.floor(diff / 60);
+      const elapsedSeconds = diff % 60;
+      
       // Actualizar clases según el tiempo restante
       timerSpan.className = 'timer';
       if (left <= 0) {
@@ -1071,7 +1096,7 @@
           endSession(sessionId);
         }
       } else if (left <= 60) {
-        timerSpan.textContent = `⚠️ ${m}:${s}`;
+        timerSpan.innerHTML = `⚠️ <strong>Restante:</strong> ${m}:${s}<br><small>Transcurrido: ${elapsed}:${String(elapsedSeconds).padStart(2, '0')}</small>`;
         timerSpan.classList.add('warning');
         // Alerta cuando quedan 30 segundos
         if (left <= 30 && !timerSpan.classList.contains('alerted-30')) {
@@ -1081,7 +1106,7 @@
           showStatusMessage(`¡Atención! A ${child ? child.name : 'este niño'} le quedan solo ${left} segundos`, 'warning');
         }
       } else {
-        timerSpan.textContent = `⏱️ ${h}:${m}:${s}`;
+        timerSpan.innerHTML = `⏱️ <strong>Restante:</strong> ${h}:${m}:${s}<br><small>Transcurrido: ${elapsed}:${String(elapsedSeconds).padStart(2, '0')}</small>`;
       }
     }
 
@@ -1131,19 +1156,48 @@
         const child = childrenCache.find(c => c.id === s.childId);
         const game = gamesCache.find(g => g.id === s.gameId);
         
-        // Si no encontramos el niño o juego, usar IDs como fallback
-        const childName = child ? child.name : `Niño ID:${s.childId}`;
-        const gameName = game ? game.name : `Juego ID:${s.gameId}`;
+        // Usar nombres reales, si no se encuentran, mostrar "Desconocido"
+        const childName = child ? child.name : 'Niño desconocido';
+        const gameName = game ? game.name : 'Juego desconocido';
         
-        const startTime = new Date(s.start).toLocaleString();
-        const endTime = s.end ? new Date(s.end).toLocaleString() : 'En curso';
-        const duration = s.end ? Math.round((s.end - s.start) / 60000) : 'En curso';
+        const startTime = new Date(s.start).toLocaleString('es-ES', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
         
-        return `<li class="list-item">
+        let endTime, duration, statusClass, statusText;
+        
+        if (s.end) {
+          // Sesión finalizada
+          endTime = new Date(s.end).toLocaleString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          });
+          duration = Math.round((s.end - s.start) / 60000);
+          statusClass = '';
+          statusText = `${duration} min`;
+        } else {
+          // Sesión en curso
+          const currentTime = Date.now();
+          const elapsedMinutes = Math.round((currentTime - s.start) / 60000);
+          endTime = 'En curso';
+          statusClass = 'active';
+          statusText = `${elapsedMinutes} min (en curso)`;
+        }
+        
+        return `<li class="list-item ${statusClass}">
           <div>
             <strong><i class="fas fa-child"></i> ${childName}</strong><br>
             <small><i class="fas fa-gamepad"></i> ${gameName}</small><br>
-            <small><i class="fas fa-clock"></i> ${duration} min</small>
+            <small><i class="fas fa-clock"></i> ${statusText}</small>
           </div>
           <div style="text-align: right; font-size: 0.9em; color: #666;">
             <div><i class="fas fa-play"></i> ${startTime}</div>
