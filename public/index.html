@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Temporizador de Juegos</title>
-  <!-- Deployment trigger: v1.2 - Fixed session loading and flickering -->
+  <!-- Deployment trigger: v1.3 - Fixed all UI issues: flickering, alerts, title overlay, mobile sync -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
     * {
@@ -31,6 +31,7 @@
       margin-bottom: 30px;
       color: white;
       position: relative;
+      padding-right: 80px; /* Espacio para el botón de sincronización */
     }
 
     .header h1 {
@@ -703,10 +704,19 @@
     // Utilidades mejoradas
     function showStatusMessage(text, type = 'success') {
       const msg = document.getElementById('statusMessage');
+      
+      // Limpiar cualquier timeout anterior
+      if (msg.timeoutId) {
+        clearTimeout(msg.timeoutId);
+      }
+      
       msg.textContent = text;
       msg.className = `status-message ${type} show`;
-      setTimeout(() => {
+      
+      // Auto-ocultar después de 4 segundos
+      msg.timeoutId = setTimeout(() => {
         msg.classList.remove('show');
+        msg.timeoutId = null;
       }, 4000);
     }
 
@@ -1002,21 +1012,25 @@
       const list = document.getElementById('activeSessions');
       if (!list) return;
       
-      // Evitar parpadeo: solo actualizar si hay cambios reales
-      const currentContent = list.innerHTML;
-      const newContent = generateActiveSessionsHTML();
+      // Solo actualizar si cambió el número de sesiones o la estructura
+      const currentSessionCount = list.children.length;
+      const newSessionCount = activeSessionsData.length;
       
-      if (currentContent !== newContent) {
-        // Usar requestAnimationFrame con delay para suavizar la actualización
-        requestAnimationFrame(() => {
-          setTimeout(() => {
-            list.innerHTML = newContent;
-            startTimers();
-            console.log('Active sessions rendered:', activeSessionsData.length, 'sessions');
-          }, 100); // Pequeño delay para evitar parpadeos
-        });
+      // Si no hay sesiones, mostrar mensaje
+      if (newSessionCount === 0) {
+        if (currentSessionCount !== 1 || !list.children[0]?.textContent?.includes('No hay')) {
+          list.innerHTML = '<li class="list-item">No hay sesiones activas</li>';
+        }
+        return;
+      }
+      
+      // Si cambió el número de sesiones, re-renderizar completamente
+      if (currentSessionCount !== newSessionCount) {
+        list.innerHTML = generateActiveSessionsHTML();
+        startTimers();
+        console.log('Active sessions structure updated:', newSessionCount, 'sessions');
       } else {
-        // Si no hay cambios en el contenido, solo actualizar timers
+        // Solo actualizar timers sin cambiar el DOM
         updateExistingTimers();
       }
     }
@@ -1615,16 +1629,31 @@
     // Función para forzar sincronización completa
     async function forceSync() {
       console.log('Forcing complete sync...');
+      showStatusMessage('Sincronizando datos...', 'info');
+      
       try {
+        // Limpiar caché antes de sincronizar
+        childrenCache = [];
+        gamesCache = [];
+        
         await Promise.all([
           fetchChildren(),
           fetchGames(),
           fetchActiveSessions(),
           fetchSessionHistory()
         ]);
+        
+        // Forzar re-renderizado de todos los elementos
+        renderChildrenList(childrenCache);
+        renderGamesList(gamesCache);
+        updateChildSelect(childrenCache);
+        updateGameSelect(gamesCache);
+        
+        showStatusMessage('Datos sincronizados correctamente', 'success');
         console.log('Complete sync successful');
       } catch (error) {
         console.error('Force sync failed:', error);
+        showStatusMessage('Error al sincronizar datos', 'error');
       }
     }
     
