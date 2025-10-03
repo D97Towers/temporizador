@@ -365,11 +365,35 @@ app.post('/sessions/end', (req, res) => {
   }
 });
 
+// Ruta de estado para diagnóstico
+app.get('/admin/status', (_, res) => {
+  try {
+    const currentData = getPersistentData();
+    const activeSessions = currentData.sessions.filter((s: Session) => !s.end);
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      children: currentData.children.length,
+      games: currentData.games.length,
+      sessions: currentData.sessions.length,
+      activeSessions: activeSessions.length
+    });
+  } catch (error) {
+    console.error('Error getting status:', error);
+    res.status(500).json({ 
+      status: 'error', 
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Ver sesiones activas
 app.get('/sessions/active', (_, res) => {
   try {
     const currentData = getPersistentData();
     const sessions = currentData.sessions.filter((s: Session) => !s.end);
+    console.log('Active sessions found:', sessions.length);
     res.json(sessions);
   } catch (error) {
     res.status(500).json({ error: 'Error interno del servidor' });

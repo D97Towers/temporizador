@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Temporizador de Juegos</title>
+  <!-- Deployment trigger: v1.2 - Fixed session loading and flickering -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
     * {
@@ -684,7 +685,10 @@
   </div>
 
   <script>
+    // Configuración de API - detectar entorno
     const api = window.location.origin;
+    console.log('API URL:', api);
+    console.log('Environment:', window.location.hostname);
 
     // Estado de la aplicación - ROBUSTO
     let isLoading = false;
@@ -970,35 +974,27 @@
         const newActiveSessionsData = await res.json() || [];
         console.log('Active sessions data received:', newActiveSessionsData);
         
-        // Solo actualizar si hay cambios reales en los datos
-        const hasChanges = JSON.stringify(newActiveSessionsData) !== JSON.stringify(activeSessionsData);
+        // Actualizar siempre para mostrar cambios
+        activeSessionsData = newActiveSessionsData;
+        renderActiveSessions();
+        console.log('Active sessions rendered:', activeSessionsData.length, 'sessions');
         
-        if (hasChanges || isFirstLoad) {
-          activeSessionsData = newActiveSessionsData;
-          renderActiveSessions();
-          console.log('Active sessions updated:', activeSessionsData.length, 'sessions');
-          isFirstLoad = false;
-        } else {
-          // Solo actualizar timers sin recrear DOM
-          updateExistingTimers();
-        }
       } catch (error) {
         console.error('Error fetching active sessions:', error);
         
         // NO resetear las sesiones activas en caso de error
-        // Solo mostrar un mensaje de error discreto
         console.warn('Failed to fetch active sessions, keeping current data');
         
         // Solo actualizar timers con datos existentes
         if (activeSessionsData.length > 0) {
           updateExistingTimers();
+        } else {
+          // Si no hay datos, mostrar mensaje de no sesiones activas
+          const list = document.getElementById('activeSessions');
+          if (list) {
+            list.innerHTML = '<li class="list-item">No hay sesiones activas</li>';
+          }
         }
-        
-        // No mostrar error al usuario para evitar confusión
-        // showStatusMessage('Error al cargar sesiones activas', 'error');
-        
-        // No re-throw para evitar que se resetee todo
-        // throw error;
       }
     }
 
@@ -1149,9 +1145,14 @@
         console.log('Session history loaded successfully:', sessions);
       } catch (error) {
         console.error('Error fetching session history:', error);
-        showStatusMessage('Error al cargar historial de sesiones', 'error');
-        renderSessionHistory([]);
-        throw error; // Re-throw para que initializeApp pueda manejarlo
+        
+        // En caso de error, mostrar mensaje de no historial
+        const list = document.getElementById('sessionHistory');
+        if (list) {
+          list.innerHTML = '<li class="list-item">No hay sesiones registradas</li>';
+        }
+        
+        console.warn('Failed to fetch session history, showing empty state');
       }
     }
 
@@ -1526,6 +1527,21 @@
       
       try {
         console.log('Initializing app...');
+        console.log('API endpoint:', api);
+        
+        // Test de conectividad primero
+        try {
+          const testResponse = await fetch(api + '/admin/status');
+          if (testResponse.ok) {
+            const status = await testResponse.json();
+            console.log('Server status:', status);
+            console.log('Server has', status.children, 'children,', status.games, 'games,', status.activeSessions, 'active sessions');
+          } else {
+            console.error('Server not responding:', testResponse.status);
+          }
+        } catch (error) {
+          console.error('Cannot connect to server:', error);
+        }
         
         // Cargar datos secuencialmente para mejor debugging
         try {
@@ -1542,7 +1558,7 @@
           console.error('Failed to load games, continuing...', error);
         }
         
-        // Cargar sesiones activas PRIMERO para evitar parpadeo
+        // Cargar sesiones activas
         try {
           console.log('Loading active sessions...');
           await fetchActiveSessions();
@@ -1550,6 +1566,7 @@
           console.error('Failed to load active sessions, continuing...', error);
         }
         
+        // Cargar historial de sesiones
         try {
           console.log('Loading session history...');
           await fetchSessionHistory();
@@ -1558,13 +1575,13 @@
         }
         
         // Configurar intervalos de actualización
-        // Actualizar sesiones activas cada 10 segundos (mucho menos frecuente para evitar parpadeo)
-        setInterval(fetchActiveSessions, 10000);
+        // Actualizar sesiones activas cada 15 segundos
+        setInterval(fetchActiveSessions, 15000);
         
-        // Actualizar historial cada 20 segundos
-        setInterval(fetchSessionHistory, 20000);
+        // Actualizar historial cada 30 segundos
+        setInterval(fetchSessionHistory, 30000);
         
-        // Actualizar niños y juegos cada 60 segundos (menos frecuente)
+        // Actualizar niños y juegos cada 60 segundos
         setInterval(() => {
           fetchChildren();
           fetchGames();
