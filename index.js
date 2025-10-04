@@ -977,6 +977,48 @@ app.post('/admin/reload-data', (req, res) => {
   }
 });
 
+// Endpoint para mantener datos en memoria (llamado automáticamente por el frontend)
+app.get('/admin/keep-alive', (req, res) => {
+  try {
+    if (process.env.VERCEL && (!globalData || globalData.children?.length === 0)) {
+      // Si no hay datos, cargar datos por defecto
+      const defaultData = {
+        children: [
+          { id: 2, name: "Santiago", displayId: "Santiago-001", avatar: "S", displayName: "Santiago", fatherName: "nicolas", motherName: "linda" },
+          { id: 4, name: "Daniel", displayId: "Daniel-001", avatar: "D", displayName: "Daniel", fatherName: null, motherName: null },
+          { id: 5, name: "mateo", displayId: "mateo-001", avatar: "M", displayName: "mateo", fatherName: null, motherName: null },
+          { id: 6, name: "Miguel", displayId: "Miguel-001", avatar: "M", displayName: "Miguel", fatherName: null, motherName: null },
+          { id: 7, name: "Lucas", displayId: "Lucas-001", avatar: "L", displayName: "Lucas", fatherName: null, motherName: null },
+          { id: 8, name: "David", displayId: "David-002", avatar: "D", displayName: "David", fatherName: null, motherName: null },
+          { id: 9, name: "david torres", displayId: "david-torres", avatar: "D", displayName: "david torres", fatherName: null, motherName: null },
+          { id: 10, name: "Sofia", displayId: "Sofia-001", avatar: "S", displayName: "Sofia", fatherName: null, motherName: null },
+          { id: 11, name: "andres", displayId: "andres-001", avatar: "A", displayName: "andres", fatherName: "alex", motherName: "Maria" }
+        ],
+        games: [
+          { id: 1, name: "videojuegos", createdAt: new Date().toISOString() },
+          { id: 2, name: "bici", createdAt: new Date().toISOString() },
+          { id: 3, name: "lego", createdAt: new Date().toISOString() }
+        ],
+        sessions: []
+      };
+      globalData = defaultData;
+      console.log('Default data loaded via keep-alive');
+    }
+    
+    res.json({ 
+      message: 'Keep-alive successful',
+      data: {
+        children: globalData?.children?.length || 0,
+        games: globalData?.games?.length || 0,
+        sessions: globalData?.sessions?.length || 0
+      }
+    });
+  } catch (error) {
+    console.error('Error in keep-alive:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
 // Iniciar servidor
 const PORT = process.env.PORT || 3010;
 app.listen(PORT, () => {
