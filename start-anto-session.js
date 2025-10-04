@@ -6,10 +6,10 @@ async function startAntoSession() {
   try {
     console.log('🎮 Iniciando sesión para "anto"...');
     
-    // Primero obtener el ID del niño anto
-    const childrenResponse = await fetch(`${PRODUCTION_URL}/children`);
-    const children = await childrenResponse.json();
-    const anto = children.find(c => c.name === 'anto');
+    // Primero obtener el ID del niño anto desde el endpoint de status
+    const statusResponse = await fetch(`${PRODUCTION_URL}/admin/status`);
+    const status = await statusResponse.json();
+    const anto = status.childrenList.find(c => c.name === 'anto');
     
     if (!anto) {
       throw new Error('No se encontró el niño "anto"');
@@ -17,10 +17,8 @@ async function startAntoSession() {
     
     console.log('👶 Niño "anto" encontrado con ID:', anto.id);
     
-    // Obtener juegos disponibles
-    const gamesResponse = await fetch(`${PRODUCTION_URL}/games`);
-    const games = await gamesResponse.json();
-    const videojuegos = games.find(g => g.name === 'videojuegos');
+    // Obtener juegos disponibles desde el endpoint de status
+    const videojuegos = status.gamesList.find(g => g.name === 'videojuegos');
     
     if (!videojuegos) {
       throw new Error('No se encontró el juego "videojuegos"');

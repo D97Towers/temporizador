@@ -297,8 +297,10 @@ app.post('/children', validateChild, async (req, res) => {
 app.get('/children', (_, res) => {
   try {
     const currentData = getPersistentData();
+    console.log('GET /children - returning', currentData.children.length, 'children');
     res.json(currentData.children);
   } catch (error) {
+    console.error('Error in GET /children:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
