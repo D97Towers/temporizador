@@ -10,7 +10,8 @@
     "dev": "nodemon src/app.ts",
     "build": "echo 'Build completed - using index.js'",
     "start": "node index.js",
-    "vercel-build": "echo 'Vercel build completed'"
+    "vercel-build": "echo 'Vercel build completed'",
+    "sync-prod": "node sync-to-production.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

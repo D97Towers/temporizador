@@ -464,6 +464,48 @@ app.post('/admin/reload', (req, res) => {
   }
 });
 
+// Endpoint para sincronizar datos desde local a producción
+app.post('/admin/sync-data', (req, res) => {
+  try {
+    const { children, games, sessions, nextChildId, nextGameId, nextSessionId } = req.body;
+    
+    // Validar que los datos sean válidos
+    if (!Array.isArray(children) || !Array.isArray(games) || !Array.isArray(sessions)) {
+      return res.status(400).json({ error: 'Datos inválidos: se esperan arrays para children, games y sessions' });
+    }
+    
+    const syncData = {
+      children: children || [],
+      games: games || [],
+      sessions: sessions || [],
+      nextChildId: nextChildId || 1,
+      nextGameId: nextGameId || 1,
+      nextSessionId: nextSessionId || 1
+    };
+    
+    // Guardar los datos sincronizados
+    saveData(syncData);
+    
+    console.log('Data synced from local to production:', {
+      childrenCount: syncData.children.length,
+      gamesCount: syncData.games.length,
+      sessionsCount: syncData.sessions.length
+    });
+    
+    res.json({ 
+      message: 'Datos sincronizados correctamente desde local',
+      synced: {
+        children: syncData.children.length,
+        games: syncData.games.length,
+        sessions: syncData.sessions.length
+      }
+    });
+  } catch (error) {
+    console.error('Error syncing data:', error);
+    res.status(500).json({ error: 'Error al sincronizar datos' });
+  }
+});
+
 // Iniciar servidor
 const PORT = process.env.PORT || 3010;
 app.listen(PORT, () => {
