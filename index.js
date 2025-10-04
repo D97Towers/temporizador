@@ -410,22 +410,48 @@ app.put('/children/:id', validateChild, (req, res) => {
 // CRUD Juegos
 app.post('/games', validateGame, (req, res) => {
   try {
-    const currentData = getPersistentData();
-    const game = { id: currentData.nextGameId++, name: req.body.name.trim() };
-    currentData.games.push(game);
-    saveData(currentData);
-    res.status(201).json(game);
+    const { name } = req.body;
+    const trimmedName = name.trim();
+    
+    console.log('Creating game:', trimmedName);
+    
+    // Crear el juego en SQLite
+    const result = games.create.run(trimmedName);
+    const gameId = result.lastInsertRowid;
+    const newGame = games.getById.get(gameId);
+    
+    console.log('Game created in SQLite:', newGame);
+    
+    // Convertir a formato esperado por el frontend
+    const formattedGame = {
+      id: newGame.id,
+      name: newGame.name,
+      createdAt: newGame.created_at
+    };
+    
+    res.status(201).json(formattedGame);
   } catch (error) {
-    res.status(500).json({ error: 'Error interno del servidor' });
+    console.error('Error creating game:', error);
+    res.status(500).json({ error: 'Error interno del servidor', details: error.message });
   }
 });
 
 app.get('/games', (_, res) => {
   try {
-    const currentData = getPersistentData();
-    res.json(currentData.games);
+    const allGames = games.getAll.all();
+    console.log('GET /games - returning', allGames.length, 'games from SQLite');
+    
+    // Convertir formato de SQLite a formato esperado por el frontend
+    const formattedGames = allGames.map(game => ({
+      id: game.id,
+      name: game.name,
+      createdAt: game.created_at
+    }));
+    
+    res.json(formattedGames);
   } catch (error) {
-    res.status(500).json({ error: 'Error interno del servidor' });
+    console.error('Error in GET /games:', error);
+    res.status(500).json({ error: 'Error interno del servidor', details: error.message });
   }
 });
 
@@ -460,12 +486,11 @@ app.delete('/games/:id', (req, res) => {
 // Iniciar sesión de juego con duración personalizada
 app.post('/sessions/start', validateSession, (req, res) => {
   try {
-    const currentData = getPersistentData();
     const { childId, gameId, duration } = req.body;
     
     // Verificar que el niño y el juego existen
-    const child = currentData.children.find((c) => c.id === childId);
-    const game = currentData.games.find((g) => g.id === gameId);
+    const child = children.getById.get(childId);
+    const game = games.getById.get(gameId);
     
     if (!child) {
       return res.status(404).json({ error: 'Niño no encontrado' });
@@ -475,37 +500,41 @@ app.post('/sessions/start', validateSession, (req, res) => {
     }
     
     // Verificar si el niño ya tiene una sesión activa
-    const activeSession = currentData.sessions.find((s) => s.childId === childId && !s.end);
+    const activeSessions = sessions.getActive.all();
+    const activeSession = activeSessions.find((s) => s.child_id === childId);
     if (activeSession) {
       return res.status(400).json({ error: 'El niño ya tiene una sesión activa' });
     }
     
     console.log('Creating session with data:', { childId, gameId, duration });
-    console.log('Current data before adding session:', JSON.stringify(currentData, null, 2));
     
-    const session = { 
-      id: currentData.nextSessionId++, 
-      childId, 
-      gameId, 
-      start: Date.now(), 
-      duration: Number(duration),
-      end: null
+    // Crear la sesión en SQLite
+    const result = sessions.create.run(
+      childId,
+      gameId,
+      Date.now(),
+      Number(duration)
+    );
+    
+    const sessionId = result.lastInsertRowid;
+    const newSession = sessions.getById.get(sessionId);
+    
+    console.log('Session created in SQLite:', newSession);
+    
+    // Convertir a formato esperado por el frontend
+    const formattedSession = {
+      id: newSession.id,
+      childId: newSession.child_id,
+      gameId: newSession.game_id,
+      start: newSession.start_time,
+      duration: newSession.duration,
+      end: newSession.end_time
     };
     
-    currentData.sessions.push(session);
-    console.log('Session created:', JSON.stringify(session, null, 2));
-    console.log('Total sessions before save:', currentData.sessions.length);
-    
-    saveData(currentData);
-    console.log('Session data saved successfully');
-    
-    // Verificar que se guardó correctamente
-    const verifyData = getPersistentData();
-    console.log('Total sessions after save:', verifyData.sessions.length);
-    
-    res.status(201).json(session);
+    res.status(201).json(formattedSession);
   } catch (error) {
-    res.status(500).json({ error: 'Error interno del servidor' });
+    console.error('Error starting session:', error);
+    res.status(500).json({ error: 'Error interno del servidor', details: error.message });
   }
 });
 
@@ -531,22 +560,54 @@ app.post('/sessions/end', (req, res) => {
 // Ver sesiones activas
 app.get('/sessions/active', (_, res) => {
   try {
-    const currentData = getPersistentData();
-    const sessions = currentData.sessions.filter((s) => !s.end);
-    res.json(sessions);
+    const activeSessions = sessions.getActive.all();
+    console.log('GET /sessions/active - returning', activeSessions.length, 'active sessions from SQLite');
+    
+    // Convertir formato de SQLite a formato esperado por el frontend
+    const formattedSessions = activeSessions.map(session => ({
+      id: session.id,
+      childId: session.child_id,
+      gameId: session.game_id,
+      start: session.start_time,
+      duration: session.duration,
+      end: session.end_time,
+      childName: session.child_display_name || session.child_name,
+      gameName: session.game_name,
+      fatherName: session.father_name,
+      motherName: session.mother_name
+    }));
+    
+    res.json(formattedSessions);
   } catch (error) {
-    res.status(500).json({ error: 'Error interno del servidor' });
+    console.error('Error in GET /sessions/active:', error);
+    res.status(500).json({ error: 'Error interno del servidor', details: error.message });
   }
 });
 
 // Ver historial de sesiones
 app.get('/sessions', (_, res) => {
   try {
-    const currentData = getPersistentData();
-    const sessions = currentData.sessions.sort((a, b) => b.start - a.start);
-    res.json(sessions);
+    const allSessions = sessions.getAll.all();
+    console.log('GET /sessions - returning', allSessions.length, 'sessions from SQLite');
+    
+    // Convertir formato de SQLite a formato esperado por el frontend
+    const formattedSessions = allSessions.map(session => ({
+      id: session.id,
+      childId: session.child_id,
+      gameId: session.game_id,
+      start: session.start_time,
+      duration: session.duration,
+      end: session.end_time,
+      childName: session.child_display_name || session.child_name,
+      gameName: session.game_name,
+      fatherName: session.father_name,
+      motherName: session.mother_name
+    }));
+    
+    res.json(formattedSessions);
   } catch (error) {
-    res.status(500).json({ error: 'Error interno del servidor' });
+    console.error('Error in GET /sessions:', error);
+    res.status(500).json({ error: 'Error interno del servidor', details: error.message });
   }
 });
 
