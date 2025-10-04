@@ -557,15 +557,57 @@ app.get('/admin/status', (req, res) => {
       nextGameId: currentData.nextGameId,
       nextSessionId: currentData.nextSessionId,
       childrenList: currentData.children,
-      gamesList: currentData.games
+      gamesList: currentData.games,
+      globalDataExists: !!globalData,
+      globalDataChildren: globalData ? globalData.children.length : 0,
+      dataLock: dataLock
     });
   } catch (error) {
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
-// Endpoint para debug completo
+// Endpoint para debug de persistencia
 app.get('/admin/debug', (req, res) => {
+  try {
+    const currentData = getPersistentData();
+    
+    // Verificar archivos en /tmp
+    let tmpData = null;
+    try {
+      const tmpFile = '/tmp/temporizador-data.json';
+      if (fs.existsSync(tmpFile)) {
+        tmpData = JSON.parse(fs.readFileSync(tmpFile, 'utf8'));
+      }
+    } catch (e) {
+      console.log('Could not read /tmp file:', e.message);
+    }
+    
+    res.json({
+      currentData: {
+        children: currentData.children.length,
+        nextChildId: currentData.nextChildId,
+        lastChild: currentData.children[currentData.children.length - 1]
+      },
+      globalData: {
+        exists: !!globalData,
+        children: globalData ? globalData.children.length : 0,
+        lastChild: globalData ? globalData.children[globalData.children.length - 1] : null
+      },
+      tmpData: {
+        exists: !!tmpData,
+        children: tmpData ? tmpData.children.length : 0,
+        lastChild: tmpData ? tmpData.children[tmpData.children.length - 1] : null
+      },
+      dataLock: dataLock
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Error en debug', details: error.message });
+  }
+});
+
+// Endpoint para debug completo
+app.get('/admin/debug-full', (req, res) => {
   try {
     const currentData = getPersistentData();
     res.json({
