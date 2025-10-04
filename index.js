@@ -162,9 +162,18 @@ initializeDefaultData();
 
 // Middleware de validación
 const validateChild = (req, res, next) => {
-  const { name } = req.body;
+  const { name, nickname, fatherName, motherName } = req.body;
   if (!name || typeof name !== 'string' || name.trim().length < 2 || name.trim().length > 50) {
     return res.status(400).json({ error: 'El nombre debe tener entre 2 y 50 caracteres' });
+  }
+  if (nickname && (typeof nickname !== 'string' || nickname.trim().length > 20)) {
+    return res.status(400).json({ error: 'El apodo debe tener máximo 20 caracteres' });
+  }
+  if (fatherName && (typeof fatherName !== 'string' || fatherName.trim().length > 30)) {
+    return res.status(400).json({ error: 'El nombre del padre debe tener máximo 30 caracteres' });
+  }
+  if (motherName && (typeof motherName !== 'string' || motherName.trim().length > 30)) {
+    return res.status(400).json({ error: 'El nombre de la madre debe tener máximo 30 caracteres' });
   }
   next();
 };
@@ -192,7 +201,21 @@ const validateSession = (req, res, next) => {
 app.post('/children', validateChild, (req, res) => {
   try {
     const currentData = getPersistentData();
-    const child = { id: currentData.nextChildId++, name: req.body.name.trim() };
+    const { name, nickname, fatherName, motherName } = req.body;
+    
+    const child = { 
+      id: currentData.nextChildId++, 
+      name: name.trim(),
+      nickname: nickname ? nickname.trim() : undefined,
+      fatherName: fatherName ? fatherName.trim() : undefined,
+      motherName: motherName ? motherName.trim() : undefined,
+      displayName: name.trim() + (nickname ? ` (${nickname.trim()})` : ''),
+      avatar: name.trim().charAt(0).toUpperCase(),
+      createdAt: new Date().toISOString(),
+      totalSessions: 0,
+      totalTimePlayed: 0
+    };
+    
     currentData.children.push(child);
     saveData(currentData);
     res.status(201).json(child);
