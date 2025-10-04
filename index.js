@@ -139,7 +139,20 @@ function getPersistentData() {
     
     // Si no hay datos en ningún lado, inicializar con datos por defecto
     console.log('No data found, initializing with defaults');
-    globalData = getDefaultData();
+    globalData = {
+      children: [
+        { id: 1, name: 'David' },
+        { id: 2, name: 'Santiago' }
+      ],
+      games: [
+        { id: 1, name: 'bici' },
+        { id: 2, name: 'videojuegos' }
+      ],
+      sessions: [],
+      nextChildId: 3,
+      nextGameId: 3,
+      nextSessionId: 1
+    };
     return globalData;
   } else {
     // En local, usar sistema de archivos

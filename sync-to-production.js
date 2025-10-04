@@ -6,7 +6,7 @@ const path = require('path');
 // Configuración
 const LOCAL_DATA_FILE = path.join(__dirname, 'data.json');
 // Obtener URL de producción desde variable de entorno o usar URL por defecto
-const PRODUCTION_URL = process.env.PRODUCTION_URL || 'https://temporizador-juegos.vercel.app';
+const PRODUCTION_URL = process.env.PRODUCTION_URL || 'https://temporizador-jade.vercel.app';
 
 async function syncToProduction() {
   try {
