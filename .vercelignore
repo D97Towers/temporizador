@@ -1,7 +1,28 @@
-node_modules
-src
-*.log
-.DS_Store
+# Development files
+src/
+*.ts
+tsconfig.json
+
+# Data files (will be handled by Vercel's memory system)
 data.json
 data.db
-README.md
+*.db
+
+# Logs
+*.log
+logs/
+
+# Development dependencies
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Local environment files
+.env.local
+.env.development

@@ -3,10 +3,14 @@
   "version": "1.0.0",
   "description": "Control de tiempo de niños en juegos",
   "main": "index.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "dev": "nodemon src/app.ts",
     "build": "echo 'Build completed - using index.js'",
-    "start": "node index.js"
+    "start": "node index.js",
+    "vercel-build": "echo 'Vercel build completed'"
   },
   "dependencies": {
     "cors": "^2.8.5",
