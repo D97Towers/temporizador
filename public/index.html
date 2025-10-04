@@ -2712,6 +2712,9 @@
         
         // Actualizar siempre para mostrar cambios
         activeSessionsData = newActiveSessionsData;
+        console.log('Active sessions data updated:', activeSessionsData);
+        console.log('Children cache length:', childrenCache.length);
+        console.log('Games cache length:', gamesCache.length);
         renderActiveSessions();
         console.log('Active sessions rendered:', activeSessionsData.length, 'sessions');
         
@@ -2772,8 +2775,27 @@
         const child = childrenCache.find(c => c.id === s.childId);
         const game = gamesCache.find(g => g.id === s.gameId);
         
-        // Usar displayName si existe, sino el nombre original
-        const childDisplayName = child ? (child.displayName || child.name) : 'Niño desconocido';
+        // Debug logging
+        console.log('Session debug:', {
+          sessionId: s.id,
+          childId: s.childId,
+          childrenCacheLength: childrenCache.length,
+          child: child,
+          gamesCacheLength: gamesCache.length,
+          game: game
+        });
+        
+        // Si no encontramos el niño o juego, intentar recargar los datos
+        if (!child || !game) {
+          console.warn('Missing child or game data, triggering refresh...');
+          setTimeout(() => {
+            fetchChildren();
+            fetchGames();
+          }, 100);
+        }
+        
+        // Usar displayName si existe y no es null/undefined, sino el nombre original
+        const childDisplayName = child ? (child.displayName && child.displayName !== 'null' ? child.displayName : child.name) : 'Niño desconocido';
         const childAvatar = child ? (child.avatar || child.name.charAt(0).toUpperCase()) : '?';
         const gameName = game ? game.name : 'Juego desconocido';
         
@@ -2997,7 +3019,7 @@
         const game = gamesCache.find(g => g.id === s.gameId);
         
         // Usar nombres reales, si no se encuentran, mostrar "Desconocido"
-        const childName = child ? (child.displayName || child.name) : 'Niño desconocido';
+        const childName = child ? (child.displayName && child.displayName !== 'null' ? child.displayName : child.name) : 'Niño desconocido';
         const gameName = game ? game.name : 'Juego desconocido';
         
         // Información de padres para diferenciación
@@ -3089,7 +3111,7 @@
           const child = childrenCache.find(c => c.id === s.childId);
           const game = gamesCache.find(g => g.id === s.gameId);
           
-          const childName = child ? child.name : 'Niño desconocido';
+          const childName = child ? (child.displayName && child.displayName !== 'null' ? child.displayName : child.name) : 'Niño desconocido';
           const gameName = game ? game.name : 'Juego desconocido';
           
           const startTime = new Date(s.start);

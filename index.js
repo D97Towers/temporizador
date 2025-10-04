@@ -88,16 +88,18 @@ function loadData() {
 function saveData(newData) {
   try {
     if (process.env.VERCEL) {
-      // En Vercel, usar tanto memoria global como intentar guardar en /tmp
+      // En Vercel, actualizar memoria global inmediatamente
       globalData = newData;
+      console.log('Updated global memory with new data');
       
       // Intentar guardar en /tmp para persistencia temporal
       try {
         const tmpFile = '/tmp/temporizador-data.json';
         fs.writeFileSync(tmpFile, JSON.stringify(newData, null, 2));
-        console.log('Data saved to /tmp and global memory (Vercel)');
+        console.log('Data saved to /tmp successfully');
       } catch (tmpError) {
-        console.log('Could not save to /tmp, using global memory only:', tmpError.message);
+        console.log('Could not save to /tmp:', tmpError.message);
+        // En caso de error con /tmp, al menos tenemos la memoria global
       }
       
       return;
@@ -105,8 +107,10 @@ function saveData(newData) {
     
     // En local, guardar en archivo
     fs.writeFileSync(dataFile, JSON.stringify(newData, null, 2));
+    console.log('Data saved to local file');
   } catch (error) {
     console.error('Error saving data:', error);
+    throw error; // Re-lanzar el error para que se maneje en el endpoint
   }
 }
 
@@ -116,18 +120,25 @@ let globalData = null;
 // Función para obtener datos persistentes
 function getPersistentData() {
   if (process.env.VERCEL) {
-    // En Vercel, intentar cargar desde /tmp o memoria global
+    // En Vercel, siempre intentar cargar desde /tmp primero
     const loadedData = loadData();
     
-    if (!globalData) {
+    // Si hay datos cargados, usarlos y actualizar memoria global
+    if (loadedData && (loadedData.children.length > 0 || loadedData.games.length > 0 || loadedData.sessions.length > 0)) {
       globalData = loadedData;
-      console.log('Loaded data into global memory:', JSON.stringify(globalData, null, 2));
-    } else {
-      // Sincronizar memoria global con datos cargados
-      globalData = loadedData;
+      console.log('Loaded fresh data from /tmp:', JSON.stringify(globalData, null, 2));
+      return globalData;
     }
     
-    console.log('Current data state:', JSON.stringify(globalData, null, 2));
+    // Si no hay datos en /tmp pero hay en memoria global, usar memoria global
+    if (globalData && (globalData.children.length > 0 || globalData.games.length > 0 || globalData.sessions.length > 0)) {
+      console.log('Using global memory data:', JSON.stringify(globalData, null, 2));
+      return globalData;
+    }
+    
+    // Si no hay datos en ningún lado, inicializar con datos por defecto
+    console.log('No data found, initializing with defaults');
+    globalData = getDefaultData();
     return globalData;
   } else {
     // En local, usar sistema de archivos
@@ -203,6 +214,9 @@ app.post('/children', validateChild, (req, res) => {
     const currentData = getPersistentData();
     const { name, nickname, fatherName, motherName } = req.body;
     
+    console.log('Creating child with data:', { name, nickname, fatherName, motherName });
+    console.log('Current data before adding child:', JSON.stringify(currentData, null, 2));
+    
     const child = { 
       id: currentData.nextChildId++, 
       name: name.trim(),
@@ -217,10 +231,15 @@ app.post('/children', validateChild, (req, res) => {
     };
     
     currentData.children.push(child);
+    console.log('Child created:', JSON.stringify(child, null, 2));
+    
     saveData(currentData);
+    console.log('Data saved successfully');
+    
     res.status(201).json(child);
   } catch (error) {
-    res.status(500).json({ error: 'Error interno del servidor' });
+    console.error('Error creating child:', error);
+    res.status(500).json({ error: 'Error interno del servidor', details: error.message });
   }
 });
 
@@ -370,15 +389,24 @@ app.post('/sessions/start', validateSession, (req, res) => {
       return res.status(400).json({ error: 'El niño ya tiene una sesión activa' });
     }
     
+    console.log('Creating session with data:', { childId, gameId, duration });
+    console.log('Current data before adding session:', JSON.stringify(currentData, null, 2));
+    
     const session = { 
       id: currentData.nextSessionId++, 
       childId, 
       gameId, 
       start: Date.now(), 
-      duration: Number(duration) 
+      duration: Number(duration),
+      end: null
     };
+    
     currentData.sessions.push(session);
+    console.log('Session created:', JSON.stringify(session, null, 2));
+    
     saveData(currentData);
+    console.log('Session data saved successfully');
+    
     res.status(201).json(session);
   } catch (error) {
     res.status(500).json({ error: 'Error interno del servidor' });
