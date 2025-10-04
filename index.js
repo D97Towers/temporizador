@@ -13,18 +13,18 @@ async function initializeDatabase() {
   if (dbInitialized) return;
   
   try {
-    // Intentar cargar MySQL primero (para Vercel con base de datos real)
-    mysqlDb = require('./mysql-database');
-    if (await mysqlDb.initializeDatabase()) {
-      children = mysqlDb.children;
-      games = mysqlDb.games;
-      sessions = mysqlDb.sessions;
-      console.log('MySQL database loaded for production');
+    // Intentar cargar PostgreSQL primero (para Vercel con base de datos real)
+    const postgresDb = require('./postgres-database');
+    if (await postgresDb.initializeDatabase()) {
+      children = postgresDb.children;
+      games = postgresDb.games;
+      sessions = postgresDb.sessions;
+      console.log('PostgreSQL database loaded for production');
       dbInitialized = true;
       return;
     }
   } catch (error) {
-    console.log('MySQL not available, trying SQLite...');
+    console.log('PostgreSQL not available, trying SQLite...');
   }
   
   // Fallback a SQLite para desarrollo local

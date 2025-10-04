@@ -1,15 +1,15 @@
-// Script para migrar datos de SQLite a MySQL
-const mysqlDb = require('./mysql-database');
+// Script para migrar datos de SQLite a PostgreSQL (Neon/Supabase)
+const postgresDb = require('./postgres-database');
 const sqliteDb = require('./database');
 
 async function migrateData() {
   try {
-    console.log('🔄 Iniciando migración de datos a MySQL...');
+    console.log('🔄 Iniciando migración de datos a PostgreSQL...');
     
-    // Inicializar MySQL
-    const mysqlInitialized = await mysqlDb.initializeDatabase();
-    if (!mysqlInitialized) {
-      console.log('❌ No se pudo inicializar MySQL. Verifica las variables de entorno.');
+    // Inicializar PostgreSQL
+    const postgresInitialized = await postgresDb.initializeDatabase();
+    if (!postgresInitialized) {
+      console.log('❌ No se pudo inicializar PostgreSQL. Verifica la variable DATABASE_URL.');
       return;
     }
     
@@ -18,7 +18,7 @@ async function migrateData() {
     const sqliteChildren = sqliteDb.children.getAll.all();
     for (const child of sqliteChildren) {
       try {
-        await mysqlDb.children.create(
+        await postgresDb.children.create(
           child.name,
           child.nickname,
           child.father_name,
@@ -39,7 +39,7 @@ async function migrateData() {
     const sqliteGames = sqliteDb.games.getAll.all();
     for (const game of sqliteGames) {
       try {
-        await mysqlDb.games.create(game.name);
+        await postgresDb.games.create(game.name);
         console.log(`   ✅ ${game.name}`);
       } catch (error) {
         console.log(`   ❌ Error con ${game.name}:`, error.message);
@@ -51,7 +51,7 @@ async function migrateData() {
     const sqliteSessions = sqliteDb.sessions.getAll.all();
     for (const session of sqliteSessions) {
       try {
-        await mysqlDb.sessions.create(
+        await postgresDb.sessions.create(
           session.child_id,
           session.game_id,
           session.start_time,
@@ -66,21 +66,21 @@ async function migrateData() {
     console.log('✅ Migración completada exitosamente!');
     
     // Verificar datos migrados
-    const mysqlChildren = await mysqlDb.children.getAll();
-    const mysqlGames = await mysqlDb.games.getAll();
-    const mysqlSessions = await mysqlDb.sessions.getAll();
+    const postgresChildren = await postgresDb.children.getAll();
+    const postgresGames = await postgresDb.games.getAll();
+    const postgresSessions = await postgresDb.sessions.getAll();
     
     console.log('📊 Resumen de migración:');
-    console.log(`   - Niños: ${mysqlChildren.length}`);
-    console.log(`   - Juegos: ${mysqlGames.length}`);
-    console.log(`   - Sesiones: ${mysqlSessions.length}`);
+    console.log(`   - Niños: ${postgresChildren.length}`);
+    console.log(`   - Juegos: ${postgresGames.length}`);
+    console.log(`   - Sesiones: ${postgresSessions.length}`);
     
   } catch (error) {
     console.error('❌ Error durante la migración:', error);
   } finally {
-    // Cerrar conexión MySQL
-    if (mysqlDb.pool) {
-      await mysqlDb.pool.end();
+    // Cerrar conexión PostgreSQL
+    if (postgresDb.pool) {
+      await postgresDb.pool.end();
     }
   }
 }
