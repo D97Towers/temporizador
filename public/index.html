@@ -3263,19 +3263,29 @@
       
       showLoading('addChildBtn', true);
       try {
+        const requestData = { 
+          name,
+          nickname: nickname || undefined,
+          fatherName: fatherName || undefined,
+          motherName: motherName || undefined
+        };
+        
+        console.log('=== ADDING CHILD ===');
+        console.log('Request URL:', api + '/children');
+        console.log('Request data:', requestData);
+        
         const res = await fetchWithRetry(api + '/children', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            name,
-            nickname: nickname || undefined,
-            fatherName: fatherName || undefined,
-            motherName: motherName || undefined
-          })
+          body: JSON.stringify(requestData)
         });
+        
+        console.log('Response status:', res.status);
+        console.log('Response ok:', res.ok);
         
         if (!res.ok) {
           const errorData = await res.json().catch(() => ({ error: 'Error desconocido' }));
+          console.log('Error response:', errorData);
           
           // Manejar duplicados con sugerencias
           if (errorData.duplicate && errorData.suggestion) {
@@ -3285,6 +3295,9 @@
           
           throw new Error(errorData.error || 'Error al agregar niño');
         }
+        
+        const responseData = await res.json();
+        console.log('Success response:', responseData);
         
         // Limpiar formulario
         document.getElementById('childName').value = '';
