@@ -977,12 +977,12 @@ app.post('/admin/reload-data', (req, res) => {
   }
 });
 
-// Endpoint para mantener datos en memoria (llamado automáticamente por el frontend)
-app.get('/admin/keep-alive', (req, res) => {
+// Endpoint para cargar datos completos en Vercel
+app.get('/admin/load-complete-data', (req, res) => {
   try {
-    if (process.env.VERCEL && (!globalData || globalData.children?.length === 0)) {
-      // Si no hay datos, cargar datos por defecto
-      const defaultData = {
+    if (process.env.VERCEL) {
+      // Cargar datos completos
+      const completeData = {
         children: [
           { id: 2, name: "Santiago", displayId: "Santiago-001", avatar: "S", displayName: "Santiago", fatherName: "nicolas", motherName: "linda" },
           { id: 4, name: "Daniel", displayId: "Daniel-001", avatar: "D", displayName: "Daniel", fatherName: null, motherName: null },
@@ -1001,20 +1001,22 @@ app.get('/admin/keep-alive', (req, res) => {
         ],
         sessions: []
       };
-      globalData = defaultData;
-      console.log('Default data loaded via keep-alive');
+      globalData = completeData;
+      console.log('Complete data loaded for Vercel');
+      
+      res.json({ 
+        message: 'Datos completos cargados correctamente',
+        data: {
+          children: completeData.children.length,
+          games: completeData.games.length,
+          sessions: completeData.sessions.length
+        }
+      });
+    } else {
+      res.json({ message: 'Endpoint solo disponible en Vercel' });
     }
-    
-    res.json({ 
-      message: 'Keep-alive successful',
-      data: {
-        children: globalData?.children?.length || 0,
-        games: globalData?.games?.length || 0,
-        sessions: globalData?.sessions?.length || 0
-      }
-    });
   } catch (error) {
-    console.error('Error in keep-alive:', error);
+    console.error('Error loading complete data:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
