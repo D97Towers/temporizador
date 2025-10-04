@@ -85,6 +85,66 @@ function getActiveSessions() {
   }
 }
 
+function createChild(childData) {
+  if (process.env.VERCEL) {
+    const newChild = {
+      id: Date.now() + Math.floor(Math.random() * 1000),
+      ...childData,
+      createdAt: new Date().toISOString()
+    };
+    if (!globalData) globalData = { children: [], games: [], sessions: [] };
+    globalData.children.push(newChild);
+    return newChild;
+  } else {
+    const result = children.create.run(
+      childData.name,
+      childData.nickname || null,
+      childData.fatherName || null,
+      childData.motherName || null,
+      childData.displayName,
+      childData.avatar,
+      childData.totalSessions || 0,
+      childData.totalTimePlayed || 0
+    );
+    const childId = result.lastInsertRowid;
+    const newChild = children.getById.get(childId);
+    return {
+      id: newChild.id,
+      name: newChild.name,
+      nickname: newChild.nickname,
+      fatherName: newChild.father_name,
+      motherName: newChild.mother_name,
+      displayName: newChild.display_name,
+      avatar: newChild.avatar,
+      totalSessions: newChild.total_sessions,
+      totalTimePlayed: newChild.total_time_played,
+      createdAt: newChild.created_at
+    };
+  }
+}
+
+function createGame(name) {
+  if (process.env.VERCEL) {
+    const newGame = {
+      id: Date.now() + Math.floor(Math.random() * 1000),
+      name: name.trim(),
+      createdAt: new Date().toISOString()
+    };
+    if (!globalData) globalData = { children: [], games: [], sessions: [] };
+    globalData.games.push(newGame);
+    return newGame;
+  } else {
+    const result = games.create.run(name.trim());
+    const gameId = result.lastInsertRowid;
+    const newGame = games.getById.get(gameId);
+    return {
+      id: newGame.id,
+      name: newGame.name,
+      createdAt: newGame.created_at
+    };
+  }
+}
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -345,50 +405,35 @@ app.post('/children', validateChild, (req, res) => {
     
     console.log('Creating child with data:', { name, nickname, fatherName, motherName });
     
-    // Verificar duplicados ANTES de crear
+    // Verificar duplicados
     const trimmedName = name.trim();
-    const existingChild = children.getByName.get(trimmedName);
+    const existingChildren = getChildren();
+    const existingChild = existingChildren.find(c => c.name === trimmedName);
     
     if (existingChild) {
       console.log('Duplicate child detected:', existingChild);
       return res.status(400).json({ error: 'Ya existe un niño con ese nombre' });
     }
     
-    // Crear el niño en SQLite
+    // Crear el niño usando función híbrida
     const displayName = trimmedName + (nickname ? ` (${nickname.trim()})` : '');
     const avatar = trimmedName.charAt(0).toUpperCase();
     
-    const result = children.create.run(
-      trimmedName,
-      nickname ? nickname.trim() : null,
-      fatherName ? fatherName.trim() : null,
-      motherName ? motherName.trim() : null,
+    const childData = {
+      name: trimmedName,
+      nickname: nickname ? nickname.trim() : null,
+      fatherName: fatherName ? fatherName.trim() : null,
+      motherName: motherName ? motherName.trim() : null,
       displayName,
       avatar,
-      0, // total_sessions
-      0  // total_time_played
-    );
-    
-    const childId = result.lastInsertRowid;
-    const newChild = children.getById.get(childId);
-    
-    console.log('Child created in SQLite:', newChild);
-    
-    // Convertir a formato esperado por el frontend
-    const formattedChild = {
-      id: newChild.id,
-      name: newChild.name,
-      nickname: newChild.nickname,
-      fatherName: newChild.father_name,
-      motherName: newChild.mother_name,
-      displayName: newChild.display_name,
-      avatar: newChild.avatar,
-      totalSessions: newChild.total_sessions,
-      totalTimePlayed: newChild.total_time_played,
-      createdAt: newChild.created_at
+      totalSessions: 0,
+      totalTimePlayed: 0
     };
     
-    res.status(201).json(formattedChild);
+    const newChild = createChild(childData);
+    console.log('Child created:', newChild);
+    
+    res.status(201).json(newChild);
   } catch (error) {
     console.error('Error creating child:', error);
     res.status(500).json({ error: 'Error interno del servidor', details: error.message });
@@ -476,25 +521,12 @@ app.put('/children/:id', validateChild, (req, res) => {
 app.post('/games', validateGame, (req, res) => {
   try {
     const { name } = req.body;
-    const trimmedName = name.trim();
+    console.log('Creating game:', name.trim());
     
-    console.log('Creating game:', trimmedName);
+    const newGame = createGame(name);
+    console.log('Game created:', newGame);
     
-    // Crear el juego en SQLite
-    const result = games.create.run(trimmedName);
-    const gameId = result.lastInsertRowid;
-    const newGame = games.getById.get(gameId);
-    
-    console.log('Game created in SQLite:', newGame);
-    
-    // Convertir a formato esperado por el frontend
-    const formattedGame = {
-      id: newGame.id,
-      name: newGame.name,
-      createdAt: newGame.created_at
-    };
-    
-    res.status(201).json(formattedGame);
+    res.status(201).json(newGame);
   } catch (error) {
     console.error('Error creating game:', error);
     res.status(500).json({ error: 'Error interno del servidor', details: error.message });
