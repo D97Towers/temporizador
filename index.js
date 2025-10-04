@@ -69,6 +69,7 @@ function getChildren() {
     if (!globalData) {
       loadFromEnvironment();
     }
+    // En Vercel, devolver los datos tal como están sin mapear
     return globalData?.children || [];
   } else {
     return children.getAll.all().map(child => ({
@@ -91,6 +92,7 @@ function getGames() {
     if (!globalData) {
       loadFromEnvironment();
     }
+    // En Vercel, devolver los datos tal como están sin mapear
     return globalData?.games || [];
   } else {
     return games.getAll.all().map(game => ({
@@ -106,6 +108,7 @@ function getSessions() {
     if (!globalData) {
       loadFromEnvironment();
     }
+    // En Vercel, devolver los datos tal como están sin mapear
     return globalData?.sessions || [];
   } else {
     return sessions.getAll.all().map(session => ({
@@ -128,6 +131,7 @@ function getActiveSessions() {
     if (!globalData) {
       loadFromEnvironment();
     }
+    // En Vercel, filtrar las sesiones activas y devolver tal como están
     return globalData?.sessions?.filter(s => !s.end) || [];
   } else {
     return sessions.getActive.all().map(session => ({
