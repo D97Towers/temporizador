@@ -3,16 +3,45 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
-// Importar base de datos solo si no estamos en Vercel
+// Importar bases de datos
 let children, games, sessions;
-if (!process.env.VERCEL) {
-  const dbModule = require('./database');
-  children = dbModule.children;
-  games = dbModule.games;
-  sessions = dbModule.sessions;
-  console.log('SQLite database loaded for local development');
-} else {
-  console.log('Using in-memory storage for Vercel');
+let mysqlDb = null;
+let dbInitialized = false;
+
+// Función para inicializar la base de datos
+async function initializeDatabase() {
+  if (dbInitialized) return;
+  
+  try {
+    // Intentar cargar MySQL primero (para Vercel con base de datos real)
+    mysqlDb = require('./mysql-database');
+    if (await mysqlDb.initializeDatabase()) {
+      children = mysqlDb.children;
+      games = mysqlDb.games;
+      sessions = mysqlDb.sessions;
+      console.log('MySQL database loaded for production');
+      dbInitialized = true;
+      return;
+    }
+  } catch (error) {
+    console.log('MySQL not available, trying SQLite...');
+  }
+  
+  // Fallback a SQLite para desarrollo local
+  try {
+    const sqliteDb = require('./database');
+    children = sqliteDb.children;
+    games = sqliteDb.games;
+    sessions = sqliteDb.sessions;
+    console.log('SQLite database loaded for local development');
+    dbInitialized = true;
+  } catch (sqliteError) {
+    console.log('SQLite not available, using in-memory storage');
+    children = null;
+    games = null;
+    sessions = null;
+    dbInitialized = true;
+  }
 }
 
 // Funciones de persistencia para Vercel
@@ -62,15 +91,13 @@ function loadFromEnvironment() {
 }
 
 // Funciones híbridas para manejar datos
-function getChildren() {
-  if (process.env.VERCEL) {
-    if (!globalData) {
-      loadFromEnvironment();
-    }
-    // En Vercel, devolver los datos tal como están sin mapear
-    return globalData?.children || [];
-  } else {
-    return children.getAll.all().map(child => ({
+async function getChildren() {
+  await initializeDatabase();
+  
+  if (children && typeof children.getAll === 'function') {
+    // Usar base de datos real (MySQL o SQLite)
+    const allChildren = await children.getAll();
+    return allChildren.map(child => ({
       id: child.id,
       name: child.name,
       nickname: child.nickname,
@@ -82,6 +109,12 @@ function getChildren() {
       totalTimePlayed: child.total_time_played,
       createdAt: child.created_at
     }));
+  } else {
+    // Fallback a memoria global
+    if (!globalData) {
+      loadFromEnvironment();
+    }
+    return globalData?.children || [];
   }
 }
 
@@ -541,10 +574,10 @@ app.post('/children', validateChild, (req, res) => {
   }
 });
 
-app.get('/children', (_, res) => {
+app.get('/children', async (_, res) => {
   try {
-    const allChildren = getChildren();
-    console.log('GET /children - returning', allChildren.length, 'children from', process.env.VERCEL ? 'memory' : 'SQLite');
+    const allChildren = await getChildren();
+    console.log('GET /children - returning', allChildren.length, 'children from database');
     res.json(allChildren);
   } catch (error) {
     console.error('Error in GET /children:', error);
