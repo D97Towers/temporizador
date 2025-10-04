@@ -788,6 +788,21 @@
       font-style: italic;
     }
 
+    /* Safari iPhone specific fixes */
+    @supports (-webkit-touch-callout: none) {
+      .btn-small, .btn-edit {
+        -webkit-appearance: none !important;
+        -webkit-tap-highlight-color: transparent !important;
+        touch-action: manipulation !important;
+      }
+      
+      .list-item {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+    }
+
     /* Responsive design for mobile */
     @media (max-width: 768px) {
       .child-form .form-row {
@@ -817,18 +832,32 @@
 
       .btn-small {
         align-self: flex-end;
-        margin-top: 5px;
-        padding: 3px 6px !important;
-        font-size: 10px !important;
+        margin-top: 8px;
+        padding: 14px 18px !important;
+        font-size: 16px !important;
+        min-width: 48px !important;
+        min-height: 48px !important;
+        touch-action: manipulation !important;
+        -webkit-tap-highlight-color: transparent !important;
+      }
+
+      .btn-edit {
+        padding: 14px 18px !important;
+        font-size: 16px !important;
+        min-width: 48px !important;
+        min-height: 48px !important;
+        touch-action: manipulation !important;
+        -webkit-tap-highlight-color: transparent !important;
       }
 
       .delete-button-container {
-        min-width: 50px;
-        height: 28px;
+        min-width: 120px;
+        height: 48px;
+        gap: 8px;
       }
 
       .button-group-small {
-        gap: 3px;
+        gap: 8px;
       }
 
       .list-item {
@@ -907,17 +936,20 @@
     }
 
     .btn-small {
-      padding: 4px 8px !important;
-      font-size: 11px !important;
-      min-width: auto !important;
-      border-radius: 5px !important;
-      opacity: 0.8;
+      padding: 12px 16px !important;
+      font-size: 14px !important;
+      min-width: 44px !important;
+      min-height: 44px !important;
+      border-radius: 8px !important;
+      opacity: 0.9;
       transition: all 0.2s ease !important;
       width: auto !important;
       height: auto !important;
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
+      touch-action: manipulation !important;
+      -webkit-tap-highlight-color: transparent !important;
     }
 
     .btn-small:hover {
@@ -927,15 +959,16 @@
     }
 
     .btn-small i {
-      font-size: 10px !important;
+      font-size: 14px !important;
     }
 
     .btn-edit {
-      padding: 4px 8px !important;
-      font-size: 11px !important;
-      min-width: auto !important;
-      border-radius: 5px !important;
-      opacity: 0.8;
+      padding: 12px 16px !important;
+      font-size: 14px !important;
+      min-width: 44px !important;
+      min-height: 44px !important;
+      border-radius: 8px !important;
+      opacity: 0.9;
       transition: all 0.2s ease !important;
       width: auto !important;
       height: auto !important;
@@ -945,7 +978,9 @@
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
       color: white !important;
       border: none !important;
-      margin-right: 5px !important;
+      margin-right: 8px !important;
+      touch-action: manipulation !important;
+      -webkit-tap-highlight-color: transparent !important;
     }
 
     .btn-edit:hover {
@@ -955,7 +990,7 @@
     }
 
     .btn-edit i {
-      font-size: 10px !important;
+      font-size: 14px !important;
     }
 
     .delete-button-container {
@@ -2187,48 +2222,52 @@
     }
 
     function updateDashboard() {
-      if (!dashboardStats) {
-        fetchDashboardStats().then(() => {
-          if (dashboardStats) {
-            renderDashboard();
-          }
-        });
-      } else {
-        renderDashboard();
-      }
+      // Actualizar dashboard con datos del caché local
+      renderDashboard();
     }
 
     function renderDashboard() {
-      if (!dashboardStats) return;
+      // Usar datos del caché local para mostrar información real
+      const totalChildren = childrenCache.length;
+      const totalGames = gamesCache.length;
+      const activeSessions = activeSessionsData.length;
+      
+      // Calcular tiempo total jugado desde el caché
+      let totalTimePlayed = 0;
+      childrenCache.forEach(child => {
+        totalTimePlayed += child.totalTimePlayed || 0;
+      });
 
       // Actualizar estadísticas principales
-      document.getElementById('totalChildren').textContent = dashboardStats.totalChildren || 0;
-      document.getElementById('totalGames').textContent = dashboardStats.totalGames || 0;
-      document.getElementById('activeSessionsCount').textContent = dashboardStats.activeSessions || 0;
-      document.getElementById('totalTimePlayed').textContent = dashboardStats.totalTimePlayed || 0;
+      document.getElementById('totalChildren').textContent = totalChildren;
+      document.getElementById('totalGames').textContent = totalGames;
+      document.getElementById('activeSessionsCount').textContent = activeSessions;
+      document.getElementById('totalTimePlayed').textContent = totalTimePlayed;
 
-      // Actualizar ranking de niños
+      // Actualizar ranking de niños basado en tiempo jugado
       const childrenRanking = document.getElementById('childrenRanking');
-      if (dashboardStats.childrenStats && dashboardStats.childrenStats.length > 0) {
-        childrenRanking.innerHTML = dashboardStats.childrenStats.map((child, index) => `
+      const sortedChildren = [...childrenCache].sort((a, b) => (b.totalTimePlayed || 0) - (a.totalTimePlayed || 0));
+      
+      if (sortedChildren.length > 0) {
+        childrenRanking.innerHTML = sortedChildren.slice(0, 5).map((child, index) => `
           <li class="ranking-item">
             <div class="ranking-position">${index + 1}°</div>
             <div class="ranking-name">${child.name}</div>
-            <div class="ranking-time">${child.totalTimePlayed} min</div>
+            <div class="ranking-time">${child.totalTimePlayed || 0} min</div>
           </li>
         `).join('');
       } else {
         childrenRanking.innerHTML = '<li class="ranking-item">No hay datos disponibles</li>';
       }
 
-      // Actualizar ranking de juegos
+      // Actualizar ranking de juegos (por ahora mostrar todos los juegos)
       const gamesRanking = document.getElementById('gamesRanking');
-      if (dashboardStats.gamesStats && dashboardStats.gamesStats.length > 0) {
-        gamesRanking.innerHTML = dashboardStats.gamesStats.map((game, index) => `
+      if (gamesCache.length > 0) {
+        gamesRanking.innerHTML = gamesCache.slice(0, 5).map((game, index) => `
           <li class="ranking-item">
             <div class="ranking-position">${index + 1}°</div>
             <div class="ranking-name">${game.name}</div>
-            <div class="ranking-time">${game.totalTimePlayed} min</div>
+            <div class="ranking-time">-</div>
           </li>
         `).join('');
       } else {
