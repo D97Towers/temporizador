@@ -1835,6 +1835,9 @@
               <button onclick="addChild()" id="addChildBtn" class="btn-primary">
                 <i class="fas fa-plus"></i> AGREGAR NIÑO
               </button>
+              <button onclick="debugChildren()" class="btn-secondary" style="margin-left: 10px;">
+                <i class="fas fa-bug"></i> DEBUG
+              </button>
             </div>
           <ul class="list" id="childrenList"></ul>
         </div>
@@ -2558,8 +2561,10 @@
         
         const children = await res.json();
         console.log('Children data received:', children);
+        console.log('Children count:', children ? children.length : 0);
         
         childrenCache = children || [];
+        console.log('Children cache updated:', childrenCache.length, 'items');
         renderChildrenList(childrenCache);
         updateChildSelect(childrenCache);
         console.log('Children loaded successfully:', childrenCache);
@@ -2570,6 +2575,27 @@
         renderChildrenList([]);
         updateChildSelect([]);
         throw error; // Re-throw para que initializeApp pueda manejarlo
+      }
+    }
+
+    // Función de debug temporal
+    async function debugChildren() {
+      console.log('=== DEBUG CHILDREN ===');
+      console.log('Current childrenCache:', childrenCache);
+      console.log('ChildrenCache length:', childrenCache.length);
+      
+      try {
+        console.log('Fetching fresh data from API...');
+        const res = await fetchWithRetry(api + '/children');
+        const freshData = await res.json();
+        console.log('Fresh data from API:', freshData);
+        console.log('Fresh data length:', freshData.length);
+        
+        childrenCache = freshData || [];
+        renderChildrenList(childrenCache);
+        console.log('Children list refreshed with debug data');
+      } catch (error) {
+        console.error('Debug fetch error:', error);
       }
     }
 
@@ -2602,9 +2628,14 @@
 
     function renderChildrenList(children) {
       const list = document.getElementById('childrenList');
-      if (!list) return;
+      console.log('renderChildrenList called with:', children ? children.length : 0, 'children');
+      if (!list) {
+        console.error('childrenList element not found');
+        return;
+      }
       
       if (!children || children.length === 0) {
+        console.log('No children to render, showing empty message');
         list.innerHTML = '<li class="list-item">No hay niños registrados</li>';
         return;
       }
