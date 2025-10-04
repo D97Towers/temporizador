@@ -15,9 +15,60 @@ if (!process.env.VERCEL) {
   console.log('Using in-memory storage for Vercel');
 }
 
+// Funciones de persistencia para Vercel
+function saveToEnvironment(data) {
+  if (process.env.VERCEL) {
+    try {
+      const dataString = JSON.stringify(data);
+      // En Vercel, actualizar la variable de entorno global
+      process.env.APP_DATA = dataString;
+      globalData = data;
+      console.log('Data saved to environment and global memory');
+    } catch (error) {
+      console.error('Error saving to environment:', error);
+    }
+  }
+}
+
+function loadFromEnvironment() {
+  if (process.env.VERCEL) {
+    try {
+      if (process.env.APP_DATA) {
+        const data = JSON.parse(process.env.APP_DATA);
+        globalData = data;
+        console.log('Data loaded from environment');
+        return data;
+      }
+    } catch (error) {
+      console.error('Error loading from environment:', error);
+    }
+    // Si no hay datos en el entorno, usar datos por defecto
+    const defaultData = {
+      children: [
+        { id: 1, name: "Santiago", nickname: null, fatherName: "Carlos", motherName: "Ana", displayName: "Santiago", avatar: "S", totalSessions: 0, totalTimePlayed: 0, createdAt: new Date().toISOString() },
+        { id: 2, name: "Daniel", nickname: null, fatherName: "Pedro", motherName: "Laura", displayName: "Daniel", avatar: "D", totalSessions: 0, totalTimePlayed: 0, createdAt: new Date().toISOString() }
+      ],
+      games: [
+        { id: 1, name: "videojuegos", createdAt: new Date().toISOString() },
+        { id: 2, name: "bici", createdAt: new Date().toISOString() },
+        { id: 3, name: "lego", createdAt: new Date().toISOString() }
+      ],
+      sessions: []
+    };
+    globalData = defaultData;
+    saveToEnvironment(defaultData);
+    console.log('Default data initialized for Vercel');
+    return defaultData;
+  }
+  return null;
+}
+
 // Funciones híbridas para manejar datos
 function getChildren() {
   if (process.env.VERCEL) {
+    if (!globalData) {
+      loadFromEnvironment();
+    }
     return globalData?.children || [];
   } else {
     return children.getAll.all().map(child => ({
@@ -37,6 +88,9 @@ function getChildren() {
 
 function getGames() {
   if (process.env.VERCEL) {
+    if (!globalData) {
+      loadFromEnvironment();
+    }
     return globalData?.games || [];
   } else {
     return games.getAll.all().map(game => ({
@@ -49,6 +103,9 @@ function getGames() {
 
 function getSessions() {
   if (process.env.VERCEL) {
+    if (!globalData) {
+      loadFromEnvironment();
+    }
     return globalData?.sessions || [];
   } else {
     return sessions.getAll.all().map(session => ({
@@ -68,6 +125,9 @@ function getSessions() {
 
 function getActiveSessions() {
   if (process.env.VERCEL) {
+    if (!globalData) {
+      loadFromEnvironment();
+    }
     return globalData?.sessions?.filter(s => !s.end) || [];
   } else {
     return sessions.getActive.all().map(session => ({
@@ -87,13 +147,16 @@ function getActiveSessions() {
 
 function createChild(childData) {
   if (process.env.VERCEL) {
+    if (!globalData) {
+      loadFromEnvironment();
+    }
     const newChild = {
       id: Date.now() + Math.floor(Math.random() * 1000),
       ...childData,
       createdAt: new Date().toISOString()
     };
-    if (!globalData) globalData = { children: [], games: [], sessions: [] };
     globalData.children.push(newChild);
+    saveToEnvironment(globalData);
     return newChild;
   } else {
     const result = children.create.run(
@@ -125,13 +188,16 @@ function createChild(childData) {
 
 function createGame(name) {
   if (process.env.VERCEL) {
+    if (!globalData) {
+      loadFromEnvironment();
+    }
     const newGame = {
       id: Date.now() + Math.floor(Math.random() * 1000),
       name: name.trim(),
       createdAt: new Date().toISOString()
     };
-    if (!globalData) globalData = { children: [], games: [], sessions: [] };
     globalData.games.push(newGame);
+    saveToEnvironment(globalData);
     return newGame;
   } else {
     const result = games.create.run(name.trim());
@@ -147,13 +213,16 @@ function createGame(name) {
 
 function createSession(sessionData) {
   if (process.env.VERCEL) {
+    if (!globalData) {
+      loadFromEnvironment();
+    }
     const newSession = {
       id: Date.now() + Math.floor(Math.random() * 1000),
       ...sessionData,
       createdAt: new Date().toISOString()
     };
-    if (!globalData) globalData = { children: [], games: [], sessions: [] };
     globalData.sessions.push(newSession);
+    saveToEnvironment(globalData);
     return newSession;
   } else {
     const result = sessions.create.run(
@@ -852,8 +921,13 @@ app.post('/admin/sync-data', (req, res) => {
       nextSessionId: nextSessionId || 1
     };
     
-    // Guardar los datos sincronizados
-    saveData(syncData);
+    // Guardar los datos sincronizados usando la nueva función de persistencia
+    if (process.env.VERCEL) {
+      globalData = syncData;
+      saveToEnvironment(syncData);
+    } else {
+      saveData(syncData);
+    }
     
     console.log('Data synced from local to production:', {
       childrenCount: syncData.children.length,
