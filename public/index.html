@@ -2641,6 +2641,8 @@
     function renderChildrenList(children) {
       const list = document.getElementById('childrenList');
       console.log('renderChildrenList called with:', children ? children.length : 0, 'children');
+      console.log('Children data:', children);
+      
       if (!list) {
         console.error('childrenList element not found');
         return;
@@ -2651,6 +2653,8 @@
         list.innerHTML = '<li class="list-item">No hay niños registrados</li>';
         return;
       }
+      
+      console.log('Rendering children list with', children.length, 'items');
         list.innerHTML = children.map(child => {
           const displayName = child.displayName || child.name;
           const avatar = child.avatar || child.name.charAt(0).toUpperCase();
@@ -2708,6 +2712,9 @@
           </div>
         </li>`
       ).join('');
+      
+      console.log('Children list rendered with', children.length, 'items');
+      console.log('List HTML length:', list.innerHTML.length);
     }
 
     function updateChildSelect(children) {
@@ -3286,13 +3293,22 @@
         document.getElementById('motherName').value = '';
         
         // Actualizar todos los datos después de agregar niño
+        console.log('Child added successfully, updating data...');
         await Promise.all([
           fetchChildren(),
           fetchGames(),
           fetchActiveSessions(),
           fetchSessionHistory()
         ]);
-        // showStatusMessage('Niño agregado exitosamente', 'success');
+        
+        // Verificar que el niño se agregó correctamente
+        console.log('Data updated, current children count:', childrenCache.length);
+        console.log('Children names:', childrenCache.map(c => c.name));
+        
+        // Forzar re-renderizado de la lista
+        renderChildrenList(childrenCache);
+        
+        showStatusMessage('Niño agregado exitosamente', 'success');
       } catch (error) {
         console.error('Error adding child:', error);
         showStatusMessage(`Error al agregar niño: ${error.message}`, 'error');
