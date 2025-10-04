@@ -116,6 +116,7 @@ function saveData(newData) {
 
 // Memoria global persistente para Vercel
 let globalData = null;
+let dataLock = false; // Lock simple para operaciones atómicas
 
 // Función para obtener datos persistentes
 function getPersistentData() {
@@ -208,56 +209,71 @@ const validateSession = (req, res, next) => {
   next();
 };
 
-// CRUD Niños
-app.post('/children', validateChild, (req, res) => {
+// Función para operaciones atómicas
+async function atomicOperation(operation) {
+  // Esperar hasta que el lock esté libre
+  while (dataLock) {
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+  
+  // Adquirir lock
+  dataLock = true;
+  
   try {
-    const currentData = getPersistentData();
-    const { name, nickname, fatherName, motherName } = req.body;
+    const result = await operation();
+    return result;
+  } finally {
+    // Liberar lock
+    dataLock = false;
+  }
+}
+
+// CRUD Niños
+app.post('/children', validateChild, async (req, res) => {
+  try {
+    const result = await atomicOperation(async () => {
+      const currentData = getPersistentData();
+      const { name, nickname, fatherName, motherName } = req.body;
     
-    console.log('Creating child with data:', { name, nickname, fatherName, motherName });
+      console.log('Creating child with data:', { name, nickname, fatherName, motherName });
+      
+      // Verificar duplicados ANTES de crear
+      const trimmedName = name.trim();
+      const existingChild = currentData.children.find(c => 
+        c.name.toLowerCase() === trimmedName.toLowerCase()
+      );
+      
+      if (existingChild) {
+        console.log('Duplicate child detected:', existingChild);
+        throw new Error('Ya existe un niño con ese nombre');
+      }
+      
+      // Generar ID único usando timestamp + random para evitar colisiones
+      const newId = Date.now() + Math.floor(Math.random() * 1000);
+      
+      const child = { 
+        id: newId, 
+        name: trimmedName,
+        nickname: nickname ? nickname.trim() : undefined,
+        fatherName: fatherName ? fatherName.trim() : undefined,
+        motherName: motherName ? motherName.trim() : undefined,
+        displayName: trimmedName + (nickname ? ` (${nickname.trim()})` : ''),
+        avatar: trimmedName.charAt(0).toUpperCase(),
+        createdAt: new Date().toISOString(),
+        totalSessions: 0,
+        totalTimePlayed: 0
+      };
+      
+      currentData.children.push(child);
+      console.log('Child created:', JSON.stringify(child, null, 2));
+      
+      saveData(currentData);
+      console.log('Data saved successfully');
+      
+      return child;
+    });
     
-    // Verificar duplicados ANTES de crear
-    const trimmedName = name.trim();
-    const existingChild = currentData.children.find(c => 
-      c.name.toLowerCase() === trimmedName.toLowerCase()
-    );
-    
-    if (existingChild) {
-      console.log('Duplicate child detected:', existingChild);
-      return res.status(400).json({ 
-        error: 'Ya existe un niño con ese nombre',
-        duplicate: true,
-        existingChild: {
-          id: existingChild.id,
-          name: existingChild.name,
-          displayName: existingChild.displayName
-        }
-      });
-    }
-    
-    // Generar ID único usando timestamp + random para evitar colisiones
-    const newId = Date.now() + Math.floor(Math.random() * 1000);
-    
-    const child = { 
-      id: newId, 
-      name: trimmedName,
-      nickname: nickname ? nickname.trim() : undefined,
-      fatherName: fatherName ? fatherName.trim() : undefined,
-      motherName: motherName ? motherName.trim() : undefined,
-      displayName: trimmedName + (nickname ? ` (${nickname.trim()})` : ''),
-      avatar: trimmedName.charAt(0).toUpperCase(),
-      createdAt: new Date().toISOString(),
-      totalSessions: 0,
-      totalTimePlayed: 0
-    };
-    
-    currentData.children.push(child);
-    console.log('Child created:', JSON.stringify(child, null, 2));
-    
-    saveData(currentData);
-    console.log('Data saved successfully');
-    
-    res.status(201).json(child);
+    res.status(201).json(result);
   } catch (error) {
     console.error('Error creating child:', error);
     res.status(500).json({ error: 'Error interno del servidor', details: error.message });
