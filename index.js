@@ -261,6 +261,42 @@ app.delete('/children/:id', (req, res) => {
   }
 });
 
+// Editar niño
+app.put('/children/:id', validateChild, (req, res) => {
+  try {
+    const currentData = getPersistentData();
+    const id = parseInt(req.params.id);
+    const { name, nickname, fatherName, motherName } = req.body;
+
+    console.log(`Attempting to edit child with ID: ${id}`);
+
+    const childIndex = currentData.children.findIndex((c) => c.id === id);
+    if (childIndex === -1) {
+      return res.status(404).json({ error: 'Niño no encontrado' });
+    }
+
+    // Actualizar el niño
+    const updatedChild = {
+      ...currentData.children[childIndex],
+      name: name.trim(),
+      nickname: nickname ? nickname.trim() : undefined,
+      fatherName: fatherName ? fatherName.trim() : undefined,
+      motherName: motherName ? motherName.trim() : undefined,
+      displayName: name.trim() + (nickname ? ` (${nickname.trim()})` : ''),
+      avatar: name.trim().charAt(0).toUpperCase()
+    };
+
+    currentData.children[childIndex] = updatedChild;
+    saveData(currentData);
+
+    console.log(`Child edited successfully: ${updatedChild.name}`);
+    res.json(updatedChild);
+  } catch (error) {
+    console.error('Error editing child:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
 // CRUD Juegos
 app.post('/games', validateGame, (req, res) => {
   try {
