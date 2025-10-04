@@ -2690,6 +2690,9 @@
             </div>
           </li>`;
         }).join('');
+        
+        console.log('Children list rendered with', children.length, 'items');
+        console.log('List HTML length:', list.innerHTML.length);
     }
 
     function renderGamesList(games) {
@@ -2712,9 +2715,6 @@
           </div>
         </li>`
       ).join('');
-      
-      console.log('Children list rendered with', children.length, 'items');
-      console.log('List HTML length:', list.innerHTML.length);
     }
 
     function updateChildSelect(children) {
