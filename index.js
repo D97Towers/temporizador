@@ -3,7 +3,87 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
-const { children, games, sessions } = require('./database');
+// Importar base de datos solo si no estamos en Vercel
+let children, games, sessions;
+if (!process.env.VERCEL) {
+  const dbModule = require('./database');
+  children = dbModule.children;
+  games = dbModule.games;
+  sessions = dbModule.sessions;
+  console.log('SQLite database loaded for local development');
+} else {
+  console.log('Using in-memory storage for Vercel');
+}
+
+// Funciones híbridas para manejar datos
+function getChildren() {
+  if (process.env.VERCEL) {
+    return globalData?.children || [];
+  } else {
+    return children.getAll.all().map(child => ({
+      id: child.id,
+      name: child.name,
+      nickname: child.nickname,
+      fatherName: child.father_name,
+      motherName: child.mother_name,
+      displayName: child.display_name,
+      avatar: child.avatar,
+      totalSessions: child.total_sessions,
+      totalTimePlayed: child.total_time_played,
+      createdAt: child.created_at
+    }));
+  }
+}
+
+function getGames() {
+  if (process.env.VERCEL) {
+    return globalData?.games || [];
+  } else {
+    return games.getAll.all().map(game => ({
+      id: game.id,
+      name: game.name,
+      createdAt: game.created_at
+    }));
+  }
+}
+
+function getSessions() {
+  if (process.env.VERCEL) {
+    return globalData?.sessions || [];
+  } else {
+    return sessions.getAll.all().map(session => ({
+      id: session.id,
+      childId: session.child_id,
+      gameId: session.game_id,
+      start: session.start_time,
+      duration: session.duration,
+      end: session.end_time,
+      childName: session.child_display_name || session.child_name,
+      gameName: session.game_name,
+      fatherName: session.father_name,
+      motherName: session.mother_name
+    }));
+  }
+}
+
+function getActiveSessions() {
+  if (process.env.VERCEL) {
+    return globalData?.sessions?.filter(s => !s.end) || [];
+  } else {
+    return sessions.getActive.all().map(session => ({
+      id: session.id,
+      childId: session.child_id,
+      gameId: session.game_id,
+      start: session.start_time,
+      duration: session.duration,
+      end: session.end_time,
+      childName: session.child_display_name || session.child_name,
+      gameName: session.game_name,
+      fatherName: session.father_name,
+      motherName: session.mother_name
+    }));
+  }
+}
 
 const app = express();
 app.use(cors());
@@ -317,24 +397,9 @@ app.post('/children', validateChild, (req, res) => {
 
 app.get('/children', (_, res) => {
   try {
-    const allChildren = children.getAll.all();
-    console.log('GET /children - returning', allChildren.length, 'children from SQLite');
-    
-    // Convertir formato de SQLite a formato esperado por el frontend
-    const formattedChildren = allChildren.map(child => ({
-      id: child.id,
-      name: child.name,
-      nickname: child.nickname,
-      fatherName: child.father_name,
-      motherName: child.mother_name,
-      displayName: child.display_name,
-      avatar: child.avatar,
-      totalSessions: child.total_sessions,
-      totalTimePlayed: child.total_time_played,
-      createdAt: child.created_at
-    }));
-    
-    res.json(formattedChildren);
+    const allChildren = getChildren();
+    console.log('GET /children - returning', allChildren.length, 'children from', process.env.VERCEL ? 'memory' : 'SQLite');
+    res.json(allChildren);
   } catch (error) {
     console.error('Error in GET /children:', error);
     res.status(500).json({ error: 'Error interno del servidor', details: error.message });
@@ -438,17 +503,9 @@ app.post('/games', validateGame, (req, res) => {
 
 app.get('/games', (_, res) => {
   try {
-    const allGames = games.getAll.all();
-    console.log('GET /games - returning', allGames.length, 'games from SQLite');
-    
-    // Convertir formato de SQLite a formato esperado por el frontend
-    const formattedGames = allGames.map(game => ({
-      id: game.id,
-      name: game.name,
-      createdAt: game.created_at
-    }));
-    
-    res.json(formattedGames);
+    const allGames = getGames();
+    console.log('GET /games - returning', allGames.length, 'games from', process.env.VERCEL ? 'memory' : 'SQLite');
+    res.json(allGames);
   } catch (error) {
     console.error('Error in GET /games:', error);
     res.status(500).json({ error: 'Error interno del servidor', details: error.message });
@@ -560,24 +617,9 @@ app.post('/sessions/end', (req, res) => {
 // Ver sesiones activas
 app.get('/sessions/active', (_, res) => {
   try {
-    const activeSessions = sessions.getActive.all();
-    console.log('GET /sessions/active - returning', activeSessions.length, 'active sessions from SQLite');
-    
-    // Convertir formato de SQLite a formato esperado por el frontend
-    const formattedSessions = activeSessions.map(session => ({
-      id: session.id,
-      childId: session.child_id,
-      gameId: session.game_id,
-      start: session.start_time,
-      duration: session.duration,
-      end: session.end_time,
-      childName: session.child_display_name || session.child_name,
-      gameName: session.game_name,
-      fatherName: session.father_name,
-      motherName: session.mother_name
-    }));
-    
-    res.json(formattedSessions);
+    const activeSessions = getActiveSessions();
+    console.log('GET /sessions/active - returning', activeSessions.length, 'active sessions from', process.env.VERCEL ? 'memory' : 'SQLite');
+    res.json(activeSessions);
   } catch (error) {
     console.error('Error in GET /sessions/active:', error);
     res.status(500).json({ error: 'Error interno del servidor', details: error.message });
@@ -587,24 +629,9 @@ app.get('/sessions/active', (_, res) => {
 // Ver historial de sesiones
 app.get('/sessions', (_, res) => {
   try {
-    const allSessions = sessions.getAll.all();
-    console.log('GET /sessions - returning', allSessions.length, 'sessions from SQLite');
-    
-    // Convertir formato de SQLite a formato esperado por el frontend
-    const formattedSessions = allSessions.map(session => ({
-      id: session.id,
-      childId: session.child_id,
-      gameId: session.game_id,
-      start: session.start_time,
-      duration: session.duration,
-      end: session.end_time,
-      childName: session.child_display_name || session.child_name,
-      gameName: session.game_name,
-      fatherName: session.father_name,
-      motherName: session.mother_name
-    }));
-    
-    res.json(formattedSessions);
+    const allSessions = getSessions();
+    console.log('GET /sessions - returning', allSessions.length, 'sessions from', process.env.VERCEL ? 'memory' : 'SQLite');
+    res.json(allSessions);
   } catch (error) {
     console.error('Error in GET /sessions:', error);
     res.status(500).json({ error: 'Error interno del servidor', details: error.message });
