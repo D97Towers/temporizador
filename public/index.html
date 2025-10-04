@@ -1838,6 +1838,9 @@
               <button onclick="debugChildren()" class="btn-secondary" style="margin-left: 10px;">
                 <i class="fas fa-bug"></i> DEBUG
               </button>
+              <button onclick="refreshChildrenList()" class="btn-info" style="margin-left: 10px;">
+                <i class="fas fa-sync-alt"></i> REFRESCAR
+              </button>
             </div>
           <ul class="list" id="childrenList"></ul>
         </div>
@@ -2549,9 +2552,15 @@
       }
     }
 
-    async function fetchChildren() {
+    async function fetchChildren(forceRefresh = false) {
       try {
-        console.log('Fetching children from:', api + '/children');
+        console.log('Fetching children from:', api + '/children', forceRefresh ? '(FORCE REFRESH)' : '');
+        
+        // Limpiar caché si es refresh forzado
+        if (forceRefresh) {
+          childrenCache = [];
+        }
+        
         const res = await fetchWithRetry(api + '/children');
         console.log('Children response status:', res.status);
         
@@ -2608,6 +2617,23 @@
         console.log('Children list refreshed with debug data');
       } catch (error) {
         console.error('Debug fetch error:', error);
+      }
+    }
+
+    // Función para refrescar lista de niños (SOLUCIÓN DEFINITIVA)
+    async function refreshChildrenList() {
+      console.log('=== REFRESHING CHILDREN LIST ===');
+      try {
+        // Limpiar caché completamente
+        childrenCache = [];
+        renderChildrenList([]);
+        
+        // Recargar datos frescos
+        await fetchChildren(true);
+        showStatusMessage('Lista de niños actualizada', 'success');
+      } catch (error) {
+        console.error('Error refreshing children list:', error);
+        showStatusMessage('Error al actualizar la lista', 'error');
       }
     }
 
@@ -3305,21 +3331,32 @@
         document.getElementById('fatherName').value = '';
         document.getElementById('motherName').value = '';
         
-        // Actualizar todos los datos después de agregar niño
-        console.log('Child added successfully, updating data...');
-        await Promise.all([
-          fetchChildren(),
-          fetchGames(),
-          fetchActiveSessions(),
-          fetchSessionHistory()
-        ]);
+        // SOLUCIÓN DEFINITIVA: Limpiar caché y recargar datos frescos
+        console.log('Child added successfully, clearing cache and reloading...');
         
-        // Verificar que el niño se agregó correctamente
-        console.log('Data updated, current children count:', childrenCache.length);
-        console.log('Children names:', childrenCache.map(c => c.name));
+        // Limpiar caché completamente
+        childrenCache = [];
         
-        // Forzar re-renderizado de la lista
-        renderChildrenList(childrenCache);
+        // Recargar datos frescos del backend
+        try {
+          const freshRes = await fetchWithRetry(api + '/children');
+          const freshChildren = await freshRes.json();
+          
+          console.log('Fresh data from backend:', freshChildren);
+          childrenCache = freshChildren || [];
+          
+          // Renderizar inmediatamente con datos frescos
+          renderChildrenList(childrenCache);
+          updateChildSelect(childrenCache);
+          
+          console.log('List updated with fresh data, count:', childrenCache.length);
+        } catch (error) {
+          console.error('Error reloading fresh data:', error);
+          // Fallback: recargar página completa
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        }
         
         showStatusMessage('Niño agregado exitosamente', 'success');
       } catch (error) {
