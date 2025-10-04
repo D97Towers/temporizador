@@ -1835,12 +1835,6 @@
               <button onclick="addChild()" id="addChildBtn" class="btn-primary">
                 <i class="fas fa-plus"></i> AGREGAR NIÑO
               </button>
-              <button onclick="debugChildren()" class="btn-secondary" style="margin-left: 10px;">
-                <i class="fas fa-bug"></i> DEBUG
-              </button>
-              <button onclick="refreshChildrenList()" class="btn-info" style="margin-left: 10px;">
-                <i class="fas fa-sync-alt"></i> REFRESCAR
-              </button>
             </div>
           <ul class="list" id="childrenList"></ul>
         </div>
@@ -2554,23 +2548,18 @@
 
     async function fetchChildren(forceRefresh = false) {
       try {
-        console.log('Fetching children from:', api + '/children', forceRefresh ? '(FORCE REFRESH)' : '');
-        
         // Limpiar caché si es refresh forzado
         if (forceRefresh) {
           childrenCache = [];
         }
         
         const res = await fetchWithRetry(api + '/children');
-        console.log('Children response status:', res.status);
         
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         }
         
         const children = await res.json();
-        console.log('Children data received:', children);
-        console.log('Children count:', children ? children.length : 0);
         
         // Verificar que los datos son válidos
         if (!Array.isArray(children)) {
@@ -2579,14 +2568,10 @@
         }
         
         childrenCache = children || [];
-        console.log('Children cache updated:', childrenCache.length, 'items');
         
         // Renderizar inmediatamente
         renderChildrenList(childrenCache);
         updateChildSelect(childrenCache);
-        
-        console.log('Children loaded successfully:', childrenCache);
-        console.log('Children names:', childrenCache.map(c => c.name));
         
         return childrenCache;
       } catch (error) {
@@ -2599,43 +2584,6 @@
       }
     }
 
-    // Función de debug temporal
-    async function debugChildren() {
-      console.log('=== DEBUG CHILDREN ===');
-      console.log('Current childrenCache:', childrenCache);
-      console.log('ChildrenCache length:', childrenCache.length);
-      
-      try {
-        console.log('Fetching fresh data from API...');
-        const res = await fetchWithRetry(api + '/children');
-        const freshData = await res.json();
-        console.log('Fresh data from API:', freshData);
-        console.log('Fresh data length:', freshData.length);
-        
-        childrenCache = freshData || [];
-        renderChildrenList(childrenCache);
-        console.log('Children list refreshed with debug data');
-      } catch (error) {
-        console.error('Debug fetch error:', error);
-      }
-    }
-
-    // Función para refrescar lista de niños (SOLUCIÓN DEFINITIVA)
-    async function refreshChildrenList() {
-      console.log('=== REFRESHING CHILDREN LIST ===');
-      try {
-        // Limpiar caché completamente
-        childrenCache = [];
-        renderChildrenList([]);
-        
-        // Recargar datos frescos
-        await fetchChildren(true);
-        showStatusMessage('Lista de niños actualizada', 'success');
-      } catch (error) {
-        console.error('Error refreshing children list:', error);
-        showStatusMessage('Error al actualizar la lista', 'error');
-      }
-    }
 
     async function fetchGames() {
       try {
@@ -3296,9 +3244,7 @@
           motherName: motherName || undefined
         };
         
-        console.log('=== ADDING CHILD ===');
-        console.log('Request URL:', api + '/children');
-        console.log('Request data:', requestData);
+        // console.log('Adding child:', requestData);
         
         const res = await fetchWithRetry(api + '/children', {
           method: 'POST',
@@ -3306,8 +3252,7 @@
           body: JSON.stringify(requestData)
         });
         
-        console.log('Response status:', res.status);
-        console.log('Response ok:', res.ok);
+        // console.log('Response status:', res.status);
         
         if (!res.ok) {
           const errorData = await res.json().catch(() => ({ error: 'Error desconocido' }));
@@ -3323,7 +3268,7 @@
         }
         
         const responseData = await res.json();
-        console.log('Success response:', responseData);
+        // console.log('Success response:', responseData);
         
         // Limpiar formulario
         document.getElementById('childName').value = '';
@@ -3331,8 +3276,7 @@
         document.getElementById('fatherName').value = '';
         document.getElementById('motherName').value = '';
         
-        // SOLUCIÓN DEFINITIVA: Limpiar caché y recargar datos frescos
-        console.log('Child added successfully, clearing cache and reloading...');
+        // Limpiar caché y recargar datos frescos
         
         // Limpiar caché completamente
         childrenCache = [];
@@ -3342,14 +3286,11 @@
           const freshRes = await fetchWithRetry(api + '/children');
           const freshChildren = await freshRes.json();
           
-          console.log('Fresh data from backend:', freshChildren);
           childrenCache = freshChildren || [];
           
           // Renderizar inmediatamente con datos frescos
           renderChildrenList(childrenCache);
           updateChildSelect(childrenCache);
-          
-          console.log('List updated with fresh data, count:', childrenCache.length);
         } catch (error) {
           console.error('Error reloading fresh data:', error);
           // Fallback: recargar página completa
