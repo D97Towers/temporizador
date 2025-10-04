@@ -215,16 +215,37 @@ app.post('/children', validateChild, (req, res) => {
     const { name, nickname, fatherName, motherName } = req.body;
     
     console.log('Creating child with data:', { name, nickname, fatherName, motherName });
-    console.log('Current data before adding child:', JSON.stringify(currentData, null, 2));
+    
+    // Verificar duplicados ANTES de crear
+    const trimmedName = name.trim();
+    const existingChild = currentData.children.find(c => 
+      c.name.toLowerCase() === trimmedName.toLowerCase()
+    );
+    
+    if (existingChild) {
+      console.log('Duplicate child detected:', existingChild);
+      return res.status(400).json({ 
+        error: 'Ya existe un niño con ese nombre',
+        duplicate: true,
+        existingChild: {
+          id: existingChild.id,
+          name: existingChild.name,
+          displayName: existingChild.displayName
+        }
+      });
+    }
+    
+    // Generar ID único usando timestamp + random para evitar colisiones
+    const newId = Date.now() + Math.floor(Math.random() * 1000);
     
     const child = { 
-      id: currentData.nextChildId++, 
-      name: name.trim(),
+      id: newId, 
+      name: trimmedName,
       nickname: nickname ? nickname.trim() : undefined,
       fatherName: fatherName ? fatherName.trim() : undefined,
       motherName: motherName ? motherName.trim() : undefined,
-      displayName: name.trim() + (nickname ? ` (${nickname.trim()})` : ''),
-      avatar: name.trim().charAt(0).toUpperCase(),
+      displayName: trimmedName + (nickname ? ` (${nickname.trim()})` : ''),
+      avatar: trimmedName.charAt(0).toUpperCase(),
       createdAt: new Date().toISOString(),
       totalSessions: 0,
       totalTimePlayed: 0
@@ -288,9 +309,11 @@ app.put('/children/:id', validateChild, (req, res) => {
     const { name, nickname, fatherName, motherName } = req.body;
 
     console.log(`Attempting to edit child with ID: ${id}`);
+    console.log('Available children IDs:', currentData.children.map(c => c.id));
 
     const childIndex = currentData.children.findIndex((c) => c.id === id);
     if (childIndex === -1) {
+      console.log(`Child with ID ${id} not found in ${currentData.children.length} children`);
       return res.status(404).json({ error: 'Niño no encontrado' });
     }
 
