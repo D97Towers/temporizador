@@ -92,6 +92,9 @@ function saveData(newData) {
       globalData = newData;
       console.log('Updated global memory with new data');
       
+      // También actualizar la variable data global para consistencia
+      data = newData;
+      
       // Intentar guardar en /tmp para persistencia temporal
       try {
         const tmpFile = '/tmp/temporizador-data.json';
