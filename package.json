@@ -11,7 +11,9 @@
     "build": "echo 'Build completed - using index.js'",
     "start": "node index.js",
     "vercel-build": "echo 'Vercel build completed'",
-    "sync-prod": "node sync-to-production.js"
+    "sync-prod": "node sync-to-production.js",
+    "sync-manual": "node sync-to-production-manual.js",
+    "sync-complete": "node sync-complete-data.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
