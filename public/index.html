@@ -2178,7 +2178,7 @@
     // Funciones del dashboard
     async function fetchDashboardStats() {
       try {
-        const res = await fetchWithRetry(api + '/admin/stats');
+        const res = await fetchWithRetry(api + '/admin/status');
         if (res.ok) {
           dashboardStats = await res.json();
           return dashboardStats;
@@ -2563,11 +2563,23 @@
         console.log('Children data received:', children);
         console.log('Children count:', children ? children.length : 0);
         
+        // Verificar que los datos son válidos
+        if (!Array.isArray(children)) {
+          console.error('Invalid children data format:', children);
+          throw new Error('Invalid children data format');
+        }
+        
         childrenCache = children || [];
         console.log('Children cache updated:', childrenCache.length, 'items');
+        
+        // Renderizar inmediatamente
         renderChildrenList(childrenCache);
         updateChildSelect(childrenCache);
+        
         console.log('Children loaded successfully:', childrenCache);
+        console.log('Children names:', childrenCache.map(c => c.name));
+        
+        return childrenCache;
       } catch (error) {
         console.error('Error fetching children:', error);
         showStatusMessage('Error al cargar la lista de niños', 'error');
@@ -2792,7 +2804,7 @@
       } else {
         // Solo actualizar timers sin cambiar el DOM - menos frecuente para evitar parpadeo
         if (activeSessionsData.length > 0) {
-          updateExistingTimers();
+        updateExistingTimers();
         }
       }
     }
@@ -3665,6 +3677,16 @@
         try {
           console.log('Loading children...');
           await fetchChildren();
+          
+          // Verificar si se cargaron todos los niños
+          console.log('Children loaded, checking cache...');
+          console.log('Current childrenCache length:', childrenCache.length);
+          
+          // Si hay pocos niños, intentar recargar
+          if (childrenCache.length < 3) {
+            console.log('Few children detected, forcing reload...');
+            await fetchChildren();
+          }
         } catch (error) {
           console.error('Failed to load children, continuing...', error);
         }
