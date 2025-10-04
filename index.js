@@ -36,29 +36,27 @@ function loadFromEnvironment() {
       if (process.env.APP_DATA) {
         const data = JSON.parse(process.env.APP_DATA);
         globalData = data;
-        console.log('Data loaded from environment');
+        console.log('Data loaded from environment:', {
+          children: data.children?.length || 0,
+          games: data.games?.length || 0,
+          sessions: data.sessions?.length || 0
+        });
         return data;
       }
     } catch (error) {
       console.error('Error loading from environment:', error);
     }
-    // Si no hay datos en el entorno, usar datos por defecto
-    const defaultData = {
-      children: [
-        { id: 1, name: "Santiago", nickname: null, fatherName: "Carlos", motherName: "Ana", displayName: "Santiago", avatar: "S", totalSessions: 0, totalTimePlayed: 0, createdAt: new Date().toISOString() },
-        { id: 2, name: "Daniel", nickname: null, fatherName: "Pedro", motherName: "Laura", displayName: "Daniel", avatar: "D", totalSessions: 0, totalTimePlayed: 0, createdAt: new Date().toISOString() }
-      ],
-      games: [
-        { id: 1, name: "videojuegos", createdAt: new Date().toISOString() },
-        { id: 2, name: "bici", createdAt: new Date().toISOString() },
-        { id: 3, name: "lego", createdAt: new Date().toISOString() }
-      ],
-      sessions: []
-    };
-    globalData = defaultData;
-    saveToEnvironment(defaultData);
-    console.log('Default data initialized for Vercel');
-    return defaultData;
+    // Solo usar datos por defecto si realmente no hay datos
+    if (!globalData || globalData.children?.length === 0) {
+      const defaultData = {
+        children: [],
+        games: [],
+        sessions: []
+      };
+      globalData = defaultData;
+      console.log('Empty data initialized for Vercel');
+      return defaultData;
+    }
   }
   return null;
 }
