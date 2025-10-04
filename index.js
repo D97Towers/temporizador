@@ -634,6 +634,8 @@ app.get('/admin/debug-full', (req, res) => {
     res.json({
       environment: process.env.VERCEL ? 'Vercel' : 'Local',
       globalDataExists: !!globalData,
+      globalDataChildren: globalData ? globalData.children.length : 0,
+      globalDataSessions: globalData ? globalData.sessions.length : 0,
       currentData: currentData,
       timestamp: new Date().toISOString()
     });
