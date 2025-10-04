@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const { children, games, sessions } = require('./database');
 
 const app = express();
 app.use(cors());
@@ -258,51 +259,56 @@ async function atomicOperation(operation) {
 }
 
 // CRUD Niños
-app.post('/children', validateChild, async (req, res) => {
+app.post('/children', validateChild, (req, res) => {
   try {
-    const result = await atomicOperation(async () => {
-      const currentData = getPersistentData();
-      const { name, nickname, fatherName, motherName } = req.body;
+    const { name, nickname, fatherName, motherName } = req.body;
     
-      console.log('Creating child with data:', { name, nickname, fatherName, motherName });
-      
-      // Verificar duplicados ANTES de crear
-      const trimmedName = name.trim();
-      const existingChild = currentData.children.find(c => 
-        c.name.toLowerCase() === trimmedName.toLowerCase()
-      );
-      
-      if (existingChild) {
-        console.log('Duplicate child detected:', existingChild);
-        throw new Error('Ya existe un niño con ese nombre');
-      }
-      
-      // Generar ID único usando timestamp + random para evitar colisiones
-      const newId = Date.now() + Math.floor(Math.random() * 1000);
-      
-      const child = { 
-        id: newId, 
-        name: trimmedName,
-        nickname: nickname ? nickname.trim() : undefined,
-        fatherName: fatherName ? fatherName.trim() : undefined,
-        motherName: motherName ? motherName.trim() : undefined,
-        displayName: trimmedName + (nickname ? ` (${nickname.trim()})` : ''),
-        avatar: trimmedName.charAt(0).toUpperCase(),
-        createdAt: new Date().toISOString(),
-        totalSessions: 0,
-        totalTimePlayed: 0
-      };
-      
-      currentData.children.push(child);
-      console.log('Child created:', JSON.stringify(child, null, 2));
-      
-      saveData(currentData);
-      console.log('Data saved successfully');
-      
-      return child;
-    });
+    console.log('Creating child with data:', { name, nickname, fatherName, motherName });
     
-    res.status(201).json(result);
+    // Verificar duplicados ANTES de crear
+    const trimmedName = name.trim();
+    const existingChild = children.getByName.get(trimmedName);
+    
+    if (existingChild) {
+      console.log('Duplicate child detected:', existingChild);
+      return res.status(400).json({ error: 'Ya existe un niño con ese nombre' });
+    }
+    
+    // Crear el niño en SQLite
+    const displayName = trimmedName + (nickname ? ` (${nickname.trim()})` : '');
+    const avatar = trimmedName.charAt(0).toUpperCase();
+    
+    const result = children.create.run(
+      trimmedName,
+      nickname ? nickname.trim() : null,
+      fatherName ? fatherName.trim() : null,
+      motherName ? motherName.trim() : null,
+      displayName,
+      avatar,
+      0, // total_sessions
+      0  // total_time_played
+    );
+    
+    const childId = result.lastInsertRowid;
+    const newChild = children.getById.get(childId);
+    
+    console.log('Child created in SQLite:', newChild);
+    
+    // Convertir a formato esperado por el frontend
+    const formattedChild = {
+      id: newChild.id,
+      name: newChild.name,
+      nickname: newChild.nickname,
+      fatherName: newChild.father_name,
+      motherName: newChild.mother_name,
+      displayName: newChild.display_name,
+      avatar: newChild.avatar,
+      totalSessions: newChild.total_sessions,
+      totalTimePlayed: newChild.total_time_played,
+      createdAt: newChild.created_at
+    };
+    
+    res.status(201).json(formattedChild);
   } catch (error) {
     console.error('Error creating child:', error);
     res.status(500).json({ error: 'Error interno del servidor', details: error.message });
@@ -311,12 +317,27 @@ app.post('/children', validateChild, async (req, res) => {
 
 app.get('/children', (_, res) => {
   try {
-    const currentData = getPersistentData();
-    console.log('GET /children - returning', currentData.children.length, 'children');
-    res.json(currentData.children);
+    const allChildren = children.getAll.all();
+    console.log('GET /children - returning', allChildren.length, 'children from SQLite');
+    
+    // Convertir formato de SQLite a formato esperado por el frontend
+    const formattedChildren = allChildren.map(child => ({
+      id: child.id,
+      name: child.name,
+      nickname: child.nickname,
+      fatherName: child.father_name,
+      motherName: child.mother_name,
+      displayName: child.display_name,
+      avatar: child.avatar,
+      totalSessions: child.total_sessions,
+      totalTimePlayed: child.total_time_played,
+      createdAt: child.created_at
+    }));
+    
+    res.json(formattedChildren);
   } catch (error) {
     console.error('Error in GET /children:', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: 'Error interno del servidor', details: error.message });
   }
 });
 
