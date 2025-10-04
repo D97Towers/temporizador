@@ -1699,7 +1699,7 @@
       <h2><i class="fas fa-gamepad"></i> Temporizador</h2>
     </div>
     <nav class="desktop-nav">
-      <button onclick="showSection('dashboard')" class="desktop-nav-btn active" id="nav-dashboard">
+      <button onclick="showSection('dashboard')" class="desktop-nav-btn" id="nav-dashboard">
         <i class="fas fa-chart-bar"></i> Dashboard
       </button>
       <button onclick="showSection('sessions')" class="desktop-nav-btn" id="nav-sessions">
@@ -1721,7 +1721,7 @@
     </div>
 
     <!-- Dashboard Section -->
-    <div id="dashboard-section" class="section active">
+    <div id="dashboard-section" class="section">
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-number" id="totalChildren">0</div>
@@ -2628,7 +2628,7 @@
               <div class="child-details">
                 <div class="child-name">${displayName}</div>
                 ${parentsInfo}
-                <div class="child-time">${child.totalTimePlayed} min</div>
+                <div class="child-time">${child.totalTimePlayed || 0} min</div>
               </div>
             </div>
             <div class="delete-button-container" style="flex-shrink: 0;">
@@ -3692,13 +3692,19 @@
         // showStatusMessage('Aplicación cargada correctamente', 'success');
         console.log('App initialized successfully');
         
+        // Ocultar todas las secciones inicialmente para evitar parpadeo
+        document.querySelectorAll('.section').forEach(section => {
+            section.classList.remove('active');
+        });
+        
         // Restaurar sección activa del localStorage
         const savedSection = localStorage.getItem('activeSection');
         if (savedSection) {
             showSection(savedSection);
         } else {
-            // Si no hay sección guardada, guardar dashboard como por defecto
+            // Si no hay sección guardada, mostrar dashboard por defecto
             localStorage.setItem('activeSection', 'dashboard');
+            showSection('dashboard');
         }
       } catch (error) {
         console.error('Critical error initializing app:', error);
