@@ -3670,9 +3670,9 @@
                console.error('Failed to initialize child search system, continuing...', error);
         }
         
-        // Configurar intervalos de actualización - MUY REDUCIDOS para evitar parpadeo
-        // Actualizar sesiones activas cada 60 segundos (solo para cambios estructurales)
-        setInterval(fetchActiveSessions, 60000);
+        // Configurar intervalos de actualización - Optimizados para mejor UX
+        // Actualizar sesiones activas cada 10 segundos para mantener datos actualizados
+        setInterval(fetchActiveSessions, 10000);
         
         // Actualizar historial cada 120 segundos
         setInterval(fetchSessionHistory, 120000);
