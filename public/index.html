@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Temporizador de Juegos</title>
-  <!-- Deployment trigger: v1.7 - FIXED ALERTS + IMPROVED HISTORY: Collapsible history + alert cleanup -->
+  <!-- Deployment trigger: v1.8 - HAMBURGER BUTTON + DESKTOP MENU: Simplified hamburger + left-aligned desktop menu -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
     * {
@@ -19,11 +19,18 @@
       min-height: 100vh;
       padding: 20px;
       color: #333;
+      box-sizing: border-box;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
     }
 
     .container {
       max-width: 1200px;
       margin: 0 auto;
+      padding: 0 10px;
+      box-sizing: border-box;
     }
 
     .header {
@@ -31,7 +38,8 @@
       margin-bottom: 30px;
       color: white;
       position: relative;
-      padding-right: 80px; /* Espacio para el botón de sincronización */
+      padding-left: 80px;
+      padding-right: 20px;
     }
 
     .header h1 {
@@ -40,34 +48,440 @@
       text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
     }
     
-    .sync-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: rgba(255, 255, 255, 0.2);
-      border: 2px solid rgba(255, 255, 255, 0.3);
+    /* Navegación principal */
+         .main-nav {
+           display: flex;
+           justify-content: flex-start;
+           gap: 10px;
+           margin-top: 20px;
+           flex-wrap: wrap;
+           margin-left: 20px;
+         }
+
+         /* Desktop Sidebar */
+         .desktop-sidebar {
+           display: none;
+         }
+
+         .main-content {
+           width: 100%;
+         }
+
+         /* Desktop - mostrar sidebar y ocultar menú móvil */
+         @media (min-width: 769px) {
+           .desktop-sidebar {
+             display: flex;
+             flex-direction: column;
+             position: fixed;
+             left: 0;
+             top: 0;
+             width: 250px;
+             height: 100vh;
+             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+             z-index: 100;
+             box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+           }
+
+           .sidebar-header {
+             padding: 30px 20px 20px;
+             border-bottom: 1px solid rgba(255,255,255,0.1);
+           }
+
+           .sidebar-header h2 {
       color: white;
-      padding: 8px 12px;
-      border-radius: 8px;
+             font-size: 1.5rem;
+             font-weight: 600;
+             text-align: center;
+             margin: 0;
+           }
+
+           .desktop-nav {
+             padding: 20px 0;
+             flex: 1;
+           }
+
+           .desktop-nav-btn {
+             display: flex;
+             align-items: center;
+             gap: 12px;
+             width: 100%;
+             padding: 15px 20px;
+             background: none;
+             border: none;
+             color: rgba(255,255,255,0.9);
+             font-size: 14px;
+             font-weight: 500;
       cursor: pointer;
       transition: all 0.3s ease;
-      backdrop-filter: blur(10px);
-      z-index: 100;
+             text-align: left;
+             border-left: 3px solid transparent;
+           }
+
+           .desktop-nav-btn:hover {
+             background: rgba(255,255,255,0.15);
+             color: white;
+             transform: translateX(5px);
+           }
+
+           .desktop-nav-btn.active {
+             background: rgba(255,255,255,0.2);
+             color: white;
+             border-left-color: white;
+             font-weight: 600;
+           }
+
+           .desktop-nav-btn i {
+             font-size: 16px;
+             width: 20px;
+           }
+
+           .main-content {
+             margin-left: 250px;
+             width: calc(100% - 250px);
+           }
+           
+           .mobile-menu-toggle {
+             display: none !important;
+           }
+           
+           .header {
+             padding-left: 20px !important;
+             text-align: center !important;
+           }
+         }
+
+         /* Menú lateral para móviles */
+         .mobile-menu-toggle {
+           display: none;
+           background: rgba(255, 255, 255, 0.1);
+      color: white;
+           border: 2px solid rgba(255, 255, 255, 0.3);
+           padding: 8px;
+      border-radius: 8px;
+      cursor: pointer;
       width: 40px;
       height: 40px;
+           transition: all 0.3s ease;
+           box-shadow: 0 2px 10px rgba(0,0,0,0.3);
       display: flex;
       align-items: center;
       justify-content: center;
     }
     
-    .sync-btn:hover {
-      background: rgba(255, 255, 255, 0.3);
-      transform: rotate(180deg);
+         .hamburger-lines {
+           display: flex;
+           flex-direction: column;
+           gap: 3px;
+           width: 18px;
+         }
+
+         .hamburger-lines span {
+           width: 100%;
+           height: 2px;
+           background-color: white;
+           border-radius: 1px;
+           transition: all 0.3s ease;
+         }
+
+         .mobile-menu-toggle:hover {
+           background: rgba(255, 255, 255, 0.2);
+           border-color: rgba(255, 255, 255, 0.5);
+         }
+
+         /* Asegurar que el botón no se vea afectado por otros estilos */
+         .mobile-menu-toggle * {
+           text-align: center !important;
+           position: static !important;
+         }
+
+         /* Sobrescribir estilos globales de botones */
+         .mobile-menu-toggle {
+           width: auto !important;
+           max-width: none !important;
+           min-width: auto !important;
+           flex: none !important;
+           box-sizing: border-box !important;
+         }
+
+         .sidebar {
+           position: fixed;
+           top: 0;
+           left: -300px;
+           width: 280px;
+           height: 100vh;
+           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+           padding: 80px 20px 20px;
+           z-index: 1002;
+           transition: left 0.3s ease;
+           box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+         }
+
+         .sidebar.open {
+           left: 0;
+         }
+
+         .sidebar .nav-btn {
+           width: 100%;
+           margin-bottom: 10px;
+           justify-content: flex-start;
+           min-width: auto;
+         }
+
+         .sidebar-overlay {
+           position: fixed;
+           top: 0;
+           left: 0;
+           width: 100%;
+           height: 100%;
+           background: rgba(0, 0, 0, 0.5);
+           z-index: 1000;
+           opacity: 0;
+           visibility: hidden;
+           transition: all 0.3s ease;
+         }
+
+         .sidebar-overlay.active {
+           opacity: 1;
+           visibility: visible;
+         }
+
+         /* Sistema de búsqueda de niños */
+         .child-search-container {
+           position: relative;
+         }
+
+         .child-search-results {
+           position: absolute;
+           top: 100%;
+           left: 0;
+           right: 0;
+           background: white;
+           border: 1px solid #ddd;
+           border-radius: 8px;
+           max-height: 200px;
+           overflow-y: auto;
+      z-index: 100;
+           display: none;
+           box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+         }
+
+         .child-search-results.show {
+           display: block;
+         }
+
+         .child-search-item {
+           padding: 12px 15px;
+           cursor: pointer;
+           border-bottom: 1px solid #f0f0f0;
+           display: flex;
+           align-items: center;
+           gap: 10px;
+           transition: background-color 0.2s ease;
+         }
+
+         .child-search-item:hover {
+           background-color: #f8f9fa;
+         }
+
+         .child-search-item:last-child {
+           border-bottom: none;
+         }
+
+         .child-search-item .child-avatar {
+           width: 30px;
+           height: 30px;
+           border-radius: 50%;
+           background: linear-gradient(135deg, #667eea, #764ba2);
+           color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+           font-weight: bold;
+           font-size: 14px;
+         }
+
+         .child-search-item .child-info {
+           flex: 1;
+         }
+
+         .child-search-item .child-name {
+           font-weight: 600;
+           color: #333;
+           margin-bottom: 2px;
+         }
+
+         .child-search-item .child-parents {
+           font-size: 12px;
+           color: #666;
+         }
+
+         .child-search-item .child-stats {
+           font-size: 11px;
+           color: #999;
+           text-align: right;
+         }
+
+         .no-results {
+           padding: 15px;
+           text-align: center;
+           color: #666;
+           font-style: italic;
+         }
+
+    .nav-btn {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      padding: 12px 20px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      min-width: 140px;
+      justify-content: center;
+    }
+
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .nav-btn.active {
+      background: rgba(255, 255, 255, 0.9);
+      color: #667eea;
+      border-color: white;
+    }
+
+    .shortcut-key {
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 10px;
+      font-weight: bold;
+      margin-left: 8px;
+      opacity: 0.8;
+    }
+
+    /* Secciones */
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    /* Dashboard de estadísticas */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #667eea;
+      margin-bottom: 10px;
+    }
+
+    .stat-label {
+      color: #666;
+      font-size: 1rem;
+      margin-bottom: 5px;
+    }
+
+    .stat-description {
+      color: #999;
+      font-size: 0.9rem;
+    }
+
+    .chart-container {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .chart-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .ranking-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .ranking-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 15px;
+      margin-bottom: 8px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+    }
+
+    .ranking-item:nth-child(1) {
+      border-left-color: #ffd700;
+      background: linear-gradient(135deg, #fff9c4, #f8f9fa);
+    }
+
+    .ranking-item:nth-child(2) {
+      border-left-color: #c0c0c0;
+      background: linear-gradient(135deg, #f0f0f0, #f8f9fa);
+    }
+
+    .ranking-item:nth-child(3) {
+      border-left-color: #cd7f32;
+      background: linear-gradient(135deg, #ffe4b5, #f8f9fa);
+    }
+
+    .ranking-position {
+      font-weight: bold;
+      color: #667eea;
+      font-size: 1.2rem;
+      min-width: 30px;
+    }
+
+    .ranking-name {
+      flex: 1;
+      margin: 0 15px;
+      font-weight: 500;
+    }
+
+    .ranking-time {
+      color: #666;
+      font-weight: 600;
     }
     
-    .sync-btn:active {
-      transform: rotate(360deg);
-    }
+    /* Sync button removed for better UX - data syncs automatically */
 
     .header p {
       font-size: 1.1rem;
@@ -199,6 +613,9 @@
       justify-content: space-between;
       align-items: center;
       transition: all 0.3s ease;
+      overflow: hidden;
+      word-wrap: break-word;
+      position: relative;
     }
 
     .list-item:hover {
@@ -209,6 +626,375 @@
     .list-item.active {
       border-left-color: #38a169;
       background: #f0fff4;
+    }
+
+    .session-info {
+      flex: 1;
+      min-width: 0;
+      margin-right: 10px;
+    }
+
+    .session-controls {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      min-width: 0;
+      flex-shrink: 0;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 3px;
+      margin-top: 5px;
+      flex-wrap: nowrap;
+    }
+    
+    /* Estilos para avatares y identificadores únicos */
+    .child-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    }
+    
+    .child-avatar {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 50%;
+      font-weight: bold;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    
+    .child-avatar-small {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 50%;
+      font-weight: bold;
+      font-size: 10px;
+      margin-right: 5px;
+    }
+    
+    .child-details {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .original-name {
+      display: block;
+      color: #666;
+      font-size: 11px;
+      margin-top: 2px;
+      font-style: italic;
+    }
+    
+    /* Estilos para formulario mejorado de niños */
+    .child-form {
+      margin-bottom: 20px;
+    }
+    
+    .child-form label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      color: #333;
+      font-size: 14px;
+    }
+    
+    .child-form input {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #e1e5e9;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
+    }
+    
+    .child-form input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .child-form input[required] {
+      border-color: #667eea;
+    }
+    
+    .child-form .form-row {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .child-form .form-row .form-group {
+      flex: 1;
+    }
+    
+    .child-form {
+      margin-bottom: 20px;
+    }
+
+    .child-form .form-row {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .child-form .form-group {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .child-form label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #333;
+      font-size: 14px;
+    }
+
+    .child-form input {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #e1e5e9;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.3s ease;
+      box-sizing: border-box;
+    }
+
+    .child-form input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .child-form small {
+      display: block;
+      color: #666;
+      font-size: 12px;
+      margin-top: 5px;
+      font-style: italic;
+    }
+
+    /* Responsive design for mobile */
+    @media (max-width: 768px) {
+      .child-form .form-row {
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .child-form .form-group {
+        flex: none;
+      }
+
+      .child-info {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 8px;
+      }
+
+      .child-details {
+        width: 100% !important;
+      }
+
+      .list-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+
+      .btn-small {
+        align-self: flex-end;
+        margin-top: 5px;
+        padding: 3px 6px !important;
+        font-size: 10px !important;
+      }
+
+      .delete-button-container {
+        min-width: 50px;
+        height: 28px;
+      }
+
+      .button-group-small {
+        gap: 3px;
+      }
+
+      .list-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      .child-info {
+        margin-right: 0 !important;
+      }
+
+      .container {
+        padding: 10px;
+      }
+
+      .card {
+        margin-bottom: 15px;
+      }
+
+      h2 {
+        font-size: 18px;
+      }
+    }
+
+    /* Tablet responsive */
+    @media (max-width: 1024px) and (min-width: 769px) {
+      .grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      
+      .child-form .form-row {
+        gap: 12px;
+      }
+    }
+    
+    /* Estilos para elementos de niños mejorados */
+    .child-item {
+      border-left: 4px solid #667eea;
+      background: #f8f9ff;
+      transition: all 0.3s ease;
+    }
+
+    .child-item:hover {
+      background: #e8f2ff;
+    }
+
+    .child-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 4px;
+    }
+
+    .nickname-text {
+      color: #666;
+      font-weight: 400;
+      font-style: italic;
+    }
+
+    .child-time {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .child-parents {
+      color: #555;
+      font-size: 12px;
+      font-style: italic;
+      margin: 2px 0;
+      background: rgba(102, 126, 234, 0.05);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border-left: 2px solid #667eea;
+    }
+
+    .btn-small {
+      padding: 4px 8px !important;
+      font-size: 11px !important;
+      min-width: auto !important;
+      border-radius: 5px !important;
+      opacity: 0.8;
+      transition: all 0.2s ease !important;
+      width: auto !important;
+      height: auto !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    .btn-small:hover {
+      opacity: 1;
+      transform: none;
+      background: #e53e3e !important;
+    }
+
+    .btn-small i {
+      font-size: 10px !important;
+    }
+
+    .btn-edit {
+      padding: 4px 8px !important;
+      font-size: 11px !important;
+      min-width: auto !important;
+      border-radius: 5px !important;
+      opacity: 0.8;
+      transition: all 0.2s ease !important;
+      width: auto !important;
+      height: auto !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+      color: white !important;
+      border: none !important;
+      margin-right: 5px !important;
+    }
+
+    .btn-edit:hover {
+      opacity: 1;
+      transform: none;
+      background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%) !important;
+    }
+
+    .btn-edit i {
+      font-size: 10px !important;
+    }
+
+    .delete-button-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      min-width: 60px;
+      height: 32px;
+    }
+
+    .button-group-small {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .parents-info {
+      color: #555;
+      font-size: 11px;
+      font-style: italic;
+      background: rgba(102, 126, 234, 0.05);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border-left: 2px solid #667eea;
+      margin: 2px 0;
+      display: inline-block;
+    }
+
+    .history-parents {
+      color: #555;
+      font-size: 11px;
+      font-style: italic;
+      background: rgba(102, 126, 234, 0.05);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border-left: 2px solid #667eea;
+      margin: 2px 0;
+      display: block;
     }
 
     /* Historial compacto y responsive */
@@ -456,7 +1242,7 @@
 
     .status-message {
       position: fixed;
-      top: 20px;
+      top: 80px;
       right: 20px;
       padding: 15px 20px;
       border-radius: 10px;
@@ -568,14 +1354,56 @@
       font-size: 12px;
     }
 
-    /* Responsive Design */
+    /* Responsive Design para navegación */
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+      }
+      
+      .stat-card {
+        padding: 15px;
+      }
+      
+      .stat-number {
+        font-size: 2rem;
+      }
+      
+      .chart-container {
+        padding: 15px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .nav-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+      }
+      
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .ranking-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      
+      .ranking-meta {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+      }
+    }
+
     /* Sistema de alertas persistentes */
     .alert-container {
       position: fixed;
-      top: 20px;
+      top: 90px;
       right: 20px;
       z-index: 10000;
-      max-width: 400px;
+      max-width: 350px;
       pointer-events: none;
     }
     
@@ -652,9 +1480,38 @@
       body {
         padding: 10px;
       }
+      
+      .mobile-menu-toggle {
+        display: block !important;
+      }
+      
+      .main-nav {
+        display: none !important;
+      }
+      
+      .header {
+        padding-left: 20px !important;
+        text-align: center !important;
+      }
+      
+      .container {
+        padding-left: 10px;
+      }
+      
+      .header {
+        padding-left: 20px !important;
+        padding-right: 20px !important;
+        text-align: center !important;
+      }
 
       .header h1 {
-        font-size: 2rem;
+        font-size: 1.5rem;
+        margin-left: 0;
+      }
+      
+      .header p {
+        font-size: 0.9rem;
+        margin-left: 0;
       }
 
       .grid {
@@ -694,7 +1551,7 @@
       
       /* Mejorar alertas en móviles */
       .alert-container {
-        top: 10px;
+        top: 70px;
         right: 10px;
         left: 10px;
         max-width: none;
@@ -734,6 +1591,8 @@
       .header h1 {
         font-size: 1.8rem;
       }
+      
+      /* Sync button responsive rules removed */
 
       .card {
         padding: 15px;
@@ -760,6 +1619,31 @@
       }
     }
 
+    /* Reglas responsive para sesiones activas */
+    @media (max-width: 768px) {
+      .list-item.active {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .session-controls {
+        align-items: center;
+        margin-top: 10px;
+      }
+      
+      .button-group {
+        justify-content: center;
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .button-group button {
+        padding: 6px 10px !important;
+        font-size: 12px !important;
+      }
+    }
+
     /* Regla específica para pantallas muy pequeñas */
     @media (max-width: 360px) {
       .form-row {
@@ -781,57 +1665,114 @@
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1><i class="fas fa-gamepad"></i> Temporizador de Juegos</h1>
-      <p>Controla el tiempo de juego de los niños de forma divertida</p>
-      <!-- Deployment trigger: v1.1 - All visual errors fixed -->
-      <button class="sync-btn" onclick="forceSync()" title="Sincronizar datos">
-        <i class="fas fa-sync-alt"></i>
+    <!-- Menú móvil - Posicionado fuera del flujo normal -->
+    <div style="position: fixed; top: 20px; left: 20px; z-index: 9999;">
+      <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+        <div class="hamburger-lines">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </button>
+    </div>
+    
+    <div class="sidebar-overlay" onclick="closeMobileMenu()"></div>
+    
+    <div class="sidebar" id="sidebar">
+      <button onclick="showSection('dashboard')" class="nav-btn" id="nav-dashboard">
+        <i class="fas fa-chart-bar"></i> Dashboard <span class="shortcut-key">1</span>
+      </button>
+      <button onclick="showSection('sessions')" class="nav-btn" id="nav-sessions">
+        <i class="fas fa-play-circle"></i> Sesiones <span class="shortcut-key">2</span>
+      </button>
+      <button onclick="showSection('children')" class="nav-btn" id="nav-children">
+        <i class="fas fa-child"></i> Niños <span class="shortcut-key">3</span>
+      </button>
+      <button onclick="showSection('games')" class="nav-btn" id="nav-games">
+        <i class="fas fa-gamepad"></i> Juegos <span class="shortcut-key">4</span>
       </button>
     </div>
 
-    <div class="grid">
-      <!-- Registrar Niño -->
-      <div class="card">
-        <h2><i class="fas fa-child"></i> Registrar Niño</h2>
-        <div class="form-row">
-          <div class="form-group">
-            <input type="text" id="childName" placeholder="Nombre del niño" maxlength="50">
+  <!-- Desktop Sidebar -->
+  <div class="desktop-sidebar">
+    <div class="sidebar-header">
+      <h2><i class="fas fa-gamepad"></i> Temporizador</h2>
+    </div>
+    <nav class="desktop-nav">
+      <button onclick="showSection('dashboard')" class="desktop-nav-btn active" id="nav-dashboard">
+        <i class="fas fa-chart-bar"></i> Dashboard
+      </button>
+      <button onclick="showSection('sessions')" class="desktop-nav-btn" id="nav-sessions">
+        <i class="fas fa-play-circle"></i> Sesiones
+      </button>
+      <button onclick="showSection('children')" class="desktop-nav-btn" id="nav-children">
+        <i class="fas fa-child"></i> Niños
+      </button>
+      <button onclick="showSection('games')" class="desktop-nav-btn" id="nav-games">
+        <i class="fas fa-gamepad"></i> Juegos
+      </button>
+    </nav>
+  </div>
+
+  <div class="main-content">
+    <div class="header">
+      <h1><i class="fas fa-gamepad"></i> Temporizador de Juegos</h1>
+      <p>Controla el tiempo de juego de los niños de forma divertida</p>
+    </div>
+
+    <!-- Dashboard Section -->
+    <div id="dashboard-section" class="section active">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number" id="totalChildren">0</div>
+          <div class="stat-label">Niños Registrados</div>
+          <div class="stat-description">Total de niños en el sistema</div>
           </div>
-          <div class="form-group">
-            <button onclick="addChild()" id="addChildBtn">
-              <i class="fas fa-plus"></i> Agregar Niño
-            </button>
+        <div class="stat-card">
+          <div class="stat-number" id="totalGames">0</div>
+          <div class="stat-label">Juegos Disponibles</div>
+          <div class="stat-description">Juegos registrados</div>
           </div>
+        <div class="stat-card">
+          <div class="stat-number" id="activeSessionsCount">0</div>
+          <div class="stat-label">Sesiones Activas</div>
+          <div class="stat-description">Jugando ahora</div>
         </div>
-        <ul class="list" id="childrenList"></ul>
+        <div class="stat-card">
+          <div class="stat-number" id="totalTimePlayed">0</div>
+          <div class="stat-label">Tiempo Total (min)</div>
+          <div class="stat-description">Tiempo jugado acumulado</div>
+        </div>
       </div>
 
-      <!-- Registrar Juego -->
-      <div class="card">
-        <h2><i class="fas fa-dice"></i> Registrar Juego</h2>
-        <div class="form-row">
-          <div class="form-group">
-            <input type="text" id="gameName" placeholder="Nombre del juego" maxlength="50">
+      <div class="chart-container">
+        <div class="chart-title">🏆 Ranking de Tiempo Jugado</div>
+        <ul class="ranking-list" id="childrenRanking">
+          <li class="ranking-item">No hay datos disponibles</li>
+        </ul>
           </div>
-          <div class="form-group">
-            <button onclick="addGame()" id="addGameBtn">
-              <i class="fas fa-plus"></i> Agregar Juego
-            </button>
+
+      <div class="chart-container">
+        <div class="chart-title">🎮 Juegos Más Populares</div>
+        <ul class="ranking-list" id="gamesRanking">
+          <li class="ranking-item">No hay datos disponibles</li>
+        </ul>
           </div>
-        </div>
-        <ul class="list" id="gamesList"></ul>
       </div>
 
+    <!-- Sessions Section -->
+    <div id="sessions-section" class="section">
+      <div class="grid">
       <!-- Iniciar Sesión -->
       <div class="card">
         <h2><i class="fas fa-play-circle"></i> Iniciar Sesión de Juego</h2>
         <div class="form-group">
           <label><i class="fas fa-user"></i> Niño:</label>
-          <select id="childSelect">
-            <option value="">Seleccione un niño</option>
-          </select>
+                     <div class="child-search-container">
+                       <input type="text" id="childSearchInput" placeholder="Buscar niño por nombre..." autocomplete="off">
+                       <div class="child-search-results" id="childSearchResults"></div>
+                       <input type="hidden" id="selectedChildId" value="">
+                     </div>
         </div>
         <div class="form-group">
           <label><i class="fas fa-gamepad"></i> Juego:</label>
@@ -863,6 +1804,65 @@
       </div>
     </div>
   </div>
+
+    <!-- Children Section -->
+    <div id="children-section" class="section">
+      <div class="grid">
+        <!-- Registrar Niño -->
+        <div class="card">
+          <h2><i class="fas fa-child"></i> Registrar Niño</h2>
+            <div class="child-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="childName">Nombre del niño</label>
+                  <input type="text" id="childName" placeholder="Ej: Juan" maxlength="30" required>
+                </div>
+                <div class="form-group">
+                  <label for="childNickname">Apodo (opcional)</label>
+                  <input type="text" id="childNickname" placeholder="Ej: Juanito" maxlength="20">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="fatherName">Nombre del padre (opcional)</label>
+                  <input type="text" id="fatherName" placeholder="Ej: Carlos" maxlength="30">
+                </div>
+                <div class="form-group">
+                  <label for="motherName">Nombre de la madre (opcional)</label>
+                  <input type="text" id="motherName" placeholder="Ej: María" maxlength="30">
+                </div>
+              </div>
+              <button onclick="addChild()" id="addChildBtn" class="btn-primary">
+                <i class="fas fa-plus"></i> AGREGAR NIÑO
+              </button>
+            </div>
+          <ul class="list" id="childrenList"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Games Section -->
+    <div id="games-section" class="section">
+      <div class="grid">
+        <!-- Registrar Juego -->
+        <div class="card">
+          <h2><i class="fas fa-dice"></i> Registrar Juego</h2>
+          <div class="form-row">
+            <div class="form-group">
+              <input type="text" id="gameName" placeholder="Nombre del juego" maxlength="50">
+            </div>
+            <div class="form-group">
+              <button onclick="addGame()" id="addGameBtn">
+                <i class="fas fa-plus"></i> Agregar Juego
+              </button>
+            </div>
+          </div>
+          <ul class="list" id="gamesList"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div> <!-- Cerrar main-content -->
 
   <!-- Status Message -->
   <div id="statusMessage" class="status-message"></div>
@@ -898,11 +1898,343 @@
     </div>
   </div>
 
+  <!-- Modal de Edición de Niño -->
+  <div id="editChildModal" class="modal">
+    <div class="modal-content">
+      <h2><i class="fas fa-edit"></i> Editar Información del Niño</h2>
+      <div class="form-group">
+        <label for="editChildName">Nombre del niño:</label>
+        <input type="text" id="editChildName" placeholder="Ej: Juan" maxlength="30" required>
+      </div>
+      <div class="form-group">
+        <label for="editChildNickname">Apodo (opcional):</label>
+        <input type="text" id="editChildNickname" placeholder="Ej: Juanito" maxlength="20">
+      </div>
+      <div class="form-group">
+        <label for="editFatherName">Nombre del padre (opcional):</label>
+        <input type="text" id="editFatherName" placeholder="Ej: Carlos" maxlength="30">
+      </div>
+      <div class="form-group">
+        <label for="editMotherName">Nombre de la madre (opcional):</label>
+        <input type="text" id="editMotherName" placeholder="Ej: María" maxlength="30">
+      </div>
+      <div class="modal-buttons">
+        <button onclick="confirmEditChild()" class="btn-success">
+          <i class="fas fa-save"></i> Guardar Cambios
+        </button>
+        <button onclick="closeEditChildModal()" class="btn-danger">
+          <i class="fas fa-times"></i> Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Configuración de API - detectar entorno
     const api = window.location.origin;
     console.log('API URL:', api);
     console.log('Environment:', window.location.hostname);
+
+    // Variables para el dashboard
+    let dashboardStats = null;
+    
+    // Variables para notificaciones
+    let notificationPermission = null;
+    
+    // Variables para atajos de teclado
+    let keyboardShortcuts = {
+      '1': () => showSection('dashboard'),
+      '2': () => showSection('sessions'),
+      '3': () => showSection('children'),
+      '4': () => showSection('games'),
+      'Escape': () => closeModal() || closeExtendModal() || closeEditChildModal()
+    };
+
+    // Funciones de notificaciones push
+    async function requestNotificationPermission() {
+      if (!('Notification' in window)) {
+        console.log('Este navegador no soporta notificaciones');
+        return false;
+      }
+      
+      if (Notification.permission === 'granted') {
+        return true;
+      }
+      
+      if (Notification.permission === 'denied') {
+        console.log('Notificaciones denegadas por el usuario');
+        return false;
+      }
+      
+      const permission = await Notification.requestPermission();
+      notificationPermission = permission === 'granted';
+      return notificationPermission;
+    }
+
+    function showBrowserNotification(title, message, icon = null) {
+      if (notificationPermission && 'Notification' in window) {
+        const notification = new Notification(title, {
+          body: message,
+          icon: icon || '/favicon.ico',
+          tag: 'temporizador-juegos',
+          requireInteraction: true
+        });
+        
+        // Auto-cerrar después de 10 segundos
+        setTimeout(() => {
+          notification.close();
+        }, 10000);
+        
+        // Cerrar al hacer click
+        notification.onclick = () => {
+          window.focus();
+          notification.close();
+        };
+      }
+    }
+
+    // Funciones de navegación
+    function showSection(sectionName) {
+      // Ocultar todas las secciones
+      document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('active');
+      });
+      
+      // Desactivar todos los botones de navegación
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      // Mostrar la sección seleccionada
+      const section = document.getElementById(sectionName + '-section');
+      if (section) {
+        section.classList.add('active');
+      }
+      
+      // Activar el botón correspondiente (tanto desktop como móvil)
+      const desktopNavBtn = document.getElementById('nav-' + sectionName);
+      const mobileNavBtn = document.querySelector('.sidebar .nav-btn[id="nav-' + sectionName + '"]');
+      
+      // Desactivar todos los botones primero
+      document.querySelectorAll('.desktop-nav-btn, .nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      // Activar el botón correspondiente
+      if (desktopNavBtn) {
+        desktopNavBtn.classList.add('active');
+      }
+      if (mobileNavBtn) {
+        mobileNavBtn.classList.add('active');
+      }
+      
+      // Actualizar dashboard si es necesario
+      if (sectionName === 'dashboard') {
+        updateDashboard();
+      }
+      
+      // Cerrar menú móvil al navegar
+      closeMobileMenu();
+      
+      // Limpiar alertas persistentes al cambiar de sección
+      clearAllPersistentAlerts();
+      
+      // Guardar sección activa en localStorage
+      localStorage.setItem('activeSection', sectionName);
+    }
+
+    // Funciones del menú móvil
+    function toggleMobileMenu() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.querySelector('.sidebar-overlay');
+      
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('active');
+    }
+
+    function closeMobileMenu() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.querySelector('.sidebar-overlay');
+      
+      sidebar.classList.remove('open');
+      overlay.classList.remove('active');
+    }
+
+    // Sistema de búsqueda de niños
+    function initializeChildSearch() {
+      const searchInput = document.getElementById('childSearchInput');
+      const searchResults = document.getElementById('childSearchResults');
+      const selectedChildId = document.getElementById('selectedChildId');
+
+      if (!searchInput) return;
+
+      let searchTimeout;
+
+      searchInput.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        const query = e.target.value.trim().toLowerCase();
+
+        if (query.length < 2) {
+          hideSearchResults();
+          return;
+        }
+
+        searchTimeout = setTimeout(() => {
+          searchChildren(query);
+        }, 300);
+      });
+
+      searchInput.addEventListener('focus', () => {
+        if (searchInput.value.trim().length >= 2) {
+          searchChildren(searchInput.value.trim().toLowerCase());
+        }
+      });
+
+      // Cerrar resultados al hacer clic fuera
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.child-search-container')) {
+          hideSearchResults();
+        }
+      });
+    }
+
+    function searchChildren(query) {
+      const results = childrenCache.filter(child => {
+        const name = (child.displayName || child.name).toLowerCase();
+        const fatherName = (child.fatherName || '').toLowerCase();
+        const motherName = (child.motherName || '').toLowerCase();
+        
+        return name.includes(query) || 
+               fatherName.includes(query) || 
+               motherName.includes(query);
+      });
+
+      displaySearchResults(results);
+    }
+
+    function displaySearchResults(results) {
+      const searchResults = document.getElementById('childSearchResults');
+      const searchInput = document.getElementById('childSearchInput');
+
+      if (!searchResults || !searchInput) return;
+
+      if (results.length === 0) {
+        searchResults.innerHTML = '<div class="no-results">No se encontraron niños</div>';
+      } else {
+        searchResults.innerHTML = results.map(child => {
+          const displayName = child.displayName || child.name;
+          const avatar = child.avatar || child.name.charAt(0).toUpperCase();
+          
+          let parentsInfo = '';
+          if (child.fatherName && child.motherName) {
+            parentsInfo = `${child.fatherName} & ${child.motherName}`;
+          } else if (child.fatherName) {
+            parentsInfo = `Papá: ${child.fatherName}`;
+          } else if (child.motherName) {
+            parentsInfo = `Mamá: ${child.motherName}`;
+          }
+
+          return `
+            <div class="child-search-item" onclick="selectChild(${child.id}, '${displayName.replace(/'/g, "\\'")}')">
+              <div class="child-avatar">${avatar}</div>
+              <div class="child-info">
+                <div class="child-name">${displayName}</div>
+                ${parentsInfo ? `<div class="child-parents">${parentsInfo}</div>` : ''}
+              </div>
+              <div class="child-stats">${child.totalTimePlayed} min</div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      searchResults.classList.add('show');
+    }
+
+    function selectChild(childId, childName) {
+      const searchInput = document.getElementById('childSearchInput');
+      const selectedChildId = document.getElementById('selectedChildId');
+      const searchResults = document.getElementById('childSearchResults');
+
+      if (searchInput) {
+        searchInput.value = childName;
+      }
+      if (selectedChildId) {
+        selectedChildId.value = childId;
+      }
+
+      hideSearchResults();
+    }
+
+    function hideSearchResults() {
+      const searchResults = document.getElementById('childSearchResults');
+      if (searchResults) {
+        searchResults.classList.remove('show');
+      }
+    }
+
+    // Funciones del dashboard
+    async function fetchDashboardStats() {
+      try {
+        const res = await fetchWithRetry(api + '/admin/stats');
+        if (res.ok) {
+          dashboardStats = await res.json();
+          return dashboardStats;
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
+      }
+      return null;
+    }
+
+    function updateDashboard() {
+      if (!dashboardStats) {
+        fetchDashboardStats().then(() => {
+          if (dashboardStats) {
+            renderDashboard();
+          }
+        });
+      } else {
+        renderDashboard();
+      }
+    }
+
+    function renderDashboard() {
+      if (!dashboardStats) return;
+
+      // Actualizar estadísticas principales
+      document.getElementById('totalChildren').textContent = dashboardStats.totalChildren || 0;
+      document.getElementById('totalGames').textContent = dashboardStats.totalGames || 0;
+      document.getElementById('activeSessionsCount').textContent = dashboardStats.activeSessions || 0;
+      document.getElementById('totalTimePlayed').textContent = dashboardStats.totalTimePlayed || 0;
+
+      // Actualizar ranking de niños
+      const childrenRanking = document.getElementById('childrenRanking');
+      if (dashboardStats.childrenStats && dashboardStats.childrenStats.length > 0) {
+        childrenRanking.innerHTML = dashboardStats.childrenStats.map((child, index) => `
+          <li class="ranking-item">
+            <div class="ranking-position">${index + 1}°</div>
+            <div class="ranking-name">${child.name}</div>
+            <div class="ranking-time">${child.totalTimePlayed} min</div>
+          </li>
+        `).join('');
+      } else {
+        childrenRanking.innerHTML = '<li class="ranking-item">No hay datos disponibles</li>';
+      }
+
+      // Actualizar ranking de juegos
+      const gamesRanking = document.getElementById('gamesRanking');
+      if (dashboardStats.gamesStats && dashboardStats.gamesStats.length > 0) {
+        gamesRanking.innerHTML = dashboardStats.gamesStats.map((game, index) => `
+          <li class="ranking-item">
+            <div class="ranking-position">${index + 1}°</div>
+            <div class="ranking-name">${game.name}</div>
+            <div class="ranking-time">${game.totalTimePlayed} min</div>
+          </li>
+        `).join('');
+      } else {
+        gamesRanking.innerHTML = '<li class="ranking-item">No hay datos disponibles</li>';
+      }
+    }
 
     // Estado de la aplicación - ROBUSTO
     let isLoading = false;
@@ -911,6 +2243,7 @@
     let gamesCache = [];
     let timerIntervals = new Map();
     let currentExtendSession = null;
+    let currentEditChild = null; // Para almacenar el ID del niño que se está editando
     let isInitialized = false;
     let isFirstLoad = true;
     let alertedSessions = new Set(); // Para evitar alertas duplicadas
@@ -922,6 +2255,11 @@
       // Si es una alerta de sesión, verificar si ya se mostró
       if (sessionId && alertedSessions.has(sessionId)) {
         return; // No mostrar alerta duplicada
+      }
+      
+      // Reproducir sonido según el tipo
+      if (type === 'warning' || type === 'danger') {
+        playNotificationSound(type);
       }
       
       // Limpiar cualquier timeout anterior
@@ -937,7 +2275,8 @@
         alertedSessions.add(sessionId);
       }
       
-      // Auto-ocultar después de 3 segundos (reducido)
+      // Auto-ocultar después de 1.5 segundos para mensajes más cortos
+      const timeoutDuration = text.length < 10 ? 1500 : 3000;
       msg.timeoutId = setTimeout(() => {
         msg.classList.remove('show');
         msg.timeoutId = null;
@@ -948,7 +2287,7 @@
             alertedSessions.delete(sessionId);
           }, 1000);
         }
-      }, 3000);
+      }, timeoutDuration);
     }
 
     function showLoading(buttonId, show = true) {
@@ -1001,8 +2340,57 @@
       }
     }
 
+    // Sistema de notificaciones con sonido
+    function playNotificationSound(type = 'default') {
+      try {
+        // Crear audio context para sonidos
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        let frequency = 800;
+        let duration = 0.2;
+        
+        switch(type) {
+          case 'warning':
+            frequency = 600;
+            duration = 0.3;
+            break;
+          case 'danger':
+            frequency = 400;
+            duration = 0.5;
+            break;
+          case 'success':
+            frequency = 1000;
+            duration = 0.2;
+            break;
+        }
+        
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = frequency;
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + duration);
+      } catch (error) {
+        console.log('Could not play notification sound:', error);
+      }
+    }
+
     // Sistema de alertas mejorado
     function showCustomModal(msg) {
+      // Reproducir sonido de notificación
+      playNotificationSound('danger');
+      
+      // Mostrar notificación del navegador
+      showBrowserNotification('⏰ Tiempo Terminado', msg);
+      
       // Crear alerta persistente en la esquina
       const alertContainer = document.getElementById('alertContainer') || createAlertContainer();
       
@@ -1021,12 +2409,12 @@
       
       alertContainer.appendChild(alert);
       
-      // Auto-remover después de 30 segundos si no se cierra manualmente
+      // Auto-remover después de 10 segundos si no se cierra manualmente
       setTimeout(() => {
         if (document.getElementById(alertId)) {
           closeAlert(alertId);
         }
-      }, 30000);
+      }, 10000);
     }
     
     function createAlertContainer() {
@@ -1042,10 +2430,25 @@
       if (alert) {
         alert.style.opacity = '0';
         alert.style.transform = 'translateX(100%)';
+        alert.style.transition = 'all 0.3s ease';
         setTimeout(() => {
+          if (alert.parentNode) {
           alert.remove();
+          }
         }, 300);
       }
+    }
+
+    // Función para limpiar todas las alertas persistentes
+    function clearAllPersistentAlerts() {
+      const alertContainer = document.getElementById('alertContainer');
+      if (alertContainer) {
+        alertContainer.innerHTML = '';
+      }
+      // También limpiar cualquier alerta que pueda estar fuera del contenedor
+      document.querySelectorAll('.persistent-alert').forEach(alert => {
+        alert.remove();
+      });
     }
 
     function closeModal() {
@@ -1054,7 +2457,25 @@
 
     function showExtendModal(sessionId, childName) {
       currentExtendSession = sessionId;
-      document.getElementById('extendMsg').textContent = `¿Cuánto tiempo adicional quiere darle a ${childName}?`;
+      
+      // Buscar información del niño para mostrar padres si existen
+      const session = activeSessionsData.find(s => s.id === sessionId);
+      const child = session ? childrenCache.find(c => c.id === session.childId) : null;
+      
+      let displayMessage = `¿Cuánto tiempo adicional quiere darle a ${childName}?`;
+      if (child && (child.fatherName || child.motherName)) {
+        let parentsText = '';
+        if (child.fatherName && child.motherName) {
+          parentsText = ` (${child.fatherName} & ${child.motherName})`;
+        } else if (child.fatherName) {
+          parentsText = ` (Papá: ${child.fatherName})`;
+        } else if (child.motherName) {
+          parentsText = ` (Mamá: ${child.motherName})`;
+        }
+        displayMessage = `¿Cuánto tiempo adicional quiere darle a ${childName}${parentsText}?`;
+      }
+      
+      document.getElementById('extendMsg').textContent = displayMessage;
       document.getElementById('extendTimeInput').value = 5;
       document.getElementById('extendModal').classList.add('show');
     }
@@ -1187,14 +2608,41 @@
         list.innerHTML = '<li class="list-item">No hay niños registrados</li>';
         return;
       }
-      list.innerHTML = children.map(child => 
-        `<li class="list-item">
-          <span><i class="fas fa-child"></i> ${child.name}</span>
-          <button onclick="deleteChild(${child.id})" class="btn-danger" style="padding: 5px 10px; font-size: 12px;">
+        list.innerHTML = children.map(child => {
+          const displayName = child.displayName || child.name;
+          const avatar = child.avatar || child.name.charAt(0).toUpperCase();
+          
+          // Información de padres simplificada
+          let parentsInfo = '';
+          if (child.fatherName && child.motherName) {
+            parentsInfo = `<div class="child-parents">${child.fatherName} & ${child.motherName}</div>`;
+          } else if (child.fatherName) {
+            parentsInfo = `<div class="child-parents">Papá: ${child.fatherName}</div>`;
+          } else if (child.motherName) {
+            parentsInfo = `<div class="child-parents">Mamá: ${child.motherName}</div>`;
+          }
+
+          return `<li class="list-item child-item">
+            <div class="child-info" style="flex: 1; margin-right: 10px;">
+              <span class="child-avatar">${avatar}</span>
+              <div class="child-details">
+                <div class="child-name">${displayName}</div>
+                ${parentsInfo}
+                <div class="child-time">${child.totalTimePlayed} min</div>
+              </div>
+            </div>
+            <div class="delete-button-container" style="flex-shrink: 0;">
+              <div class="button-group-small">
+                <button onclick="editChild(${child.id})" class="btn-edit" title="Editar información">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button onclick="deleteChild(${child.id})" class="btn-danger btn-small" title="Eliminar niño">
             <i class="fas fa-trash"></i>
           </button>
-        </li>`
-      ).join('');
+              </div>
+            </div>
+          </li>`;
+        }).join('');
     }
 
     function renderGamesList(games) {
@@ -1207,10 +2655,14 @@
       }
       list.innerHTML = games.map(game => 
         `<li class="list-item">
+          <div style="flex: 1; margin-right: 10px;">
           <span><i class="fas fa-dice"></i> ${game.name}</span>
-          <button onclick="deleteGame(${game.id})" class="btn-danger" style="padding: 5px 10px; font-size: 12px;">
+          </div>
+          <div class="delete-button-container" style="flex-shrink: 0;">
+            <button onclick="deleteGame(${game.id})" class="btn-danger btn-small">
             <i class="fas fa-trash"></i>
           </button>
+          </div>
         </li>`
       ).join('');
     }
@@ -1220,7 +2672,20 @@
       if (!select) return;
       
       select.innerHTML = '<option value="">Seleccione un niño</option>' +
-        (children || []).map(child => `<option value="${child.id}">${child.name}</option>`).join('');
+        (children || []).map(child => {
+          const displayName = child.displayName || child.name;
+          
+          // Agregar información de padres si existe para diferenciar
+          let parentInfo = '';
+          if (child.fatherName || child.motherName) {
+            const father = child.fatherName ? child.fatherName : '';
+            const mother = child.motherName ? child.motherName : '';
+            const separator = father && mother ? ', ' : '';
+            parentInfo = ` (${father}${separator}${mother})`;
+          }
+          
+          return `<option value="${child.id}">${displayName}${parentInfo}</option>`;
+        }).join('');
     }
 
     function updateGameSelect(games) {
@@ -1305,24 +2770,37 @@
         const child = childrenCache.find(c => c.id === s.childId);
         const game = gamesCache.find(g => g.id === s.gameId);
         
-        // Usar nombres reales, si no se encuentran, mostrar "Desconocido"
-        const childName = child ? child.name : 'Niño desconocido';
+        // Usar displayName si existe, sino el nombre original
+        const childDisplayName = child ? (child.displayName || child.name) : 'Niño desconocido';
+        const childAvatar = child ? (child.avatar || child.name.charAt(0).toUpperCase()) : '?';
         const gameName = game ? game.name : 'Juego desconocido';
         
+        // Información de padres para diferenciación
+        let parentsInfo = '';
+        if (child && (child.fatherName || child.motherName)) {
+          if (child.fatherName && child.motherName) {
+            parentsInfo = `<br><small class="parents-info"><i class="fas fa-users"></i> ${child.fatherName} & ${child.motherName}</small>`;
+          } else if (child.fatherName) {
+            parentsInfo = `<br><small class="parents-info"><i class="fas fa-users"></i> Papá: ${child.fatherName}</small>`;
+          } else if (child.motherName) {
+            parentsInfo = `<br><small class="parents-info"><i class="fas fa-users"></i> Mamá: ${child.motherName}</small>`;
+          }
+        }
+        
         return `<li class="list-item active" data-session-id="${s.id}" id="session-${s.id}">
-          <div>
-            <strong><i class="fas fa-child"></i> ${childName}</strong><br>
+          <div class="session-info">
+            <strong><span class="child-avatar-small">${childAvatar}</span> <i class="fas fa-child"></i> ${childDisplayName}</strong>${parentsInfo}<br>
             <small><i class="fas fa-gamepad"></i> ${gameName}</small><br>
             <small><i class="fas fa-clock"></i> Duración: ${s.duration} min</small>
           </div>
-          <div style="text-align: right;">
+          <div class="session-controls">
             <div class="timer" id="timer-${s.id}">Calculando...</div>
-            <div style="margin-top: 5px;">
-              <button class="btn-danger" onclick="endSession(${s.id})" style="padding: 5px 10px; font-size: 12px; margin-right: 5px;">
-                <i class="fas fa-stop"></i> Finalizar
+            <div class="button-group">
+              <button class="btn-danger" onclick="endSession(${s.id})" style="padding: 4px 8px; font-size: 11px; margin-right: 3px;">
+                <i class="fas fa-stop"></i> FIN
               </button>
-              <button class="extend-time" onclick="showExtendModal(${s.id}, '${childName}')" style="padding: 5px 10px; font-size: 12px;">
-                <i class="fas fa-plus"></i> +5min
+              <button class="extend-time" onclick="showExtendModal(${s.id}, '${childName}')" style="padding: 4px 8px; font-size: 11px;">
+                <i class="fas fa-plus"></i> +5
               </button>
             </div>
           </div>
@@ -1392,22 +2870,27 @@
       const timerSpan = document.getElementById(`timer-${sessionId}`);
       if (!timerSpan) return;
       
-      const now = Date.now();
-      const diff = Math.floor((now - startTime) / 1000);
-      const total = duration * 60;
-      const left = total - diff;
+      // Usar datos actualizados de activeSessionsData si están disponibles
+      const sessionData = activeSessionsData.find(s => s.id === sessionId);
+      const currentStartTime = sessionData ? sessionData.start : startTime;
+      const currentDuration = sessionData ? sessionData.duration : duration;
       
-      const h = String(Math.floor(left / 3600)).padStart(2, '0');
-      const m = String(Math.floor((left % 3600) / 60)).padStart(2, '0');
-      const s = String(left % 60).padStart(2, '0');
+      const now = Date.now();
+      const elapsedSeconds = Math.floor((now - currentStartTime) / 1000);
+      const totalSeconds = currentDuration * 60;
+      const remainingSeconds = totalSeconds - elapsedSeconds;
+      
+      const h = String(Math.floor(remainingSeconds / 3600)).padStart(2, '0');
+      const m = String(Math.floor((remainingSeconds % 3600) / 60)).padStart(2, '0');
+      const s = String(remainingSeconds % 60).padStart(2, '0');
       
       // Calcular tiempo transcurrido para mostrar también
-      const elapsed = Math.floor(diff / 60);
-      const elapsedSeconds = diff % 60;
+      const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+      const elapsedSecs = elapsedSeconds % 60;
       
       // Actualizar clases según el tiempo restante
       timerSpan.className = 'timer';
-      if (left <= 0) {
+      if (remainingSeconds <= 0) {
         timerSpan.textContent = '⏰ ¡Tiempo terminado!';
         timerSpan.classList.add('danger');
         if (!timerSpan.classList.contains('alerted')) {
@@ -1417,18 +2900,31 @@
           showCustomModal(`¡Se acabó el tiempo para ${child ? child.name : 'este niño'}!`);
           endSession(sessionId);
         }
-      } else if (left <= 60) {
-        timerSpan.innerHTML = `⚠️ <strong>Restante:</strong> ${m}:${s}<br><small>Transcurrido: ${elapsed}:${String(elapsedSeconds).padStart(2, '0')}</small>`;
+      } else if (remainingSeconds <= 60) {
+        timerSpan.innerHTML = `⚠️ <strong>Restante:</strong> ${m}:${s}<br><small>Transcurrido: ${elapsedMinutes}:${String(elapsedSecs).padStart(2, '0')}</small>`;
         timerSpan.classList.add('warning');
         // Alerta cuando quedan 30 segundos
-        if (left <= 30 && !timerSpan.classList.contains('alerted-30')) {
+        if (remainingSeconds <= 30 && !timerSpan.classList.contains('alerted-30')) {
           timerSpan.classList.add('alerted-30');
           const session = activeSessionsData.find(s => s.id === sessionId);
           const child = childrenCache.find(c => c.id === session.childId);
-          showStatusMessage(`¡Atención! A ${child ? child.name : 'este niño'} le quedan solo ${left} segundos`, 'warning', sessionId);
+          
+          let childDisplayName = child ? (child.displayName || child.name) : 'este niño';
+          let parentsText = '';
+          if (child && (child.fatherName || child.motherName)) {
+            if (child.fatherName && child.motherName) {
+              parentsText = ` (${child.fatherName} & ${child.motherName})`;
+            } else if (child.fatherName) {
+              parentsText = ` (Papá: ${child.fatherName})`;
+            } else if (child.motherName) {
+              parentsText = ` (Mamá: ${child.motherName})`;
+            }
+          }
+          
+          showStatusMessage(`¡Atención! A ${childDisplayName}${parentsText} le quedan solo ${remainingSeconds} segundos`, 'warning', sessionId);
         }
       } else {
-        timerSpan.innerHTML = `⏱️ <strong>Restante:</strong> ${h}:${m}:${s}<br><small>Transcurrido: ${elapsed}:${String(elapsedSeconds).padStart(2, '0')}</small>`;
+        timerSpan.innerHTML = `⏱️ <strong>Restante:</strong> ${h}:${m}:${s}<br><small>Transcurrido: ${elapsedMinutes}:${String(elapsedSecs).padStart(2, '0')}</small>`;
       }
     }
 
@@ -1499,8 +2995,20 @@
         const game = gamesCache.find(g => g.id === s.gameId);
         
         // Usar nombres reales, si no se encuentran, mostrar "Desconocido"
-        const childName = child ? child.name : 'Niño desconocido';
+        const childName = child ? (child.displayName || child.name) : 'Niño desconocido';
         const gameName = game ? game.name : 'Juego desconocido';
+        
+        // Información de padres para diferenciación
+        let parentsInfo = '';
+        if (child && (child.fatherName || child.motherName)) {
+          if (child.fatherName && child.motherName) {
+            parentsInfo = `<div class="history-parents"><i class="fas fa-users"></i> ${child.fatherName} & ${child.motherName}</div>`;
+          } else if (child.fatherName) {
+            parentsInfo = `<div class="history-parents"><i class="fas fa-users"></i> Papá: ${child.fatherName}</div>`;
+          } else if (child.motherName) {
+            parentsInfo = `<div class="history-parents"><i class="fas fa-users"></i> Mamá: ${child.motherName}</div>`;
+          }
+        }
         
         const startTime = new Date(s.start);
         const timeStr = startTime.toLocaleTimeString('es-ES', {
@@ -1522,13 +3030,17 @@
           durationText = `${duration}min`;
           durationClass = 'completed';
         } else {
-          // Sesión en curso
+          // Sesión en curso - usar la misma lógica que renderActiveSessions
           const currentTime = Date.now();
-          const elapsedMinutes = Math.round((currentTime - s.start) / 60000);
-          const totalMinutes = s.duration || 15;
-          const remainingMinutes = Math.max(0, totalMinutes - elapsedMinutes);
+          const elapsedSeconds = Math.floor((currentTime - s.start) / 1000);
+          const totalSeconds = (s.duration || 15) * 60;
+          const remainingSeconds = Math.max(0, totalSeconds - elapsedSeconds);
           
-          if (remainingMinutes <= 0) {
+          // Convertir a minutos para mostrar
+          const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+          const totalMinutes = s.duration || 15;
+          
+          if (remainingSeconds <= 0) {
             statusClass = 'expired';
             iconClass = 'expired';
             durationText = 'Agotado';
@@ -1551,6 +3063,7 @@
               <i class="fas fa-child"></i>
               ${childName}
             </div>
+            ${parentsInfo}
             <div class="history-subtitle">
               <i class="fas fa-gamepad"></i>
               ${gameName}
@@ -1668,6 +3181,10 @@
     // Funciones principales ROBUSTAS
     async function addChild() {
       const name = document.getElementById('childName').value.trim();
+      const nickname = document.getElementById('childNickname').value.trim();
+      const fatherName = document.getElementById('fatherName').value.trim();
+      const motherName = document.getElementById('motherName').value.trim();
+      
       if (!validateName(name, 'nombre del niño')) return;
       
       showLoading('addChildBtn', true);
@@ -1675,15 +3192,32 @@
         const res = await fetchWithRetry(api + '/children', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name })
+          body: JSON.stringify({ 
+            name,
+            nickname: nickname || undefined,
+            fatherName: fatherName || undefined,
+            motherName: motherName || undefined
+          })
         });
         
         if (!res.ok) {
           const errorData = await res.json().catch(() => ({ error: 'Error desconocido' }));
+          
+          // Manejar duplicados con sugerencias
+          if (errorData.duplicate && errorData.suggestion) {
+            showStatusMessage(`⚠️ ${errorData.suggestion}`, 'warning');
+            return;
+          }
+          
           throw new Error(errorData.error || 'Error al agregar niño');
         }
         
+        // Limpiar formulario
         document.getElementById('childName').value = '';
+        document.getElementById('childNickname').value = '';
+        document.getElementById('fatherName').value = '';
+        document.getElementById('motherName').value = '';
+        
         // Actualizar todos los datos después de agregar niño
         await Promise.all([
           fetchChildren(),
@@ -1691,7 +3225,7 @@
           fetchActiveSessions(),
           fetchSessionHistory()
         ]);
-        showStatusMessage('Niño agregado exitosamente', 'success');
+        // showStatusMessage('Niño agregado exitosamente', 'success');
       } catch (error) {
         console.error('Error adding child:', error);
         showStatusMessage(`Error al agregar niño: ${error.message}`, 'error');
@@ -1725,7 +3259,7 @@
           fetchActiveSessions(),
           fetchSessionHistory()
         ]);
-        showStatusMessage('Juego agregado exitosamente', 'success');
+        // showStatusMessage('Juego agregado exitosamente', 'success');
       } catch (error) {
         console.error('Error adding game:', error);
         showStatusMessage(`Error al agregar juego: ${error.message}`, 'error');
@@ -1735,7 +3269,7 @@
     }
 
     async function startSession() {
-      const childId = document.getElementById('childSelect').value;
+      const selectedChildId = document.getElementById('selectedChildId').value;
       const gameId = document.getElementById('gameSelect').value;
       const durationInput = document.getElementById('durationInput').value;
       
@@ -1747,12 +3281,12 @@
       
       const duration = parseInt(durationInput.trim());
       
-      console.log('Starting session:', { childId, gameId, duration, originalInput: durationInput });
+      console.log('Starting session:', { selectedChildId, gameId, duration, originalInput: durationInput });
       
-      if (!validateSession(childId, gameId, duration)) return;
+      if (!validateSession(selectedChildId, gameId, duration)) return;
       
       // Verificar que el niño y juego existen en el caché
-      const child = childrenCache.find(c => c.id == childId);
+      const child = childrenCache.find(c => c.id == selectedChildId);
       const game = gamesCache.find(g => g.id == gameId);
       
       if (!child) {
@@ -1770,7 +3304,7 @@
       showLoading('startBtn', true);
       try {
         const requestBody = { 
-          childId: Number(childId), 
+          childId: Number(selectedChildId), 
           gameId: Number(gameId), 
           duration: Number(duration) 
         };
@@ -1800,7 +3334,7 @@
           fetchChildren(), // Asegurar datos actualizados
           fetchGames()
         ]);
-        showStatusMessage('Sesión iniciada exitosamente', 'success');
+        // showStatusMessage('Sesión iniciada exitosamente', 'success');
         
         // Limpiar alertas de sesiones anteriores
         clearAllSessionAlerts();
@@ -1838,7 +3372,7 @@
           fetchChildren(), // Asegurar datos actualizados
           fetchGames()
         ]);
-        showStatusMessage('Sesión finalizada', 'success');
+        // showStatusMessage('Sesión finalizada', 'success');
         
         // Limpiar alertas de esta sesión
         clearSessionAlert(sessionId);
@@ -1897,7 +3431,10 @@
           fetchSessionHistory()
         ]);
         
-        showStatusMessage(`Tiempo extendido ${additionalTime} minutos correctamente`, 'success');
+        // Reiniciar timers para usar los datos actualizados
+        startTimers();
+        
+        showStatusMessage(`+${additionalTime} min`, 'success');
       } catch (error) {
         console.error('Error extending time:', error);
         showStatusMessage(`Error al extender tiempo: ${error.message}`, 'error');
@@ -1925,7 +3462,7 @@
           fetchActiveSessions(),
           fetchSessionHistory()
         ]);
-        showStatusMessage('Niño eliminado', 'success');
+        // showStatusMessage('Niño eliminado', 'success');
       } catch (error) {
         console.error('Error deleting child:', error);
         showStatusMessage(`Error al eliminar niño: ${error.message}`, 'error');
@@ -1952,14 +3489,102 @@
           fetchActiveSessions(),
           fetchSessionHistory()
         ]);
-        showStatusMessage('Juego eliminado', 'success');
+        // showStatusMessage('Juego eliminado', 'success');
       } catch (error) {
         console.error('Error deleting game:', error);
         showStatusMessage(`Error al eliminar juego: ${error.message}`, 'error');
       }
     }
 
+    // Funciones de edición de niños
+    function editChild(childId) {
+      const child = childrenCache.find(c => c.id === childId);
+      if (!child) {
+        showStatusMessage('Niño no encontrado', 'error');
+        return;
+      }
+
+      currentEditChild = childId;
+      
+      // Llenar el modal con los datos actuales
+      document.getElementById('editChildName').value = child.name || '';
+      document.getElementById('editChildNickname').value = child.nickname || '';
+      document.getElementById('editFatherName').value = child.fatherName || '';
+      document.getElementById('editMotherName').value = child.motherName || '';
+      
+      // Mostrar el modal
+      document.getElementById('editChildModal').classList.add('show');
+    }
+
+    function closeEditChildModal() {
+      document.getElementById('editChildModal').classList.remove('show');
+      currentEditChild = null;
+    }
+
+    async function confirmEditChild() {
+      if (!currentEditChild) {
+        showStatusMessage('No hay niño seleccionado para editar', 'error');
+        return;
+      }
+
+      const name = document.getElementById('editChildName').value.trim();
+      const nickname = document.getElementById('editChildNickname').value.trim();
+      const fatherName = document.getElementById('editFatherName').value.trim();
+      const motherName = document.getElementById('editMotherName').value.trim();
+      
+      if (!validateName(name, 'nombre del niño')) {
+        return;
+      }
+      
+      try {
+        const res = await fetchWithRetry(`${api}/children/${currentEditChild}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            name,
+            nickname: nickname || undefined,
+            fatherName: fatherName || undefined,
+            motherName: motherName || undefined
+          })
+        });
+        
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({ error: 'Error desconocido' }));
+          throw new Error(errorData.error || 'Error al editar niño');
+        }
+        
+        // Actualizar todos los datos después de editar niño
+        await Promise.all([
+          fetchChildren(),
+          fetchGames(),
+          fetchActiveSessions(),
+          fetchSessionHistory()
+        ]);
+        
+        closeEditChildModal();
+        showStatusMessage('Información del niño actualizada', 'success');
+      } catch (error) {
+        console.error('Error editing child:', error);
+        showStatusMessage(`Error al editar niño: ${error.message}`, 'error');
+      }
+    }
+
     // Inicialización ROBUSTA
+    // Función para migrar niños existentes
+    async function migrateExistingChildren() {
+      try {
+        const response = await fetch('/children/migrate', { method: 'POST' });
+        const result = await response.json();
+        
+        if (result.migrated > 0) {
+          console.log(`Migrated ${result.migrated} children with new display IDs`);
+          await fetchChildren(); // Recargar la lista
+        }
+      } catch (error) {
+        console.error('Error migrating children:', error);
+      }
+    }
+
     async function initializeApp() {
       if (isInitialized) return;
       
@@ -1996,6 +3621,14 @@
           console.error('Failed to load games, continuing...', error);
         }
         
+        // Migrar niños existentes si es necesario
+        try {
+          console.log('Migrating existing children...');
+          await migrateExistingChildren();
+        } catch (error) {
+          console.error('Failed to migrate children, continuing...', error);
+        }
+        
         // Cargar sesiones activas
         try {
           console.log('Loading active sessions...');
@@ -2010,6 +3643,31 @@
           await fetchSessionHistory();
         } catch (error) {
           console.error('Failed to load session history, continuing...', error);
+        }
+        
+        // Cargar estadísticas del dashboard
+        try {
+          console.log('Loading dashboard stats...');
+          await fetchDashboardStats();
+          updateDashboard();
+        } catch (error) {
+          console.error('Failed to load dashboard stats, continuing...', error);
+        }
+        
+             // Solicitar permisos de notificación
+             try {
+               console.log('Requesting notification permission...');
+               await requestNotificationPermission();
+             } catch (error) {
+               console.error('Failed to request notification permission, continuing...', error);
+             }
+             
+             // Inicializar sistema de búsqueda de niños
+             try {
+               console.log('Initializing child search system...');
+               initializeChildSearch();
+             } catch (error) {
+               console.error('Failed to initialize child search system, continuing...', error);
         }
         
         // Configurar intervalos de actualización - MUY REDUCIDOS para evitar parpadeo
@@ -2031,8 +3689,17 @@
         });
         
         isInitialized = true;
-        showStatusMessage('Aplicación cargada correctamente', 'success');
+        // showStatusMessage('Aplicación cargada correctamente', 'success');
         console.log('App initialized successfully');
+        
+        // Restaurar sección activa del localStorage
+        const savedSection = localStorage.getItem('activeSection');
+        if (savedSection) {
+            showSection(savedSection);
+        } else {
+            // Si no hay sección guardada, guardar dashboard como por defecto
+            localStorage.setItem('activeSection', 'dashboard');
+        }
       } catch (error) {
         console.error('Critical error initializing app:', error);
         showStatusMessage('Error crítico al cargar la aplicación', 'error');
@@ -2051,12 +3718,10 @@
     }
     
     // Función para forzar sincronización completa
+    // Función interna para debugging - no visible para usuarios
     async function forceSync() {
-      console.log('Forcing complete sync...');
-      showStatusMessage('Sincronizando datos...', 'info');
-      
+      console.log('Internal sync triggered...');
       try {
-        // Limpiar caché antes de sincronizar
         childrenCache = [];
         gamesCache = [];
         
@@ -2067,17 +3732,14 @@
           fetchSessionHistory()
         ]);
         
-        // Forzar re-renderizado de todos los elementos
         renderChildrenList(childrenCache);
         renderGamesList(gamesCache);
         updateChildSelect(childrenCache);
         updateGameSelect(gamesCache);
         
-        showStatusMessage('Datos sincronizados correctamente', 'success');
-        console.log('Complete sync successful');
+        console.log('Internal sync completed');
       } catch (error) {
-        console.error('Force sync failed:', error);
-        showStatusMessage('Error al sincronizar datos', 'error');
+        console.error('Internal sync failed:', error);
       }
     }
     
@@ -2085,14 +3747,34 @@
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
         console.log('Page became visible, forcing sync...');
-        forceSync();
+        // forceSync(); // Comentado para evitar alertas molestas
       }
     });
     
     // Sincronización cuando se enfoca la ventana
     window.addEventListener('focus', () => {
       console.log('Window focused, forcing sync...');
-      forceSync();
+      // forceSync(); // Comentado para evitar alertas molestas
+    });
+
+    // Manejador de atajos de teclado
+    document.addEventListener('keydown', (event) => {
+      // Solo activar atajos si no se está escribiendo en un input
+      if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.tagName === 'SELECT') {
+        return;
+      }
+      
+      const key = event.key;
+      if (keyboardShortcuts[key]) {
+        event.preventDefault();
+        keyboardShortcuts[key]();
+      }
+      
+      // Atajo para abrir/cerrar menú móvil (tecla 'm')
+      if (key === 'm' || key === 'M') {
+        event.preventDefault();
+        toggleMobileMenu();
+      }
     });
 
     // Inicializar cuando se carga la página
