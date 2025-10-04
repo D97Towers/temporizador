@@ -12,47 +12,24 @@
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/index.js"
-    },
-    {
       "src": "/admin/(.*)",
       "dest": "/index.js"
     },
     {
-      "src": "/children/(.*)",
+      "src": "/children(.*)",
       "dest": "/index.js"
     },
     {
-      "src": "/games/(.*)",
+      "src": "/games(.*)",
       "dest": "/index.js"
     },
     {
-      "src": "/sessions/(.*)",
+      "src": "/sessions(.*)",
       "dest": "/index.js"
     },
     {
       "src": "/(.*)",
       "dest": "/public/$1"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
-        }
-      ]
     }
   ],
   "env": {
