@@ -18,23 +18,26 @@ const dataFile = path.join(__dirname, 'data.json');
 function loadData() {
   try {
     if (process.env.VERCEL) {
-      // En Vercel, intentar cargar desde /tmp primero
-      try {
-        const tmpFile = '/tmp/temporizador-data.json';
-        if (fs.existsSync(tmpFile)) {
-          const data = JSON.parse(fs.readFileSync(tmpFile, 'utf8'));
-          console.log('Data loaded from /tmp:', data);
-          return {
-            children: data.children || [],
-            games: data.games || [],
-            sessions: data.sessions || [],
-            nextChildId: data.nextChildId || 1,
-            nextGameId: data.nextGameId || 1,
-            nextSessionId: data.nextSessionId || 1
-          };
+      // En Vercel, intentar cargar desde /tmp con múltiples ubicaciones
+      const tmpFiles = ['/tmp/temporizador-data.json', '/tmp/data.json'];
+      
+      for (const tmpFile of tmpFiles) {
+        try {
+          if (fs.existsSync(tmpFile)) {
+            const data = JSON.parse(fs.readFileSync(tmpFile, 'utf8'));
+            console.log('Data loaded from', tmpFile, ':', data);
+            return {
+              children: data.children || [],
+              games: data.games || [],
+              sessions: data.sessions || [],
+              nextChildId: data.nextChildId || 1,
+              nextGameId: data.nextGameId || 1,
+              nextSessionId: data.nextSessionId || 1
+            };
+          }
+        } catch (tmpError) {
+          console.log('Could not load from', tmpFile, ':', tmpError.message);
         }
-      } catch (tmpError) {
-        console.log('Could not load from /tmp:', tmpError.message);
       }
       
       // Si no hay archivo en /tmp, intentar desde variables de entorno
@@ -95,15 +98,27 @@ function saveData(newData) {
       // También actualizar la variable data global para consistencia
       data = newData;
       
-      // Intentar guardar en /tmp para persistencia temporal
+      // Intentar guardar en /tmp para persistencia temporal con redundancia
       try {
         const tmpFile = '/tmp/temporizador-data.json';
         fs.writeFileSync(tmpFile, JSON.stringify(newData, null, 2));
         console.log('Data saved to /tmp successfully');
+        
+        // También guardar en backup para redundancia
+        const tmpFile2 = '/tmp/data.json';
+        fs.writeFileSync(tmpFile2, JSON.stringify(newData, null, 2));
+        console.log('Data saved to backup /tmp/data.json');
+        
       } catch (tmpError) {
         console.log('Could not save to /tmp:', tmpError.message);
         // En caso de error con /tmp, al menos tenemos la memoria global
       }
+      
+      // Log de estado para debug
+      console.log('Current data state:');
+      console.log('- Children:', newData.children.length);
+      console.log('- Games:', newData.games.length);
+      console.log('- Sessions:', newData.sessions.length);
       
       return;
     }
@@ -694,6 +709,32 @@ app.post('/admin/sync-data', (req, res) => {
   } catch (error) {
     console.error('Error syncing data:', error);
     res.status(500).json({ error: 'Error al sincronizar datos' });
+  }
+});
+
+// Endpoint para forzar recarga de datos
+app.post('/admin/reload-data', (req, res) => {
+  try {
+    console.log('Forcing data reload...');
+    
+    // Recargar datos frescos
+    const freshData = loadData();
+    
+    // Actualizar memoria global
+    globalData = freshData;
+    data = freshData;
+    
+    res.json({ 
+      message: 'Datos recargados correctamente',
+      data: {
+        children: freshData.children.length,
+        games: freshData.games.length,
+        sessions: freshData.sessions.length
+      }
+    });
+  } catch (error) {
+    console.error('Error reloading data:', error);
+    res.status(500).json({ error: 'Error interno del servidor', details: error.message });
   }
 });
 
