@@ -458,9 +458,14 @@ app.post('/sessions/start', validateSession, (req, res) => {
     
     currentData.sessions.push(session);
     console.log('Session created:', JSON.stringify(session, null, 2));
+    console.log('Total sessions before save:', currentData.sessions.length);
     
     saveData(currentData);
     console.log('Session data saved successfully');
+    
+    // Verificar que se guardó correctamente
+    const verifyData = getPersistentData();
+    console.log('Total sessions after save:', verifyData.sessions.length);
     
     res.status(201).json(session);
   } catch (error) {
