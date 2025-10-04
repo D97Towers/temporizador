@@ -1870,6 +1870,9 @@
               <button onclick="addChild()" id="addChildBtn" class="btn-primary">
                 <i class="fas fa-plus"></i> AGREGAR NIÑO
               </button>
+              <button onclick="debugRefreshData()" class="btn-secondary" style="margin-left: 10px; padding: 8px 12px; font-size: 12px;">
+                <i class="fas fa-sync"></i> REFRESCAR
+              </button>
             </div>
           <ul class="list" id="childrenList"></ul>
         </div>
@@ -2592,7 +2595,8 @@
           childrenCache = [];
         }
         
-        const res = await fetchWithRetry(api + '/children');
+        const timestamp = Date.now();
+        const res = await fetchWithRetry(api + '/children?t=' + timestamp);
         
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}: ${res.statusText}`);
@@ -3319,17 +3323,22 @@
         
         // Limpiar caché completamente
         childrenCache = [];
+        console.log('Cache cleared, fetching fresh data...');
         
-        // Recargar datos frescos del backend
+        // Recargar datos frescos del backend con cache busting
         try {
-          const freshRes = await fetchWithRetry(api + '/children');
+          const timestamp = Date.now();
+          const freshRes = await fetchWithRetry(api + '/children?t=' + timestamp);
           const freshChildren = await freshRes.json();
           
+          console.log('Fresh children data received:', freshChildren);
           childrenCache = freshChildren || [];
           
           // Renderizar inmediatamente con datos frescos
           renderChildrenList(childrenCache);
           updateChildSelect(childrenCache);
+          
+          console.log('Children list updated with', childrenCache.length, 'items');
         } catch (error) {
           console.error('Error reloading fresh data:', error);
           // Fallback: recargar página completa
@@ -3606,6 +3615,37 @@
       } catch (error) {
         console.error('Error deleting game:', error);
         showStatusMessage(`Error al eliminar juego: ${error.message}`, 'error');
+      }
+    }
+
+    // Función de debug para refrescar datos
+    async function debugRefreshData() {
+      console.log('=== DEBUG REFRESH DATA ===');
+      console.log('Current children cache:', childrenCache.length);
+      console.log('Current games cache:', gamesCache.length);
+      
+      try {
+        // Limpiar todos los cachés
+        childrenCache = [];
+        gamesCache = [];
+        activeSessionsData = [];
+        
+        // Recargar todo
+        await Promise.all([
+          fetchChildren(true),
+          fetchGames(),
+          fetchActiveSessions(),
+          fetchSessionHistory()
+        ]);
+        
+        console.log('After refresh - children:', childrenCache.length);
+        console.log('After refresh - games:', gamesCache.length);
+        console.log('After refresh - active sessions:', activeSessionsData.length);
+        
+        showStatusMessage('Datos refrescados', 'success');
+      } catch (error) {
+        console.error('Error in debug refresh:', error);
+        showStatusMessage('Error al refrescar datos', 'error');
       }
     }
 
