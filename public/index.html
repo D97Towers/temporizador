@@ -3637,16 +3637,17 @@
     }
 
     // Inicialización ROBUSTA
-    // Función para migrar niños existentes
+    // Función para migrar niños existentes (DESHABILITADA - endpoint no existe)
     async function migrateExistingChildren() {
       try {
-        const response = await fetch('/children/migrate', { method: 'POST' });
-        const result = await response.json();
+        console.log('Migration function called but disabled - endpoint does not exist');
+        // const response = await fetch('/children/migrate', { method: 'POST' });
+        // const result = await response.json();
         
-        if (result.migrated > 0) {
-          console.log(`Migrated ${result.migrated} children with new display IDs`);
-          await fetchChildren(); // Recargar la lista
-        }
+        // if (result.migrated > 0) {
+        //   console.log(`Migrated ${result.migrated} children with new display IDs`);
+        //   await fetchChildren(); // Recargar la lista
+        // }
       } catch (error) {
         console.error('Error migrating children:', error);
       }
@@ -3698,10 +3699,10 @@
           console.error('Failed to load games, continuing...', error);
         }
         
-        // Migrar niños existentes si es necesario
+        // Migrar niños existentes si es necesario (DESHABILITADO)
         try {
-          console.log('Migrating existing children...');
-          await migrateExistingChildren();
+          console.log('Migration disabled - endpoint does not exist');
+          // await migrateExistingChildren();
         } catch (error) {
           console.error('Failed to migrate children, continuing...', error);
         }
