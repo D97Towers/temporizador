@@ -2756,8 +2756,10 @@
         startTimers();
         console.log('Active sessions structure updated:', activeSessionsData.length, 'sessions');
       } else {
-        // Solo actualizar timers sin cambiar el DOM
-        updateExistingTimers();
+        // Solo actualizar timers sin cambiar el DOM - menos frecuente para evitar parpadeo
+        if (activeSessionsData.length > 0) {
+          updateExistingTimers();
+        }
       }
     }
     
@@ -3670,9 +3672,9 @@
                console.error('Failed to initialize child search system, continuing...', error);
         }
         
-        // Configurar intervalos de actualización - Optimizados para mejor UX
-        // Actualizar sesiones activas cada 10 segundos para mantener datos actualizados
-        setInterval(fetchActiveSessions, 10000);
+        // Configurar intervalos de actualización - Optimizados para evitar parpadeo
+        // Actualizar sesiones activas cada 30 segundos para mantener datos actualizados sin parpadeo
+        setInterval(fetchActiveSessions, 30000);
         
         // Actualizar historial cada 120 segundos
         setInterval(fetchSessionHistory, 120000);
