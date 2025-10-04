@@ -124,19 +124,17 @@ let dataLock = false; // Lock simple para operaciones atómicas
 // Función para obtener datos persistentes
 function getPersistentData() {
   if (process.env.VERCEL) {
-    // En Vercel, siempre intentar cargar desde /tmp primero
-    const loadedData = loadData();
-    
-    // Si hay datos cargados, usarlos y actualizar memoria global
-    if (loadedData && (loadedData.children.length > 0 || loadedData.games.length > 0 || loadedData.sessions.length > 0)) {
-      globalData = loadedData;
-      console.log('Loaded fresh data from /tmp:', JSON.stringify(globalData, null, 2));
+    // En Vercel, priorizar memoria global que se actualiza con cada saveData
+    if (globalData && (globalData.children.length > 0 || globalData.games.length > 0 || globalData.sessions.length > 0)) {
+      console.log('Using global memory data:', JSON.stringify(globalData, null, 2));
       return globalData;
     }
     
-    // Si no hay datos en /tmp pero hay en memoria global, usar memoria global
-    if (globalData && (globalData.children.length > 0 || globalData.games.length > 0 || globalData.sessions.length > 0)) {
-      console.log('Using global memory data:', JSON.stringify(globalData, null, 2));
+    // Si no hay datos en memoria global, intentar cargar desde /tmp
+    const loadedData = loadData();
+    if (loadedData && (loadedData.children.length > 0 || loadedData.games.length > 0 || loadedData.sessions.length > 0)) {
+      globalData = loadedData;
+      console.log('Loaded fresh data from /tmp:', JSON.stringify(globalData, null, 2));
       return globalData;
     }
     
