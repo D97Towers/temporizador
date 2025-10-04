@@ -145,6 +145,36 @@ function createGame(name) {
   }
 }
 
+function createSession(sessionData) {
+  if (process.env.VERCEL) {
+    const newSession = {
+      id: Date.now() + Math.floor(Math.random() * 1000),
+      ...sessionData,
+      createdAt: new Date().toISOString()
+    };
+    if (!globalData) globalData = { children: [], games: [], sessions: [] };
+    globalData.sessions.push(newSession);
+    return newSession;
+  } else {
+    const result = sessions.create.run(
+      sessionData.childId,
+      sessionData.gameId,
+      sessionData.start,
+      sessionData.duration
+    );
+    const sessionId = result.lastInsertRowid;
+    const newSession = sessions.getById.get(sessionId);
+    return {
+      id: newSession.id,
+      childId: newSession.child_id,
+      gameId: newSession.game_id,
+      start: newSession.start_time,
+      duration: newSession.duration,
+      end: newSession.end_time
+    };
+  }
+}
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -577,9 +607,12 @@ app.post('/sessions/start', validateSession, (req, res) => {
   try {
     const { childId, gameId, duration } = req.body;
     
-    // Verificar que el niño y el juego existen
-    const child = children.getById.get(childId);
-    const game = games.getById.get(gameId);
+    // Verificar que el niño y el juego existen usando funciones híbridas
+    const allChildren = getChildren();
+    const allGames = getGames();
+    
+    const child = allChildren.find(c => c.id === childId);
+    const game = allGames.find(g => g.id === gameId);
     
     if (!child) {
       return res.status(404).json({ error: 'Niño no encontrado' });
@@ -589,38 +622,27 @@ app.post('/sessions/start', validateSession, (req, res) => {
     }
     
     // Verificar si el niño ya tiene una sesión activa
-    const activeSessions = sessions.getActive.all();
-    const activeSession = activeSessions.find((s) => s.child_id === childId);
+    const activeSessions = getActiveSessions();
+    const activeSession = activeSessions.find((s) => s.childId === childId);
     if (activeSession) {
       return res.status(400).json({ error: 'El niño ya tiene una sesión activa' });
     }
     
     console.log('Creating session with data:', { childId, gameId, duration });
     
-    // Crear la sesión en SQLite
-    const result = sessions.create.run(
+    // Crear la sesión usando función híbrida
+    const sessionData = {
       childId,
       gameId,
-      Date.now(),
-      Number(duration)
-    );
-    
-    const sessionId = result.lastInsertRowid;
-    const newSession = sessions.getById.get(sessionId);
-    
-    console.log('Session created in SQLite:', newSession);
-    
-    // Convertir a formato esperado por el frontend
-    const formattedSession = {
-      id: newSession.id,
-      childId: newSession.child_id,
-      gameId: newSession.game_id,
-      start: newSession.start_time,
-      duration: newSession.duration,
-      end: newSession.end_time
+      start: Date.now(),
+      duration: Number(duration),
+      end: null
     };
     
-    res.status(201).json(formattedSession);
+    const newSession = createSession(sessionData);
+    console.log('Session created:', newSession);
+    
+    res.status(201).json(newSession);
   } catch (error) {
     console.error('Error starting session:', error);
     res.status(500).json({ error: 'Error interno del servidor', details: error.message });
