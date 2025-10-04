@@ -1870,9 +1870,6 @@
               <button onclick="addChild()" id="addChildBtn" class="btn-primary">
                 <i class="fas fa-plus"></i> AGREGAR NIÑO
               </button>
-              <button onclick="debugRefreshData()" class="btn-secondary" style="margin-left: 10px; padding: 8px 12px; font-size: 12px;">
-                <i class="fas fa-sync"></i> REFRESCAR
-              </button>
             </div>
           <ul class="list" id="childrenList"></ul>
         </div>
@@ -3615,37 +3612,6 @@
       } catch (error) {
         console.error('Error deleting game:', error);
         showStatusMessage(`Error al eliminar juego: ${error.message}`, 'error');
-      }
-    }
-
-    // Función de debug para refrescar datos
-    async function debugRefreshData() {
-      console.log('=== DEBUG REFRESH DATA ===');
-      console.log('Current children cache:', childrenCache.length);
-      console.log('Current games cache:', gamesCache.length);
-      
-      try {
-        // Limpiar todos los cachés
-        childrenCache = [];
-        gamesCache = [];
-        activeSessionsData = [];
-        
-        // Recargar todo
-        await Promise.all([
-          fetchChildren(true),
-          fetchGames(),
-          fetchActiveSessions(),
-          fetchSessionHistory()
-        ]);
-        
-        console.log('After refresh - children:', childrenCache.length);
-        console.log('After refresh - games:', gamesCache.length);
-        console.log('After refresh - active sessions:', activeSessionsData.length);
-        
-        showStatusMessage('Datos refrescados', 'success');
-      } catch (error) {
-        console.error('Error in debug refresh:', error);
-        showStatusMessage('Error al refrescar datos', 'error');
       }
     }
 
