@@ -21,10 +21,15 @@ async function initializeDatabase() {
       return false;
     }
 
+    console.log('Attempting to connect to PostgreSQL...');
+    console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
+    
     pool = new Pool(dbConfig);
     
     // Probar la conexión
+    console.log('Testing PostgreSQL connection...');
     const client = await pool.connect();
+    console.log('PostgreSQL connection successful!');
     await client.release();
     
     // Crear tablas si no existen
@@ -68,7 +73,8 @@ async function initializeDatabase() {
     console.log('PostgreSQL database initialized successfully');
     return true;
   } catch (error) {
-    console.error('Error initializing PostgreSQL database:', error);
+    console.error('Error initializing PostgreSQL database:', error.message);
+    console.error('Error details:', error);
     return false;
   }
 }
