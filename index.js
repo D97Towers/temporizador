@@ -5,7 +5,6 @@ const path = require('path');
 const fs = require('fs');
 // Importar bases de datos
 let children, games, sessions;
-let mysqlDb = null;
 let dbInitialized = false;
 
 // Función para inicializar la base de datos
@@ -910,19 +909,37 @@ app.get('/admin/debug', (req, res) => {
 });
 
 // Endpoint para debug completo
-app.get('/admin/debug-full', (req, res) => {
+app.get('/admin/debug-full', async (req, res) => {
   try {
-    const currentData = getPersistentData();
-    res.json({
+    await initializeDatabase();
+    
+    const result = {
       environment: process.env.VERCEL ? 'Vercel' : 'Local',
-      globalDataExists: !!globalData,
-      globalDataChildren: globalData ? globalData.children.length : 0,
-      globalDataSessions: globalData ? globalData.sessions.length : 0,
-      currentData: currentData,
+      databaseInitialized: dbInitialized,
+      databaseType: children ? 'PostgreSQL/SQLite' : 'In-memory',
+      hasDatabaseUrl: !!process.env.DATABASE_URL,
       timestamp: new Date().toISOString()
-    });
+    };
+    
+    if (children) {
+      try {
+        const childrenList = await children.getAll();
+        result.childrenCount = childrenList.length;
+        result.children = childrenList.slice(0, 3); // Solo primeros 3 para debug
+      } catch (dbError) {
+        result.databaseError = dbError.message;
+      }
+    } else {
+      result.message = 'Using in-memory storage - no database connected';
+    }
+    
+    res.json(result);
   } catch (error) {
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ 
+      error: 'Error interno del servidor', 
+      details: error.message,
+      stack: process.env.VERCEL ? undefined : error.stack
+    });
   }
 });
 
