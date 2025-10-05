@@ -2891,7 +2891,7 @@
     }
 
     function updateChildSelect(children) {
-      const select = document.getElementById('childSelect');
+      const select = document.getElementById('selectedChildId');
       if (!select) return;
       
       select.innerHTML = '<option value="">Seleccione un niño</option>' +
@@ -3035,7 +3035,7 @@
             '<button class="btn-danger" onclick="endSession(' + s.id + ')" style="padding: 4px 8px; font-size: 11px; margin-right: 3px;">' +
               '<i class="fas fa-stop"></i> FIN' +
             '</button>' +
-            '<button class="extend-time" onclick="showExtendModal(' + s.id + ', \'' + childDisplayName + '\')" style="padding: 4px 8px; font-size: 11px;">' +
+            '<button class="extend-time" onclick="showExtendModal(' + s.id + ', \`' + childDisplayName + '\`)" style="padding: 4px 8px; font-size: 11px;">' +
               '<i class="fas fa-plus"></i> +5' +
             '</button>' +
           '</div>' +
@@ -3661,7 +3661,7 @@
         console.error('Child not found after refresh:', selectedChildId, 'Available children:', childrenCache.map(c => `${c.id}:${c.name}`));
         showStatusMessage('Error: Niño no encontrado después de recargar datos', 'error');
         // Limpiar el select de niños para evitar futuros errores
-        document.getElementById('childSelect').value = '';
+        document.getElementById('selectedChildId').value = '';
         return;
       }
       
