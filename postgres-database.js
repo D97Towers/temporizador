@@ -1,13 +1,16 @@
 // Base de datos PostgreSQL gratuita para Vercel usando Neon
 const { Pool } = require('pg');
 
-// Configuración de la base de datos PostgreSQL (Neon)
+// Configuración de la base de datos PostgreSQL (Supabase)
 const dbConfig = {
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
+  ssl: process.env.DATABASE_URL ? { 
+    rejectUnauthorized: false,
+    require: true 
+  } : false,
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 10000, // Aumentar timeout
 };
 
 // Pool de conexiones

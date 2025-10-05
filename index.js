@@ -943,6 +943,52 @@ app.get('/admin/debug-full', async (req, res) => {
   }
 });
 
+// Endpoint específico para probar PostgreSQL
+app.get('/admin/test-postgres', async (req, res) => {
+  try {
+    if (!process.env.DATABASE_URL) {
+      return res.json({ 
+        success: false, 
+        error: 'DATABASE_URL not configured' 
+      });
+    }
+
+    const { Pool } = require('pg');
+    
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { 
+        rejectUnauthorized: false,
+        require: true 
+      },
+      connectionTimeoutMillis: 10000
+    });
+    
+    console.log('Testing PostgreSQL connection...');
+    const client = await pool.connect();
+    console.log('PostgreSQL connection successful!');
+    
+    // Probar una consulta simple
+    const result = await client.query('SELECT version()');
+    await client.release();
+    await pool.end();
+    
+    res.json({
+      success: true,
+      message: 'PostgreSQL connection successful',
+      version: result.rows[0].version
+    });
+    
+  } catch (error) {
+    console.error('PostgreSQL test error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      code: error.code
+    });
+  }
+});
+
 // Endpoint para forzar recarga de datos
 app.post('/admin/reload', (req, res) => {
   try {
