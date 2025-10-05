@@ -214,6 +214,7 @@ function validateSession(req, res, next) {
 // Obtener todos los niños
 app.get('/children', async (req, res) => {
   try {
+    await ensureDatabaseInitialized();
     const children = await db.getChildren();
     console.log('GET /children - returning', children.length, 'children');
     res.json(children);
@@ -655,33 +656,29 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Inicializar servidor con base de datos
-async function startServer() {
-  try {
-    // Inicializar base de datos
-    console.log('🔄 Inicializando base de datos...');
-    await db.initializeDatabase();
-    console.log('✅ Base de datos inicializada');
-    
-    // Migrar datos por defecto
-    await db.migrateExistingData();
-    console.log('✅ Datos por defecto migrados');
-    
-    // Iniciar servidor
-    const PORT = process.env.PORT || 3010;
-    app.listen(PORT, () => {
-      console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
-      console.log(`📊 Entorno: ${process.env.VERCEL ? 'Vercel' : 'Local'}`);
-      console.log(`💾 Base de datos: PostgreSQL (Neon)`);
-    });
-    
-  } catch (error) {
-    console.error('❌ Error iniciando servidor:', error.message);
-    process.exit(1);
+// Inicialización lazy de la base de datos
+let dbInitialized = false;
+async function ensureDatabaseInitialized() {
+  if (!dbInitialized) {
+    try {
+      console.log('🔄 Inicializando base de datos...');
+      await db.initializeDatabase();
+      await db.migrateExistingData();
+      dbInitialized = true;
+      console.log('✅ Base de datos inicializada');
+    } catch (error) {
+      console.error('❌ Error inicializando base de datos:', error.message);
+      throw error;
+    }
   }
 }
 
-// Iniciar servidor
-startServer();
+// Iniciar servidor sin inicializar base de datos
+const PORT = process.env.PORT || 3010;
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
+  console.log(`📊 Entorno: ${process.env.VERCEL ? 'Vercel' : 'Local'}`);
+  console.log(`💾 Base de datos: PostgreSQL (Neon) - Lazy Loading`);
+});
 
 module.exports = app;
