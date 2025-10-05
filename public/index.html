@@ -2929,8 +2929,25 @@
             startTime = now;
           }
           
+          // Debug adicional del cálculo
+          console.log('Timer calculation debug:', {
+            now: now,
+            startTime: startTime,
+            elapsed: Math.floor((now - startTime) / 1000),
+            duration: s.duration
+          });
+          
           const elapsed = Math.floor((now - startTime) / 1000);
-          const remaining = Math.max(0, (s.duration * 60) - elapsed);
+          const totalDurationSeconds = (s.duration || 1) * 60;
+          const remaining = Math.max(0, totalDurationSeconds - elapsed);
+          
+          // Validar que los cálculos son válidos
+          if (isNaN(elapsed) || isNaN(remaining) || isNaN(totalDurationSeconds)) {
+            console.error('Invalid timer calculation:', { elapsed, remaining, totalDurationSeconds, startTime, now, duration: s.duration });
+            timerElement.innerHTML = '⏱️ <strong>Calculando...</strong>';
+            timerElement.className = 'timer';
+            return;
+          }
           
           if (remaining <= 0) {
             timerElement.innerHTML = '⏰ <strong>Tiempo agotado</strong>';
