@@ -1,8 +1,8 @@
-// Vercel Entrypoint - Temporizador de Juegos
+// Vercel Entrypoint - Temporizador de Juegos con JSONBin.io
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const fs = require('fs');
+const { loadData, saveData } = require('./jsonbin-storage');
 
 const app = express();
 const PORT = process.env.PORT || 3010;
@@ -11,59 +11,6 @@ const PORT = process.env.PORT || 3010;
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
-
-// Archivo de datos
-const dataFile = process.env.VERCEL ? '/tmp/data.json' : './data.json';
-
-// Función para cargar datos
-function loadData() {
-  try {
-    if (fs.existsSync(dataFile)) {
-      const data = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
-      return {
-        children: data.children || [],
-        games: data.games || [],
-        sessions: data.sessions || [],
-        nextChildId: data.nextChildId || 1,
-        nextGameId: data.nextGameId || 1,
-        nextSessionId: data.nextSessionId || 1
-      };
-    }
-    return getDefaultData();
-  } catch (error) {
-    console.error('Error loading data:', error);
-    return getDefaultData();
-  }
-}
-
-// Función para guardar datos
-function saveData(newData) {
-  try {
-    fs.writeFileSync(dataFile, JSON.stringify(newData, null, 2));
-    console.log('Data saved successfully');
-  } catch (error) {
-    console.error('Error saving data:', error);
-    throw error;
-  }
-}
-
-// Función para datos por defecto
-function getDefaultData() {
-  return {
-    children: [
-      { id: 1, name: 'David', nickname: 'Dave', fatherName: 'Carlos', motherName: 'Maria', displayName: 'David (Dave)', avatar: 'D', totalSessions: 0, totalTimePlayed: 0, createdAt: new Date().toISOString() },
-      { id: 2, name: 'Santiago', nickname: 'Santi', fatherName: 'Luis', motherName: 'Ana', displayName: 'Santiago (Santi)', avatar: 'S', totalSessions: 0, totalTimePlayed: 0, createdAt: new Date().toISOString() }
-    ],
-    games: [
-      { id: 1, name: 'bici', createdAt: new Date().toISOString() },
-      { id: 2, name: 'videojuegos', createdAt: new Date().toISOString() }
-    ],
-    sessions: [],
-    nextChildId: 3,
-    nextGameId: 3,
-    nextSessionId: 1
-  };
-}
 
 // Middleware de validación
 function validateChild(req, res, next) {
@@ -85,9 +32,9 @@ function validateSession(req, res, next) {
 // Rutas API
 
 // Obtener todos los niños
-app.get('/children', (req, res) => {
+app.get('/children', async (req, res) => {
   try {
-    const data = loadData();
+    const data = await loadData();
     console.log('GET /children - returning', data.children.length, 'children');
     res.json(data.children);
   } catch (error) {
@@ -97,9 +44,9 @@ app.get('/children', (req, res) => {
 });
 
 // Crear nuevo niño
-app.post('/children', validateChild, (req, res) => {
+app.post('/children', validateChild, async (req, res) => {
   try {
-    const data = loadData();
+    const data = await loadData();
     const { name, nickname, fatherName, motherName } = req.body;
     
     const trimmedName = name.trim();
@@ -125,7 +72,7 @@ app.post('/children', validateChild, (req, res) => {
     };
     
     data.children.push(newChild);
-    saveData(data);
+    await saveData(data);
     
     console.log('Child created:', newChild.name);
     res.status(201).json(newChild);
@@ -136,9 +83,9 @@ app.post('/children', validateChild, (req, res) => {
 });
 
 // Obtener todos los juegos
-app.get('/games', (req, res) => {
+app.get('/games', async (req, res) => {
   try {
-    const data = loadData();
+    const data = await loadData();
     console.log('GET /games - returning', data.games.length, 'games');
     res.json(data.games);
   } catch (error) {
@@ -148,9 +95,9 @@ app.get('/games', (req, res) => {
 });
 
 // Crear nuevo juego
-app.post('/games', (req, res) => {
+app.post('/games', async (req, res) => {
   try {
-    const data = loadData();
+    const data = await loadData();
     const { name } = req.body;
     
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
@@ -164,7 +111,7 @@ app.post('/games', (req, res) => {
     };
     
     data.games.push(newGame);
-    saveData(data);
+    await saveData(data);
     
     console.log('Game created:', newGame.name);
     res.status(201).json(newGame);
@@ -175,9 +122,9 @@ app.post('/games', (req, res) => {
 });
 
 // Obtener sesiones activas
-app.get('/sessions/active', (req, res) => {
+app.get('/sessions/active', async (req, res) => {
   try {
-    const data = loadData();
+    const data = await loadData();
     const activeSessions = data.sessions.filter(s => !s.endTime);
     
     const sessionsWithDetails = activeSessions.map(session => {
@@ -203,9 +150,9 @@ app.get('/sessions/active', (req, res) => {
 });
 
 // Iniciar sesión
-app.post('/sessions/start', validateSession, (req, res) => {
+app.post('/sessions/start', validateSession, async (req, res) => {
   try {
-    const data = loadData();
+    const data = await loadData();
     const { childId, gameId, duration } = req.body;
     
     const child = data.children.find(c => c.id === parseInt(childId));
@@ -226,7 +173,7 @@ app.post('/sessions/start', validateSession, (req, res) => {
     };
     
     data.sessions.push(session);
-    saveData(data);
+    await saveData(data);
     
     console.log('Session started:', session.id);
     res.status(201).json(session);
@@ -237,9 +184,9 @@ app.post('/sessions/start', validateSession, (req, res) => {
 });
 
 // Finalizar sesión
-app.post('/sessions/:id/end', (req, res) => {
+app.post('/sessions/:id/end', async (req, res) => {
   try {
-    const data = loadData();
+    const data = await loadData();
     const sessionId = parseInt(req.params.id);
     
     const session = data.sessions.find(s => s.id === sessionId);
@@ -260,7 +207,7 @@ app.post('/sessions/:id/end', (req, res) => {
       child.totalTimePlayed += session.duration;
     }
     
-    saveData(data);
+    await saveData(data);
     
     console.log('Session ended:', sessionId);
     res.json(session);
@@ -271,9 +218,9 @@ app.post('/sessions/:id/end', (req, res) => {
 });
 
 // Obtener historial de sesiones
-app.get('/sessions', (req, res) => {
+app.get('/sessions', async (req, res) => {
   try {
-    const data = loadData();
+    const data = await loadData();
     
     const sessionsWithDetails = data.sessions.map(session => {
       const child = data.children.find(c => c.id === session.childId);
@@ -298,11 +245,12 @@ app.get('/sessions', (req, res) => {
 });
 
 // Endpoint de estado
-app.get('/admin/status', (req, res) => {
+app.get('/admin/status', async (req, res) => {
   try {
-    const data = loadData();
+    const data = await loadData();
     res.json({
       environment: process.env.VERCEL ? 'Vercel' : 'Local',
+      storage: process.env.JSONBIN_API_KEY ? 'JSONBin.io' : 'Local',
       children: data.children.length,
       games: data.games.length,
       sessions: data.sessions.length,
@@ -310,6 +258,23 @@ app.get('/admin/status', (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// Endpoint para migrar a JSONBin.io
+app.post('/admin/migrate-to-jsonbin', async (req, res) => {
+  try {
+    const { migrateToJsonBin } = require('./jsonbin-storage');
+    const success = await migrateToJsonBin();
+    
+    if (success) {
+      res.json({ message: 'Migración a JSONBin.io completada exitosamente' });
+    } else {
+      res.status(500).json({ error: 'Error durante la migración' });
+    }
+  } catch (error) {
+    console.error('Error in migration:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -323,6 +288,7 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en puerto ${PORT}`);
   console.log(`Entorno: ${process.env.VERCEL ? 'Vercel' : 'Local'}`);
+  console.log(`Almacenamiento: ${process.env.JSONBIN_API_KEY ? 'JSONBin.io' : 'Local'}`);
 });
 
 module.exports = app;
