@@ -2,8 +2,8 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-// Importar almacenamiento optimizado para Vercel
-const { loadData, saveData } = require('./vercel-optimized-storage');
+// Importar solución final definitiva
+const { loadData, saveData } = require('./final-solution-storage');
 
 // Control de concurrencia para operaciones de escritura
 const writeLock = new Map();
