@@ -37,6 +37,7 @@ class TransactionManager {
   async commitTransaction(transactionId) {
     const transaction = this.activeTransactions.get(transactionId);
     if (!transaction) {
+      console.error(`Transaction ${transactionId} not found in active transactions:`, Array.from(this.activeTransactions.keys()));
       throw new Error(`Transaction ${transactionId} not found`);
     }
     
