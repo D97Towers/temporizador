@@ -2906,7 +2906,8 @@
         if (timerElement) {
           // Actualizar directamente el contenido del timer sin recrear el elemento
           const now = Date.now();
-          const elapsed = Math.floor((now - s.start) / 1000);
+          const startTime = s.startTime || s.start || Date.now(); // Compatibilidad con ambos formatos
+          const elapsed = Math.floor((now - startTime) / 1000);
           const remaining = (s.duration * 60) - elapsed;
           
           if (remaining <= 0) {
@@ -3098,7 +3099,8 @@
           }
         }
         
-        const startTime = new Date(s.start);
+        const startTimeValue = s.startTime || s.start || Date.now();
+        const startTime = new Date(startTimeValue);
         const timeStr = startTime.toLocaleTimeString('es-ES', {
           hour: '2-digit',
           minute: '2-digit'
@@ -3110,9 +3112,10 @@
         
         let statusClass, iconClass, durationText, durationClass;
         
-        if (s.end) {
+        if (s.endTime || s.end) {
           // Sesión finalizada
-          const duration = Math.round((s.end - s.start) / 60000);
+          const endTimeValue = s.endTime || s.end;
+          const duration = Math.round((endTimeValue - startTimeValue) / 60000);
           statusClass = 'completed';
           iconClass = 'completed';
           durationText = `${duration}min`;
@@ -3120,7 +3123,7 @@
         } else {
           // Sesión en curso - usar la misma lógica que renderActiveSessions
           const currentTime = Date.now();
-          const elapsedSeconds = Math.floor((currentTime - s.start) / 1000);
+          const elapsedSeconds = Math.floor((currentTime - startTimeValue) / 1000);
           const totalSeconds = (s.duration || 15) * 60;
           const remainingSeconds = Math.max(0, totalSeconds - elapsedSeconds);
           
