@@ -10,7 +10,9 @@ const dbConfig = {
   } : false,
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000, // Aumentar timeout
+  connectionTimeoutMillis: 15000, // Aumentar timeout
+  // Forzar IPv4
+  family: 4
 };
 
 // Pool de conexiones
