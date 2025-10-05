@@ -47,7 +47,9 @@ async function loadData() {
     return loadLocalData();
   } catch (error) {
     console.error('Error loading data:', error.message);
-    return getDefaultData();
+    // Si hay error con JSONBin.io, intentar cargar desde archivo local
+    console.log('Attempting to load from local file as fallback...');
+    return loadLocalData();
   }
 }
 
