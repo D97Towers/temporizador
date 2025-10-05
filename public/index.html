@@ -3602,14 +3602,18 @@
         }
         
         document.getElementById('gameName').value = '';
-        // Actualizar todos los datos después de agregar juego
+        
+        // Actualizar juegos primero para mostrar inmediatamente
+        await fetchGames();
+        
+        // Luego actualizar el resto de datos
         await Promise.all([
           fetchChildren(),
-          fetchGames(),
           fetchActiveSessions(),
           fetchSessionHistory()
         ]);
-        // showStatusMessage('Juego agregado exitosamente', 'success');
+        
+        showStatusMessage('Juego agregado exitosamente', 'success');
       } catch (error) {
         console.error('Error adding game:', error);
         showStatusMessage('Error al agregar juego: ' + error.message, 'error');
