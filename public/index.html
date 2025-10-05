@@ -1911,6 +1911,9 @@
           <select id="gameSelect">
             <option value="">Seleccione un juego</option>
           </select>
+          <button onclick="forceRefreshGames()" class="btn-refresh" title="Refrescar lista de juegos" style="margin-left: 8px; padding: 4px 8px; font-size: 12px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;">
+            🔄
+          </button>
         </div>
         <div class="form-group">
           <label><i class="fas fa-clock"></i> Tiempo (minutos):</label>
@@ -2917,6 +2920,46 @@
       
       select.innerHTML = '<option value="">Seleccione un juego</option>' +
         (games || []).map(game => `<option value="${game.id}">${game.name}</option>`).join('');
+    }
+
+    // Función para forzar la recarga de juegos
+    async function forceRefreshGames() {
+      console.log('🔄 Forzando recarga de juegos...');
+      showStatusMessage('Recargando lista de juegos...', 'info');
+      
+      try {
+        // Limpiar caché completamente
+        gamesCache = [];
+        updateGameSelect([]);
+        
+        // Hacer fetch directo
+        const response = await fetch(api + '/games');
+        console.log('Force refresh - Response status:', response.status);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const games = await response.json();
+        console.log('Force refresh - Games received:', games);
+        
+        if (Array.isArray(games)) {
+          gamesCache = games;
+          updateGameSelect(gamesCache);
+          renderGamesList(gamesCache);
+          
+          console.log('✅ Juegos recargados exitosamente:', gamesCache.length);
+          showStatusMessage(`✅ ${gamesCache.length} juegos cargados`, 'success');
+        } else {
+          throw new Error('Formato de datos inválido');
+        }
+        
+      } catch (error) {
+        console.error('❌ Error forzando recarga de juegos:', error);
+        showStatusMessage('❌ Error al recargar juegos', 'error');
+        gamesCache = [];
+        updateGameSelect([]);
+      }
     }
 
     // Funciones de sesiones activas ROBUSTAS
