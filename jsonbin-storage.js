@@ -11,19 +11,46 @@ let localCache = null;
 let lastSaveTime = 0;
 let writeLock = false;
 
-// Función para cargar datos - SOLO ALMACENAMIENTO LOCAL para consistencia perfecta
+// Función para cargar datos - JSONBin.io con cache local
 async function loadData() {
   try {
-    // USAR SOLO ALMACENAMIENTO LOCAL para evitar eventual consistency
-    console.log('Using local storage for perfect consistency');
+    // Si tenemos cache local reciente, usarlo
+    if (localCache && (Date.now() - lastSaveTime < 30000)) { // 30 segundos
+      console.log('Using local cache (recent)');
+      return localCache;
+    }
+    
+    // Intentar cargar desde JSONBin.io
+    if (JSONBIN_API_KEY && JSONBIN_BIN_ID) {
+      console.log('Loading from JSONBin.io...');
+      const response = await axios.get(`${JSONBIN_BASE_URL}/${JSONBIN_BIN_ID}/latest`, {
+        headers: { 'X-Master-Key': JSONBIN_API_KEY },
+        timeout: 10000
+      });
+      
+      const data = response.data.record;
+      localCache = data;
+      lastSaveTime = Date.now();
+      
+      console.log('JSONBin.io data loaded:', {
+        children: data.children?.length || 0,
+        games: data.games?.length || 0,
+        sessions: data.sessions?.length || 0
+      });
+      
+      return data;
+    }
+    
+    // Fallback a almacenamiento local
+    console.log('Falling back to local storage');
     return loadLocalData();
   } catch (error) {
-    console.error('Error loading local data:', error.message);
+    console.error('Error loading data:', error.message);
     return getDefaultData();
   }
 }
 
-// Función para guardar datos - SOLO ALMACENAMIENTO LOCAL para consistencia perfecta
+// Función para guardar datos - JSONBin.io con cache local
 async function saveData(newData) {
   try {
     // Prevenir escrituras concurrentes
@@ -45,8 +72,20 @@ async function saveData(newData) {
       sessions: newData.sessions?.length || 0
     });
     
-    // USAR SOLO ALMACENAMIENTO LOCAL para consistencia perfecta
-    console.log('Using local storage for perfect consistency');
+    // Guardar en JSONBin.io
+    if (JSONBIN_API_KEY && JSONBIN_BIN_ID) {
+      console.log('Saving to JSONBin.io...');
+      await axios.put(`${JSONBIN_BASE_URL}/${JSONBIN_BIN_ID}`, newData, {
+        headers: { 
+          'X-Master-Key': JSONBIN_API_KEY,
+          'Content-Type': 'application/json'
+        },
+        timeout: 15000
+      });
+      console.log('JSONBin.io save successful');
+    }
+    
+    // También guardar localmente como backup
     const result = saveLocalData(newData);
     writeLock = false;
     return result;
