@@ -641,14 +641,37 @@ app.post('/admin/migrate-to-jsonbin', async (req, res) => {
   }
 });
 
-// Endpoint de prueba simple
+// Endpoint de prueba simple (sin base de datos)
 app.get('/test', (req, res) => {
   res.json({
     status: 'ok',
     message: 'Servidor funcionando',
     environment: process.env.VERCEL ? 'Vercel' : 'Local',
+    databaseUrl: process.env.DATABASE_URL ? 'Configurada' : 'No configurada',
     timestamp: new Date().toISOString()
   });
+});
+
+// Endpoint de prueba de base de datos
+app.get('/test-db', async (req, res) => {
+  try {
+    await ensureDatabaseInitialized();
+    const stats = await db.getDashboardStats();
+    res.json({
+      status: 'ok',
+      message: 'Base de datos funcionando',
+      stats: stats,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Error de base de datos',
+      error: error.message,
+      code: error.code,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 // Servir archivos estáticos
