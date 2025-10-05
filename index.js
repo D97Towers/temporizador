@@ -567,6 +567,29 @@ app.get('/admin/status', async (req, res) => {
   }
 });
 
+// Endpoint de diagnóstico para verificar configuración
+app.get('/admin/diagnostic', async (req, res) => {
+  try {
+    const data = await loadData();
+    res.json({
+      status: 'ok',
+      environment: process.env.VERCEL ? 'Vercel' : 'Local',
+      storage: process.env.JSONBIN_API_KEY ? 'JSONBin.io' : 'Local',
+      jsonbinConfigured: !!process.env.JSONBIN_API_KEY,
+      jsonbinBinId: process.env.JSONBIN_BIN_ID ? 'Configured' : 'Not configured',
+      data: {
+        children: data.children.length,
+        games: data.games.length,
+        sessions: data.sessions.length,
+        activeSessions: data.sessions.filter(s => !s.endTime).length
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
 // Endpoint para migrar a JSONBin.io
 app.post('/admin/migrate-to-jsonbin', async (req, res) => {
   try {
