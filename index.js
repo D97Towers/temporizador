@@ -217,6 +217,34 @@ app.post('/sessions/:id/end', async (req, res) => {
   }
 });
 
+// Extender sesión
+app.post('/sessions/extend', async (req, res) => {
+  try {
+    const data = await loadData();
+    const { sessionId, additionalTime } = req.body;
+    
+    const session = data.sessions.find(s => s.id === parseInt(sessionId));
+    if (!session) {
+      return res.status(404).json({ error: 'Sesión no encontrada' });
+    }
+    
+    if (session.endTime) {
+      return res.status(400).json({ error: 'La sesión ya ha terminado' });
+    }
+    
+    // Extender la duración de la sesión
+    session.duration += parseInt(additionalTime);
+    
+    await saveData(data);
+    
+    console.log('Session extended:', sessionId, 'by', additionalTime, 'minutes');
+    res.json(session);
+  } catch (error) {
+    console.error('Error extending session:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
 // Obtener historial de sesiones
 app.get('/sessions', async (req, res) => {
   try {
