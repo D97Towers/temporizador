@@ -2898,54 +2898,54 @@
         const timerElement = sessionElement ? sessionElement.querySelector('.timer') : null;
         
         if (!sessionElement || !timerElement) return;
-          // Actualizar directamente el contenido del timer sin recrear el elemento
-          const now = Date.now();
+        
+        // Actualizar directamente el contenido del timer sin recrear el elemento
+        const now = Date.now();
+        
+        // Buscar startTime en múltiples formatos posibles
+        let startTime = s.startTime || s.start;
+        
+        // Si no hay startTime válido, usar createdAt como fallback
+        if (!startTime || isNaN(startTime)) {
+          startTime = s.createdAt ? new Date(s.createdAt).getTime() : now;
+        }
+        
+        // Asegurar que startTime es un número válido
+        if (isNaN(startTime) || startTime <= 0) {
+          startTime = now;
+        }
+        
+        const elapsed = Math.floor((now - startTime) / 1000);
+        const totalDurationSeconds = (s.duration || 1) * 60;
+        const remaining = Math.max(0, totalDurationSeconds - elapsed);
+        
+        // Validar que los cálculos son válidos
+        if (isNaN(elapsed) || isNaN(remaining) || isNaN(totalDurationSeconds)) {
+          console.error('Invalid timer calculation:', { elapsed, remaining, totalDurationSeconds, startTime, now, duration: s.duration });
+          timerElement.innerHTML = '<strong>Calculando...</strong>';
+          timerElement.className = 'timer';
+          return;
+        }
+        
+        if (remaining <= 0) {
+          timerElement.innerHTML = '<strong>Tiempo agotado</strong>';
+          timerElement.className = 'timer danger';
+        } else {
+          const h = Math.floor(remaining / 3600);
+          const m = Math.floor((remaining % 3600) / 60);
+          const s = remaining % 60;
+          const elapsedMin = Math.floor(elapsed / 60);
+          const elapsedSec = elapsed % 60;
           
-          // Buscar startTime en múltiples formatos posibles
-          let startTime = s.startTime || s.start;
+          timerElement.innerHTML = 'Restante: ' + h + ':' + m.toString().padStart(2, '0') + ':' + s.toString().padStart(2, '0') + '<br><small>Transcurrido: ' + elapsedMin + ':' + elapsedSec.toString().padStart(2, '0') + '</small>';
           
-          // Si no hay startTime válido, usar createdAt como fallback
-          if (!startTime || isNaN(startTime)) {
-            startTime = s.createdAt ? new Date(s.createdAt).getTime() : now;
-          }
-          
-          // Asegurar que startTime es un número válido
-          if (isNaN(startTime) || startTime <= 0) {
-            startTime = now;
-          }
-          
-          const elapsed = Math.floor((now - startTime) / 1000);
-          const totalDurationSeconds = (s.duration || 1) * 60;
-          const remaining = Math.max(0, totalDurationSeconds - elapsed);
-          
-          // Validar que los cálculos son válidos
-          if (isNaN(elapsed) || isNaN(remaining) || isNaN(totalDurationSeconds)) {
-            console.error('Invalid timer calculation:', { elapsed, remaining, totalDurationSeconds, startTime, now, duration: s.duration });
-            timerElement.innerHTML = '⏱️ <strong>Calculando...</strong>';
-            timerElement.className = 'timer';
-            return;
-          }
-          
-          if (remaining <= 0) {
-            timerElement.innerHTML = '⏰ <strong>Tiempo agotado</strong>';
+          // Cambiar color según tiempo restante
+          if (remaining <= 60) {
             timerElement.className = 'timer danger';
+          } else if (remaining <= 300) {
+            timerElement.className = 'timer warning';
           } else {
-            const h = Math.floor(remaining / 3600);
-            const m = Math.floor((remaining % 3600) / 60);
-            const s = remaining % 60;
-            const elapsedMin = Math.floor(elapsed / 60);
-            const elapsedSec = elapsed % 60;
-            
-            timerElement.innerHTML = `⏱️ <strong>Restante:</strong> ${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}<br><small>Transcurrido: ${elapsedMin}:${elapsedSec.toString().padStart(2, '0')}</small>`;
-            
-            // Cambiar color según tiempo restante
-            if (remaining <= 60) {
-              timerElement.className = 'timer danger';
-            } else if (remaining <= 300) {
-              timerElement.className = 'timer warning';
-            } else {
-              timerElement.className = 'timer';
-            }
+            timerElement.className = 'timer';
           }
         }
       });
@@ -3015,7 +3015,7 @@
           endSession(sessionId);
         }
       } else if (remainingSeconds <= 60) {
-        timerSpan.innerHTML = `⚠️ <strong>Restante:</strong> ${m}:${s}<br><small>Transcurrido: ${elapsedMinutes}:${String(elapsedSecs).padStart(2, '0')}</small>`;
+        timerSpan.innerHTML = '<strong>Restante:</strong> ' + m + ':' + s + '<br><small>Transcurrido: ' + elapsedMinutes + ':' + String(elapsedSecs).padStart(2, '0') + '</small>';
         timerSpan.classList.add('warning');
         // Alerta cuando quedan 30 segundos
         if (remainingSeconds <= 30 && !timerSpan.classList.contains('alerted-30')) {
@@ -3038,7 +3038,7 @@
           showStatusMessage(`¡Atención! A ${childDisplayName}${parentsText} le quedan solo ${remainingSeconds} segundos`, 'warning', sessionId);
         }
       } else {
-        timerSpan.innerHTML = `⏱️ <strong>Restante:</strong> ${h}:${m}:${s}<br><small>Transcurrido: ${elapsedMinutes}:${String(elapsedSecs).padStart(2, '0')}</small>`;
+        timerSpan.innerHTML = '<strong>Restante:</strong> ' + h + ':' + m + ':' + s + '<br><small>Transcurrido: ' + elapsedMinutes + ':' + String(elapsedSecs).padStart(2, '0') + '</small>';
       }
     }
 
