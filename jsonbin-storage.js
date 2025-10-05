@@ -20,10 +20,10 @@ async function loadData() {
       return loadLocalData();
     }
 
-    // Si tenemos cache local reciente (menos de 10 segundos), usarlo
+    // SIEMPRE usar cache local si está disponible (para consistencia inmediata)
     const now = Date.now();
-    if (localCache && (now - lastSaveTime) < 10000) {
-      console.log('Using local cache for immediate consistency');
+    if (localCache) {
+      console.log('Using local cache for immediate consistency (always)');
       return localCache;
     }
 
@@ -115,7 +115,7 @@ function loadLocalData() {
     const dataFile = process.env.VERCEL ? '/tmp/data.json' : './data.json';
     if (fs.existsSync(dataFile)) {
       const data = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
-      return {
+      const result = {
         children: data.children || [],
         games: data.games || [],
         sessions: data.sessions || [],
@@ -123,6 +123,12 @@ function loadLocalData() {
         nextGameId: data.nextGameId || 1,
         nextSessionId: data.nextSessionId || 1
       };
+      
+      // Inicializar cache local con datos cargados
+      localCache = result;
+      lastSaveTime = Date.now();
+      
+      return result;
     }
     return getDefaultData();
   } catch (error) {
@@ -144,7 +150,7 @@ function saveLocalData(newData) {
 }
 
 function getDefaultData() {
-  return {
+  const defaultData = {
     children: [
       { id: 1, name: 'David', nickname: 'Dave', fatherName: 'Carlos', motherName: 'Maria', displayName: 'David (Dave)', avatar: 'D', totalSessions: 0, totalTimePlayed: 0, createdAt: new Date().toISOString() },
       { id: 2, name: 'Santiago', nickname: 'Santi', fatherName: 'Luis', motherName: 'Ana', displayName: 'Santiago (Santi)', avatar: 'S', totalSessions: 0, totalTimePlayed: 0, createdAt: new Date().toISOString() }
@@ -158,6 +164,12 @@ function getDefaultData() {
     nextGameId: 3,
     nextSessionId: 1
   };
+  
+  // Inicializar cache local con datos por defecto
+  localCache = defaultData;
+  lastSaveTime = Date.now();
+  
+  return defaultData;
 }
 
 // Función para migrar datos existentes a JSONBin.io
