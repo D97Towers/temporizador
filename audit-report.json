@@ -1,0 +1,99 @@
+{
+  "timestamp": "2025-10-05T19:02:41.046Z",
+  "summary": {
+    "totalTests": 56,
+    "passed": 54,
+    "errors": 0,
+    "warnings": 2,
+    "successRate": "96.4%"
+  },
+  "errors": [],
+  "warnings": [
+    {
+      "testName": "Consistencia Niños - Requests Simultáneos",
+      "passed": false,
+      "details": "Conteos: 3, 2, 2, 3, 2, 2, 2, 3, 2, 2...",
+      "severity": "info",
+      "timestamp": "2025-10-05T19:02:39.827Z"
+    },
+    {
+      "testName": "Consistencia Juegos - Requests Simultáneos",
+      "passed": false,
+      "details": "Conteos: 2, 2, 2, 3, 3, 3, 2, 3, 2, 2...",
+      "severity": "info",
+      "timestamp": "2025-10-05T19:02:39.827Z"
+    }
+  ],
+  "passed": [
+    {
+      "testName": "Conexión al servidor",
+      "passed": true,
+      "details": "Status: 200",
+      "severity": "info",
+      "timestamp": "2025-10-05T19:02:36.767Z"
+    },
+    {
+      "testName": "Estructura de respuesta",
+      "passed": true,
+      "details": "Respuesta válida",
+      "severity": "info",
+      "timestamp": "2025-10-05T19:02:36.767Z"
+    },
+    {
+      "testName": "Campo environment",
+      "passed": true,
+      "details": "Value: Vercel",
+      "severity": "info",
+      "timestamp": "2025-10-05T19:02:36.768Z"
+    },
+    {
+      "testName": "Campo storage",
+      "passed": true,
+      "details": "Value: JSONBin.io",
+      "severity": "info",
+      "timestamp": "2025-10-05T19:02:36.769Z"
+    },
+    {
+      "testName": "Campo children",
+      "passed": true,
+      "details": "Value: 2",
+      "severity": "info",
+      "timestamp": "2025-10-05T19:02:36.770Z"
+    },
+    {
+      "testName": "Campo games",
+      "passed": true,
+      "details": "Value: 2",
+      "severity": "info",
+      "timestamp": "2025-10-05T19:02:36.770Z"
+    },
+    {
+      "testName": "Campo sessions",
+      "passed": true,
+      "details": "Value: 0",
+      "severity": "info",
+      "timestamp": "2025-10-05T19:02:36.770Z"
+    },
+    {
+      "testName": "Campo activeSessions",
+      "passed": true,
+      "details": "Value: 0",
+      "severity": "info",
+      "timestamp": "2025-10-05T19:02:36.770Z"
+    },
+    {
+      "testName": "GET /children",
+      "passed": true,
+      "details": "Status: 200",
+      "severity": "info",
+      "timestamp": "2025-10-05T19:02:37.010Z"
+    },
+    {
+      "testName": "Niños - Estructura",
+      "passed": true,
+      "details": "Tipo: Array",
+      "severity": "info",
+      "timestamp": "2025-10-05T19:02:37.011Z"
+    }
+  ]
+}

@@ -4,6 +4,76 @@ const cors = require('cors');
 const path = require('path');
 const { loadData, saveData } = require('./jsonbin-storage');
 
+// Control de concurrencia para operaciones de escritura
+const writeLock = new Map();
+const WRITE_LOCK_TIMEOUT = 30000; // 30 segundos
+
+function acquireWriteLock(resource, timeout = WRITE_LOCK_TIMEOUT) {
+  const lockKey = resource;
+  const now = Date.now();
+  
+  // Limpiar locks expirados
+  for (const [key, lock] of writeLock.entries()) {
+    if (now - lock.timestamp > timeout) {
+      writeLock.delete(key);
+    }
+  }
+  
+  // Verificar si ya existe un lock
+  if (writeLock.has(lockKey)) {
+    return false; // Lock no disponible
+  }
+  
+  // Crear nuevo lock
+  writeLock.set(lockKey, {
+    timestamp: now,
+    resource: lockKey
+  });
+  
+  return true; // Lock adquirido
+}
+
+function releaseWriteLock(resource) {
+  writeLock.delete(resource);
+}
+
+// Rate limiting simple (sin dependencias externas)
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW = 60000; // 1 minuto
+const RATE_LIMIT_MAX_REQUESTS = 100; // 100 requests por minuto
+
+function rateLimit(req, res, next) {
+  const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+  const now = Date.now();
+  
+  // Limpiar entradas expiradas
+  if (rateLimitMap.has(clientIP)) {
+    const requests = rateLimitMap.get(clientIP).filter(time => now - time < RATE_LIMIT_WINDOW);
+    if (requests.length === 0) {
+      rateLimitMap.delete(clientIP);
+    } else {
+      rateLimitMap.set(clientIP, requests);
+    }
+  }
+  
+  // Verificar límite
+  if (!rateLimitMap.has(clientIP)) {
+    rateLimitMap.set(clientIP, []);
+  }
+  
+  const requests = rateLimitMap.get(clientIP);
+  if (requests.length >= RATE_LIMIT_MAX_REQUESTS) {
+    return res.status(429).json({ 
+      error: 'Demasiadas solicitudes. Intenta de nuevo en un minuto.',
+      retryAfter: Math.ceil(RATE_LIMIT_WINDOW / 1000)
+    });
+  }
+  
+  // Agregar request actual
+  requests.push(now);
+  next();
+}
+
 const app = express();
 const PORT = process.env.PORT || 3010;
 
@@ -11,21 +81,86 @@ const PORT = process.env.PORT || 3010;
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
+app.use(rateLimit); // Aplicar rate limiting a todas las rutas
 
 // Middleware de validación
 function validateChild(req, res, next) {
-  const { name } = req.body;
+  const { name, nickname, fatherName, motherName } = req.body;
+  
+  // Validar nombre (requerido)
   if (!name || typeof name !== 'string' || name.trim().length === 0) {
     return res.status(400).json({ error: 'El nombre es requerido' });
   }
+  
+  // Sanitizar y validar longitud
+  const cleanName = name.trim();
+  if (cleanName.length < 2 || cleanName.length > 50) {
+    return res.status(400).json({ error: 'El nombre debe tener entre 2 y 50 caracteres' });
+  }
+  
+  // Validar caracteres permitidos (solo letras, espacios, guiones y apostrofes)
+  if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\-']+$/.test(cleanName)) {
+    return res.status(400).json({ error: 'El nombre solo puede contener letras, espacios, guiones y apostrofes' });
+  }
+  
+  // Validar campos opcionales
+  if (nickname && (typeof nickname !== 'string' || nickname.trim().length > 30)) {
+    return res.status(400).json({ error: 'El apodo debe ser una cadena de máximo 30 caracteres' });
+  }
+  
+  if (fatherName && (typeof fatherName !== 'string' || fatherName.trim().length > 50)) {
+    return res.status(400).json({ error: 'El nombre del padre debe ser máximo 50 caracteres' });
+  }
+  
+  if (motherName && (typeof motherName !== 'string' || motherName.trim().length > 50)) {
+    return res.status(400).json({ error: 'El nombre de la madre debe ser máximo 50 caracteres' });
+  }
+  
+  // Agregar valores sanitizados al request
+  req.body.name = cleanName;
+  req.body.nickname = nickname ? nickname.trim() : null;
+  req.body.fatherName = fatherName ? fatherName.trim() : null;
+  req.body.motherName = motherName ? motherName.trim() : null;
+  
   next();
 }
 
 function validateSession(req, res, next) {
   const { childId, gameId, duration } = req.body;
+  
+  // Validar existencia de campos
   if (!childId || !gameId || !duration) {
     return res.status(400).json({ error: 'childId, gameId y duration son requeridos' });
   }
+  
+  // Validar tipos de datos
+  const childIdNum = parseInt(childId);
+  const gameIdNum = parseInt(gameId);
+  const durationNum = parseInt(duration);
+  
+  if (isNaN(childIdNum) || isNaN(gameIdNum) || isNaN(durationNum)) {
+    return res.status(400).json({ error: 'Los IDs y duración deben ser números válidos' });
+  }
+  
+  // Validar rangos
+  if (childIdNum <= 0 || gameIdNum <= 0) {
+    return res.status(400).json({ error: 'Los IDs deben ser números positivos' });
+  }
+  
+  if (durationNum < 1 || durationNum > 180) {
+    return res.status(400).json({ error: 'La duración debe estar entre 1 y 180 minutos' });
+  }
+  
+  // Validar que sean enteros
+  if (!Number.isInteger(childIdNum) || !Number.isInteger(gameIdNum) || !Number.isInteger(durationNum)) {
+    return res.status(400).json({ error: 'Los valores deben ser números enteros' });
+  }
+  
+  // Agregar valores validados al request
+  req.body.childId = childIdNum;
+  req.body.gameId = gameIdNum;
+  req.body.duration = durationNum;
+  
   next();
 }
 
@@ -45,6 +180,11 @@ app.get('/children', async (req, res) => {
 
 // Crear nuevo niño
 app.post('/children', validateChild, async (req, res) => {
+  // Adquirir lock para operación de escritura
+  if (!acquireWriteLock('children')) {
+    return res.status(429).json({ error: 'Operación en progreso. Intenta de nuevo en unos segundos.' });
+  }
+  
   try {
     const data = await loadData();
     const { name, nickname, fatherName, motherName } = req.body;
@@ -79,6 +219,9 @@ app.post('/children', validateChild, async (req, res) => {
   } catch (error) {
     console.error('Error creating child:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
+  } finally {
+    // Liberar lock
+    releaseWriteLock('children');
   }
 });
 
@@ -189,6 +332,11 @@ app.get('/sessions/active', async (req, res) => {
 
 // Iniciar sesión
 app.post('/sessions/start', validateSession, async (req, res) => {
+  // Adquirir lock para operación de escritura
+  if (!acquireWriteLock('sessions')) {
+    return res.status(429).json({ error: 'Operación en progreso. Intenta de nuevo en unos segundos.' });
+  }
+  
   try {
     const data = await loadData();
     const { childId, gameId, duration } = req.body;
@@ -218,6 +366,9 @@ app.post('/sessions/start', validateSession, async (req, res) => {
   } catch (error) {
     console.error('Error starting session:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
+  } finally {
+    // Liberar lock
+    releaseWriteLock('sessions');
   }
 });
 
@@ -315,8 +466,7 @@ app.get('/admin/status', async (req, res) => {
   try {
     const data = await loadData();
     res.json({
-      environment: process.env.VERCEL ? 'Vercel' : 'Local',
-      storage: process.env.JSONBIN_API_KEY ? 'JSONBin.io' : 'Local',
+      status: 'ok',
       children: data.children.length,
       games: data.games.length,
       sessions: data.sessions.length,
