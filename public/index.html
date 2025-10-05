@@ -2839,16 +2839,6 @@
         const child = childrenCache.find(c => c.id === s.childId);
         const game = gamesCache.find(g => g.id === s.gameId);
         
-        // Debug logging
-        console.log('Session debug:', {
-          sessionId: s.id,
-          childId: s.childId,
-          childrenCacheLength: childrenCache.length,
-          child: child,
-          gamesCacheLength: gamesCache.length,
-          game: game
-        });
-        
         // Si no encontramos el niño o juego, intentar recargar los datos
         if (!child || !game) {
           console.warn('Missing child or game data, triggering refresh...');
@@ -2887,7 +2877,7 @@
               <button class="btn-danger" onclick="endSession(${s.id})" style="padding: 4px 8px; font-size: 11px; margin-right: 3px;">
                 <i class="fas fa-stop"></i> FIN
               </button>
-              <button class="extend-time" onclick="showExtendModal(${s.id}, '${childDisplayName}')" style="padding: 4px 8px; font-size: 11px;">
+              <button class="extend-time" onclick="showExtendModal(${s.id}, \`${childDisplayName}\`)" style="padding: 4px 8px; font-size: 11px;">
                 <i class="fas fa-plus"></i> +5
               </button>
             </div>
@@ -2899,40 +2889,17 @@
     function updateExistingTimers() {
       // Solo actualizar timers existentes sin recrear el DOM
       const list = document.getElementById('activeSessions');
-      if (!list) {
-        console.log('Active sessions list not found');
-        return;
-      }
+      if (!list) return;
       
-      if (!activeSessionsData || activeSessionsData.length === 0) {
-        console.log('No active sessions data');
-        return;
-      }
+      if (!activeSessionsData || activeSessionsData.length === 0) return;
       
       activeSessionsData.forEach(s => {
         const sessionElement = list.querySelector(`[data-session-id="${s.id}"]`);
         const timerElement = sessionElement ? sessionElement.querySelector('.timer') : null;
         
-        if (!sessionElement) {
-          console.log(`Session element not found for ID: ${s.id}`);
-          return;
-        }
-        
-        if (!timerElement) {
-          console.log(`Timer element not found for session ID: ${s.id}`);
-          return;
-        }
+        if (!sessionElement || !timerElement) return;
           // Actualizar directamente el contenido del timer sin recrear el elemento
           const now = Date.now();
-          
-          // Debug: mostrar datos de la sesión
-          console.log('Session timer debug:', {
-            sessionId: s.id,
-            startTime: s.startTime,
-            start: s.start,
-            createdAt: s.createdAt,
-            duration: s.duration
-          });
           
           // Buscar startTime en múltiples formatos posibles
           let startTime = s.startTime || s.start;
@@ -2946,14 +2913,6 @@
           if (isNaN(startTime) || startTime <= 0) {
             startTime = now;
           }
-          
-          // Debug adicional del cálculo
-          console.log('Timer calculation debug:', {
-            now: now,
-            startTime: startTime,
-            elapsed: Math.floor((now - startTime) / 1000),
-            duration: s.duration
-          });
           
           const elapsed = Math.floor((now - startTime) / 1000);
           const totalDurationSeconds = (s.duration || 1) * 60;
