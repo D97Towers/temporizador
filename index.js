@@ -2,8 +2,8 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-// Importar solución final definitiva
-const { loadData, saveData } = require('./final-solution-storage');
+// Importar base de datos PostgreSQL real
+const db = require('./database');
 
 // Control de concurrencia para operaciones de escritura
 const writeLock = new Map();
@@ -214,104 +214,103 @@ function validateSession(req, res, next) {
 // Obtener todos los niños
 app.get('/children', async (req, res) => {
   try {
-    const data = await loadData();
-    console.log('GET /children - returning', data.children.length, 'children');
-    res.json(data.children);
+    const children = await db.getChildren();
+    console.log('GET /children - returning', children.length, 'children');
+    res.json(children);
   } catch (error) {
     console.error('Error in GET /children:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
-// Crear nuevo niño (Enterprise Storage)
+// Crear nuevo niño (PostgreSQL)
 app.post('/children', validateChild, async (req, res) => {
   if (!acquireWriteLock('children')) {
     return res.status(429).json({ error: 'Operación en progreso. Intenta de nuevo en unos segundos.' });
   }
   
   try {
-    const data = await loadData();
     const { name, nickname, fatherName, motherName } = req.body;
     
     const trimmedName = name.trim();
-    const existingChild = data.children.find(c => c.name.toLowerCase() === trimmedName.toLowerCase());
-    if (existingChild) {
-      return res.status(400).json({ error: 'Ya existe un niño con ese nombre' });
-    }
-    
     const displayName = trimmedName + (nickname ? ` (${nickname.trim()})` : '');
     const avatar = trimmedName.charAt(0).toUpperCase();
     
-    const newChild = {
-      id: data.nextChildId++,
+    const newChild = await db.createChild({
       name: trimmedName,
       nickname: nickname ? nickname.trim() : null,
       fatherName: fatherName ? fatherName.trim() : null,
       motherName: motherName ? motherName.trim() : null,
       displayName,
-      avatar,
-      totalSessions: 0,
-      totalTimePlayed: 0,
-      createdAt: new Date().toISOString()
-    };
-    
-    data.children.push(newChild);
-    await saveData(data);
+      avatar
+    });
     
     console.log('Child created:', newChild.name);
     res.status(201).json(newChild);
   } catch (error) {
     console.error('Error creating child:', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    if (error.code === '23505') { // Unique constraint violation
+      res.status(400).json({ error: 'Ya existe un niño con ese nombre' });
+    } else {
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
   } finally {
     releaseWriteLock('children');
   }
 });
 
-// Editar niño existente
+// Editar niño existente (PostgreSQL)
 app.put('/children/:id', async (req, res) => {
   try {
-    const data = await loadData();
     const childId = parseInt(req.params.id);
     const { name, nickname, fatherName, motherName } = req.body;
     
-    const child = data.children.find(c => c.id === childId);
-    if (!child) {
-      return res.status(404).json({ error: 'Niño no encontrado' });
+    const updateData = {};
+    if (name) {
+      updateData.name = name.trim();
+    }
+    if (nickname !== undefined) {
+      updateData.nickname = nickname ? nickname.trim() : null;
+    }
+    if (fatherName !== undefined) {
+      updateData.fatherName = fatherName ? fatherName.trim() : null;
+    }
+    if (motherName !== undefined) {
+      updateData.motherName = motherName ? motherName.trim() : null;
     }
     
-    const trimmedName = name.trim();
-    
-    // Verificar que no haya otro niño con el mismo nombre (excepto el actual)
-    const existingChild = data.children.find(c => c.id !== childId && c.name.toLowerCase() === trimmedName.toLowerCase());
-    if (existingChild) {
-      return res.status(400).json({ error: 'Ya existe otro niño con ese nombre' });
+    // Actualizar displayName si name o nickname cambió
+    if (updateData.name || updateData.nickname !== undefined) {
+      const currentChild = await db.getChildById(childId);
+      if (!currentChild) {
+        return res.status(404).json({ error: 'Niño no encontrado' });
+      }
+      
+      const finalName = updateData.name || currentChild.name;
+      const finalNickname = updateData.nickname !== undefined ? updateData.nickname : currentChild.nickname;
+      updateData.displayName = finalName + (finalNickname ? ` (${finalNickname})` : '');
     }
     
-    // Actualizar datos del niño
-    child.name = trimmedName;
-    child.nickname = nickname ? nickname.trim() : null;
-    child.fatherName = fatherName ? fatherName.trim() : null;
-    child.motherName = motherName ? motherName.trim() : null;
-    child.displayName = trimmedName + (nickname ? ` (${nickname.trim()})` : '');
-    child.avatar = trimmedName.charAt(0).toUpperCase();
+    const updatedChild = await db.updateChild(childId, updateData);
     
-    await saveData(data);
-    
-    console.log('Child updated:', child.name);
-    res.json(child);
+    console.log('Child updated:', updatedChild.name);
+    res.json(updatedChild);
   } catch (error) {
     console.error('Error updating child:', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    if (error.code === '23505') { // Unique constraint violation
+      res.status(400).json({ error: 'Ya existe un niño con ese nombre' });
+    } else {
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
   }
 });
 
 // Obtener todos los juegos
 app.get('/games', async (req, res) => {
   try {
-    const data = await loadData();
-    console.log('GET /games - returning', data.games.length, 'games');
-    res.json(data.games);
+    const games = await db.getGames();
+    console.log('GET /games - returning', games.length, 'games');
+    res.json(games);
   } catch (error) {
     console.error('Error in GET /games:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
@@ -645,11 +644,33 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Inicializar servidor con base de datos
+async function startServer() {
+  try {
+    // Inicializar base de datos
+    console.log('🔄 Inicializando base de datos...');
+    await db.initializeDatabase();
+    console.log('✅ Base de datos inicializada');
+    
+    // Migrar datos por defecto
+    await db.migrateExistingData();
+    console.log('✅ Datos por defecto migrados');
+    
+    // Iniciar servidor
+    const PORT = process.env.PORT || 3010;
+    app.listen(PORT, () => {
+      console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
+      console.log(`📊 Entorno: ${process.env.VERCEL ? 'Vercel' : 'Local'}`);
+      console.log(`💾 Base de datos: PostgreSQL (Neon)`);
+    });
+    
+  } catch (error) {
+    console.error('❌ Error iniciando servidor:', error.message);
+    process.exit(1);
+  }
+}
+
 // Iniciar servidor
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en puerto ${PORT}`);
-  console.log(`Entorno: ${process.env.VERCEL ? 'Vercel' : 'Local'}`);
-  console.log(`Almacenamiento: ${process.env.JSONBIN_API_KEY ? 'JSONBin.io' : 'Local'}`);
-});
+startServer();
 
 module.exports = app;
