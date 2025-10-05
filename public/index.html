@@ -2906,9 +2906,31 @@
         if (timerElement) {
           // Actualizar directamente el contenido del timer sin recrear el elemento
           const now = Date.now();
-          const startTime = s.startTime || s.start || Date.now(); // Compatibilidad con ambos formatos
+          
+          // Debug: mostrar datos de la sesión
+          console.log('Session timer debug:', {
+            sessionId: s.id,
+            startTime: s.startTime,
+            start: s.start,
+            createdAt: s.createdAt,
+            duration: s.duration
+          });
+          
+          // Buscar startTime en múltiples formatos posibles
+          let startTime = s.startTime || s.start;
+          
+          // Si no hay startTime válido, usar createdAt como fallback
+          if (!startTime || isNaN(startTime)) {
+            startTime = s.createdAt ? new Date(s.createdAt).getTime() : now;
+          }
+          
+          // Asegurar que startTime es un número válido
+          if (isNaN(startTime) || startTime <= 0) {
+            startTime = now;
+          }
+          
           const elapsed = Math.floor((now - startTime) / 1000);
-          const remaining = (s.duration * 60) - elapsed;
+          const remaining = Math.max(0, (s.duration * 60) - elapsed);
           
           if (remaining <= 0) {
             timerElement.innerHTML = '⏰ <strong>Tiempo agotado</strong>';
