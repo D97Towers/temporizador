@@ -2969,7 +2969,7 @@
       const sessionHash = visibleSessions.map(s => `${s.id}-${s.childId}-${s.gameId}-${s.duration}`).join('|');
       
       if (list.dataset.sessionHash !== sessionHash) {
-        let html = visibleSessions.map(s => generateActiveSessionHTML(s)).join('');
+        let html = visibleSessions.map(s => generateSingleSessionHTML(s)).join('');
         
         if (hiddenCount > 0) {
           html += `<li class="list-item info"><i class="fas fa-info-circle"></i> ... y ${hiddenCount} sesiones más</li>`;
@@ -2982,6 +2982,56 @@
       }
     }
     
+    function generateSingleSessionHTML(s) {
+      const child = childrenCache.find(c => c.id === s.childId);
+      const game = gamesCache.find(g => g.id === s.gameId);
+      
+      // Si no encontramos el niño o juego, intentar recargar los datos
+      if (!child || !game) {
+        console.warn('Missing child or game data, triggering refresh...');
+        setTimeout(() => {
+          fetchChildren();
+          fetchGames();
+        }, 100);
+      }
+      
+      // Usar displayName si existe y no es null/undefined, sino el nombre original
+      const childDisplayName = child ? (child.displayName && child.displayName !== 'null' ? child.displayName : child.name) : 'Niño desconocido';
+      const childAvatar = child ? (child.avatar || child.name.charAt(0).toUpperCase()) : '?';
+      const gameName = game ? game.name : 'Juego desconocido';
+      
+      // Información de padres para diferenciación
+      let parentsInfo = '';
+      if (child && (child.fatherName || child.motherName)) {
+        if (child.fatherName && child.motherName) {
+          parentsInfo = '<br><small class="parents-info"><i class="fas fa-users"></i> ' + child.fatherName + ' & ' + child.motherName + '</small>';
+        } else if (child.fatherName) {
+          parentsInfo = '<br><small class="parents-info"><i class="fas fa-users"></i> Papá: ' + child.fatherName + '</small>';
+        } else if (child.motherName) {
+          parentsInfo = '<br><small class="parents-info"><i class="fas fa-users"></i> Mamá: ' + child.motherName + '</small>';
+        }
+      }
+      
+      return '<li class="list-item active" data-session-id="' + s.id + '" id="session-' + s.id + '">' +
+        '<div class="session-info">' +
+          '<strong><span class="child-avatar-small">' + childAvatar + '</span> <i class="fas fa-child"></i> ' + childDisplayName + '</strong>' + parentsInfo + '<br>' +
+          '<small><i class="fas fa-gamepad"></i> ' + gameName + '</small><br>' +
+          '<small><i class="fas fa-clock"></i> Duración: ' + s.duration + ' min</small>' +
+        '</div>' +
+        '<div class="session-controls">' +
+          '<div class="timer" id="timer-' + s.id + '">Calculando...</div>' +
+          '<div class="button-group">' +
+            '<button class="btn-danger" onclick="endSession(' + s.id + ')" style="padding: 4px 8px; font-size: 11px; margin-right: 3px;">' +
+              '<i class="fas fa-stop"></i> FIN' +
+            '</button>' +
+            '<button class="extend-time" onclick="showExtendModal(' + s.id + ', \'' + childDisplayName + '\')" style="padding: 4px 8px; font-size: 11px;">' +
+              '<i class="fas fa-plus"></i> +5' +
+            '</button>' +
+          '</div>' +
+        '</div>' +
+      '</li>';
+    }
+
     function generateActiveSessionsHTML() {
       if (!activeSessionsData || activeSessionsData.length === 0) {
         return '<li class="list-item">No hay sesiones activas</li>';
