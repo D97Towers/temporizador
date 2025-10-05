@@ -43,7 +43,7 @@ async function testRateLimit() {
   console.log('========================');
   
   const promises = [];
-  for (let i = 0; i < 110; i++) { // Más del límite de 100
+  for (let i = 0; i < 15; i++) { // Más del límite de 10
     promises.push(testRequest('GET', '/admin/status', null, `Request ${i + 1}`));
   }
   

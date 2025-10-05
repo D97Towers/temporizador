@@ -40,7 +40,7 @@ function releaseWriteLock(resource) {
 // Rate limiting simple (sin dependencias externas)
 const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW = 60000; // 1 minuto
-const RATE_LIMIT_MAX_REQUESTS = 10; // 10 requests por minuto (para pruebas)
+const RATE_LIMIT_MAX_REQUESTS = 60; // 60 requests por minuto (más realista)
 
 function rateLimit(req, res, next) {
   // En Vercel, usar User-Agent + IP para mejor identificación
@@ -65,10 +65,17 @@ function rateLimit(req, res, next) {
   }
   
   const requests = rateLimitMap.get(clientId);
-  if (requests.length >= RATE_LIMIT_MAX_REQUESTS) {
+  
+  // Límites diferentes para lectura vs escritura
+  const isReadRequest = req.method === 'GET';
+  const maxRequests = isReadRequest ? 120 : 30; // 120 lecturas, 30 escrituras por minuto
+  const requestType = isReadRequest ? 'lectura' : 'escritura';
+  
+  if (requests.length >= maxRequests) {
     return res.status(429).json({ 
-      error: 'Demasiadas solicitudes. Intenta de nuevo en un minuto.',
-      retryAfter: Math.ceil(RATE_LIMIT_WINDOW / 1000)
+      error: `Demasiadas solicitudes de ${requestType}. Intenta de nuevo en un minuto.`,
+      retryAfter: Math.ceil(RATE_LIMIT_WINDOW / 1000),
+      limitType: requestType
     });
   }
   

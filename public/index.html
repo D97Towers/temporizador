@@ -2738,6 +2738,16 @@
           if (res.ok) {
             return res;
           }
+          
+          // Manejo especial para rate limiting (429)
+          if (res.status === 429) {
+            const retryAfter = res.headers.get('retry-after') || '60';
+            const waitTime = parseInt(retryAfter) * 1000;
+            console.warn(`Rate limited, esperando ${retryAfter} segundos...`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+            continue; // Reintentar sin contar como fallo
+          }
+          
           if (i === retries - 1) {
             throw new Error(`HTTP ${res.status}: ${res.statusText}`);
           }
