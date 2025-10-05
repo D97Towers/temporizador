@@ -40,28 +40,31 @@ function releaseWriteLock(resource) {
 // Rate limiting simple (sin dependencias externas)
 const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW = 60000; // 1 minuto
-const RATE_LIMIT_MAX_REQUESTS = 100; // 100 requests por minuto
+const RATE_LIMIT_MAX_REQUESTS = 10; // 10 requests por minuto (para pruebas)
 
 function rateLimit(req, res, next) {
+  // En Vercel, usar User-Agent + IP para mejor identificación
   const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+  const userAgent = req.get('User-Agent') || 'unknown';
+  const clientId = `${clientIP}-${userAgent}`;
   const now = Date.now();
   
   // Limpiar entradas expiradas
-  if (rateLimitMap.has(clientIP)) {
-    const requests = rateLimitMap.get(clientIP).filter(time => now - time < RATE_LIMIT_WINDOW);
+  if (rateLimitMap.has(clientId)) {
+    const requests = rateLimitMap.get(clientId).filter(time => now - time < RATE_LIMIT_WINDOW);
     if (requests.length === 0) {
-      rateLimitMap.delete(clientIP);
+      rateLimitMap.delete(clientId);
     } else {
-      rateLimitMap.set(clientIP, requests);
+      rateLimitMap.set(clientId, requests);
     }
   }
   
   // Verificar límite
-  if (!rateLimitMap.has(clientIP)) {
-    rateLimitMap.set(clientIP, []);
+  if (!rateLimitMap.has(clientId)) {
+    rateLimitMap.set(clientId, []);
   }
   
-  const requests = rateLimitMap.get(clientIP);
+  const requests = rateLimitMap.get(clientId);
   if (requests.length >= RATE_LIMIT_MAX_REQUESTS) {
     return res.status(429).json({ 
       error: 'Demasiadas solicitudes. Intenta de nuevo en un minuto.',
@@ -327,6 +330,85 @@ app.get('/sessions/active', async (req, res) => {
   } catch (error) {
     console.error('Error in GET /sessions/active:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// Eliminar niño
+app.delete('/children/:id', async (req, res) => {
+  // Adquirir lock para operación de escritura
+  if (!acquireWriteLock('children')) {
+    return res.status(429).json({ error: 'Operación en progreso. Intenta de nuevo en unos segundos.' });
+  }
+  
+  try {
+    const data = await loadData();
+    const childId = parseInt(req.params.id);
+    
+    const childIndex = data.children.findIndex(c => c.id === childId);
+    if (childIndex === -1) {
+      return res.status(404).json({ error: 'Niño no encontrado' });
+    }
+    
+    // Eliminar el niño
+    const deletedChild = data.children.splice(childIndex, 1)[0];
+    
+    // Eliminar sesiones relacionadas
+    data.sessions = data.sessions.filter(s => s.childId !== childId);
+    
+    await saveData(data);
+    
+    console.log('Child deleted:', deletedChild.name);
+    res.json({ message: 'Niño eliminado exitosamente', deletedChild });
+  } catch (error) {
+    console.error('Error deleting child:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  } finally {
+    // Liberar lock
+    releaseWriteLock('children');
+  }
+});
+
+// Eliminar juego
+app.delete('/games/:id', async (req, res) => {
+  // Adquirir lock para operación de escritura
+  if (!acquireWriteLock('games')) {
+    return res.status(429).json({ error: 'Operación en progreso. Intenta de nuevo en unos segundos.' });
+  }
+  
+  try {
+    const data = await loadData();
+    const gameId = parseInt(req.params.id);
+    
+    const gameIndex = data.games.findIndex(g => g.id === gameId);
+    if (gameIndex === -1) {
+      return res.status(404).json({ error: 'Juego no encontrado' });
+    }
+    
+    // Verificar si hay sesiones activas con este juego
+    const activeSessions = data.sessions.filter(s => s.gameId === gameId && !s.endTime);
+    if (activeSessions.length > 0) {
+      return res.status(400).json({ 
+        error: 'No se puede eliminar un juego que tiene sesiones activas',
+        activeSessions: activeSessions.length
+      });
+    }
+    
+    // Eliminar el juego
+    const deletedGame = data.games.splice(gameIndex, 1)[0];
+    
+    // Eliminar sesiones relacionadas
+    data.sessions = data.sessions.filter(s => s.gameId !== gameId);
+    
+    await saveData(data);
+    
+    console.log('Game deleted:', deletedGame.name);
+    res.json({ message: 'Juego eliminado exitosamente', deletedGame });
+  } catch (error) {
+    console.error('Error deleting game:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  } finally {
+    // Liberar lock
+    releaseWriteLock('games');
   }
 });
 
