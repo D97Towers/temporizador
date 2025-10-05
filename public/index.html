@@ -2579,7 +2579,7 @@
     // Función para actualizar el indicador de alertas
     function updateAlertIndicator() {
       let indicator = document.getElementById('alertIndicator');
-      const container = getOrCreateAlertContainer();
+      const container = document.getElementById('alertContainer') || createAlertContainer();
       const activeAlerts = container.children.length;
       
       if (activeAlerts > 0 && !indicator) {
@@ -2597,7 +2597,7 @@
     
     // Función para mostrar alertas elegantes
     function showElegantAlert(msg, type = 'info', sessionId = null) {
-      const container = getOrCreateAlertContainer();
+      const container = document.getElementById('alertContainer') || createAlertContainer();
       const alertId = `alert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
       const alertElement = document.createElement('div');
