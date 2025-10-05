@@ -6,13 +6,24 @@ const JSONBIN_API_KEY = process.env.JSONBIN_API_KEY;
 const JSONBIN_BIN_ID = process.env.JSONBIN_BIN_ID;
 const JSONBIN_BASE_URL = 'https://api.jsonbin.io/v3/b';
 
-// Función para cargar datos desde JSONBin.io
+// Cache local para consistencia inmediata
+let localCache = null;
+let lastSaveTime = 0;
+
+// Función para cargar datos desde JSONBin.io con cache local
 async function loadData() {
   try {
     // Si no hay configuración de JSONBin.io, usar datos locales
     if (!JSONBIN_API_KEY || !JSONBIN_BIN_ID) {
       console.log('JSONBin.io not configured, using local storage');
       return loadLocalData();
+    }
+
+    // Si tenemos cache local reciente (menos de 5 segundos), usarlo
+    const now = Date.now();
+    if (localCache && (now - lastSaveTime) < 5000) {
+      console.log('Using local cache for immediate consistency');
+      return localCache;
     }
 
     const response = await axios.get(`${JSONBIN_BASE_URL}/${JSONBIN_BIN_ID}/latest`, {
@@ -28,7 +39,7 @@ async function loadData() {
       sessions: data.sessions?.length || 0
     });
 
-    return {
+    const result = {
       children: data.children || [],
       games: data.games || [],
       sessions: data.sessions || [],
@@ -36,6 +47,10 @@ async function loadData() {
       nextGameId: data.nextGameId || 1,
       nextSessionId: data.nextSessionId || 1
     };
+
+    // Actualizar cache local
+    localCache = result;
+    return result;
   } catch (error) {
     console.error('Error loading from JSONBin.io:', error.message);
     console.log('Falling back to local storage');
@@ -43,9 +58,13 @@ async function loadData() {
   }
 }
 
-// Función para guardar datos en JSONBin.io
+// Función para guardar datos en JSONBin.io con cache local
 async function saveData(newData) {
   try {
+    // Actualizar cache local inmediatamente para consistencia
+    localCache = newData;
+    lastSaveTime = Date.now();
+    
     // Si no hay configuración de JSONBin.io, usar almacenamiento local
     if (!JSONBIN_API_KEY || !JSONBIN_BIN_ID) {
       console.log('JSONBin.io not configured, using local storage');
@@ -59,7 +78,7 @@ async function saveData(newData) {
       }
     });
 
-    console.log('Data saved to JSONBin.io successfully');
+    console.log('Data saved to JSONBin.io successfully, local cache updated');
     return true;
   } catch (error) {
     console.error('Error saving to JSONBin.io:', error.message);
