@@ -2899,11 +2899,29 @@
     function updateExistingTimers() {
       // Solo actualizar timers existentes sin recrear el DOM
       const list = document.getElementById('activeSessions');
-      if (!list) return;
+      if (!list) {
+        console.log('Active sessions list not found');
+        return;
+      }
+      
+      if (!activeSessionsData || activeSessionsData.length === 0) {
+        console.log('No active sessions data');
+        return;
+      }
       
       activeSessionsData.forEach(s => {
-        const timerElement = list.querySelector(`[data-session-id="${s.id}"] .timer`);
-        if (timerElement) {
+        const sessionElement = list.querySelector(`[data-session-id="${s.id}"]`);
+        const timerElement = sessionElement ? sessionElement.querySelector('.timer') : null;
+        
+        if (!sessionElement) {
+          console.log(`Session element not found for ID: ${s.id}`);
+          return;
+        }
+        
+        if (!timerElement) {
+          console.log(`Timer element not found for session ID: ${s.id}`);
+          return;
+        }
           // Actualizar directamente el contenido del timer sin recrear el elemento
           const now = Date.now();
           
@@ -2987,8 +3005,9 @@
       // Crear timers solo para sesiones nuevas
       activeSessionsData.forEach(s => {
         if (!timerIntervals.has(s.id)) {
-          updateTimer(s.id, s.start, s.duration);
-          const interval = setInterval(() => updateTimer(s.id, s.start, s.duration), 1000);
+          const startTime = s.startTime || s.start || Date.now();
+          updateTimer(s.id, startTime, s.duration);
+          const interval = setInterval(() => updateTimer(s.id, startTime, s.duration), 1000);
           timerIntervals.set(s.id, interval);
         }
       });
@@ -3000,10 +3019,18 @@
       
       // Usar datos actualizados de activeSessionsData si están disponibles
       const sessionData = activeSessionsData.find(s => s.id === sessionId);
-      const currentStartTime = sessionData ? sessionData.start : startTime;
+      const currentStartTime = sessionData ? (sessionData.startTime || sessionData.start || startTime) : startTime;
       const currentDuration = sessionData ? sessionData.duration : duration;
       
       const now = Date.now();
+      
+      // Validar que currentStartTime es un número válido
+      if (isNaN(currentStartTime) || currentStartTime <= 0) {
+        console.error('Invalid startTime in updateTimer:', { sessionId, currentStartTime, sessionData });
+        timerSpan.textContent = '⏱️ Calculando...';
+        return;
+      }
+      
       const elapsedSeconds = Math.floor((now - currentStartTime) / 1000);
       const totalSeconds = currentDuration * 60;
       const remainingSeconds = totalSeconds - elapsedSeconds;
