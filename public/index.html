@@ -2569,7 +2569,7 @@
         alert.style.transition = 'all 0.3s ease';
         setTimeout(() => {
           if (alert.parentNode) {
-            alert.remove();
+          alert.remove();
             updateAlertIndicator();
           }
         }, 300);
@@ -2950,7 +2950,7 @@
       }
     }
 
-    
+
     function renderActiveSessions() {
       const list = document.getElementById('activeSessions');
       if (!list) return;
@@ -3032,7 +3032,7 @@
         '</div>' +
       '</li>';
     }
-
+    
     function generateActiveSessionsHTML() {
       if (!activeSessionsData || activeSessionsData.length === 0) {
         return '<li class="list-item">No hay sesiones activas</li>';
@@ -3102,8 +3102,8 @@
         
         if (!sessionElement || !timerElement) return;
         
-        // Actualizar directamente el contenido del timer sin recrear el elemento
-        const now = Date.now();
+          // Actualizar directamente el contenido del timer sin recrear el elemento
+          const now = Date.now();
         
         // Buscar startTime en múltiples formatos posibles
         let startTime = s.startTime || s.start;
@@ -3129,26 +3129,26 @@
           timerElement.className = 'timer';
           return;
         }
-        
-        if (remaining <= 0) {
+          
+          if (remaining <= 0) {
           timerElement.innerHTML = '<strong>Tiempo agotado</strong>';
-          timerElement.className = 'timer danger';
-        } else {
-          const h = Math.floor(remaining / 3600);
-          const m = Math.floor((remaining % 3600) / 60);
-          const s = remaining % 60;
-          const elapsedMin = Math.floor(elapsed / 60);
-          const elapsedSec = elapsed % 60;
-          
-          timerElement.innerHTML = 'Restante: ' + h + ':' + m.toString().padStart(2, '0') + ':' + s.toString().padStart(2, '0') + '<br><small>Transcurrido: ' + elapsedMin + ':' + elapsedSec.toString().padStart(2, '0') + '</small>';
-          
-          // Cambiar color según tiempo restante
-          if (remaining <= 60) {
             timerElement.className = 'timer danger';
-          } else if (remaining <= 300) {
-            timerElement.className = 'timer warning';
           } else {
-            timerElement.className = 'timer';
+            const h = Math.floor(remaining / 3600);
+            const m = Math.floor((remaining % 3600) / 60);
+            const s = remaining % 60;
+            const elapsedMin = Math.floor(elapsed / 60);
+            const elapsedSec = elapsed % 60;
+            
+          timerElement.innerHTML = 'Restante: ' + h + ':' + m.toString().padStart(2, '0') + ':' + s.toString().padStart(2, '0') + '<br><small>Transcurrido: ' + elapsedMin + ':' + elapsedSec.toString().padStart(2, '0') + '</small>';
+            
+            // Cambiar color según tiempo restante
+            if (remaining <= 60) {
+              timerElement.className = 'timer danger';
+            } else if (remaining <= 300) {
+              timerElement.className = 'timer warning';
+            } else {
+              timerElement.className = 'timer';
           }
         }
       });
@@ -3639,21 +3639,37 @@
       
       if (!validateSession(selectedChildId, gameId, duration)) return;
       
-      // Verificar que el niño y juego existen en el caché
+      // RECARGAR DATOS FRESCOS ANTES DE VALIDAR
+      console.log('Recargando datos frescos antes de iniciar sesión...');
+      await Promise.all([fetchChildren(), fetchGames()]);
+      
+      // Verificar que el niño y juego existen en el caché después de recargar
       const child = childrenCache.find(c => c.id == selectedChildId);
       const game = gamesCache.find(g => g.id == gameId);
       
       if (!child) {
-        showStatusMessage('Error: Niño no encontrado en la lista', 'error');
-        await fetchChildren(); // Recargar datos
+        console.error('Child not found after refresh:', selectedChildId, 'Available children:', childrenCache.map(c => `${c.id}:${c.name}`));
+        showStatusMessage('Error: Niño no encontrado después de recargar datos', 'error');
+        // Limpiar el select de niños para evitar futuros errores
+        document.getElementById('childSelect').value = '';
         return;
       }
       
       if (!game) {
-        showStatusMessage('Error: Juego no encontrado en la lista', 'error');
-        await fetchGames(); // Recargar datos
+        console.error('Game not found after refresh:', gameId, 'Available games:', gamesCache.map(g => `${g.id}:${g.name}`));
+        showStatusMessage('Error: Juego no encontrado después de recargar datos', 'error');
+        // Limpiar el select de juegos para evitar futuros errores
+        document.getElementById('gameSelect').value = '';
         return;
       }
+      
+      console.log('Validación exitosa - Iniciando sesión:', {
+        childId: selectedChildId,
+        gameId: gameId,
+        duration: duration,
+        childName: child.name,
+        gameName: game.name
+      });
       
       showLoading('startBtn', true);
       try {
