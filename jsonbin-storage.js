@@ -11,7 +11,7 @@ let localCache = null;
 let lastSaveTime = 0;
 let writeLock = false;
 
-// Función para cargar datos - JSONBin.io con cache local
+// Función para cargar datos - Almacenamiento local confiable
 async function loadData() {
   try {
     // Si tenemos cache local reciente, usarlo
@@ -20,40 +20,30 @@ async function loadData() {
       return localCache;
     }
     
-    // Intentar cargar desde JSONBin.io
-    if (JSONBIN_API_KEY && JSONBIN_BIN_ID) {
-      console.log('Loading from JSONBin.io...');
-      const response = await axios.get(`${JSONBIN_BASE_URL}/${JSONBIN_BIN_ID}/latest`, {
-        headers: { 'X-Master-Key': JSONBIN_API_KEY },
-        timeout: 10000
-      });
-      
-      const data = response.data.record;
-      localCache = data;
-      lastSaveTime = Date.now();
-      
-      console.log('🔄 JSONBin.io data loaded:', {
-        children: data.children?.length || 0,
-        games: data.games?.length || 0,
-        sessions: data.sessions?.length || 0,
-        activeSessions: data.sessions?.filter(s => !s.endTime)?.length || 0
-      });
-      
-      return data;
-    }
+    // Usar almacenamiento local como principal (más confiable)
+    console.log('Loading from local storage...');
+    const data = loadLocalData();
     
-    // Fallback a almacenamiento local
-    console.log('Falling back to local storage');
-    return loadLocalData();
+    // Actualizar cache local
+    localCache = data;
+    lastSaveTime = Date.now();
+    
+    console.log('🔄 Local data loaded:', {
+      children: data.children?.length || 0,
+      games: data.games?.length || 0,
+      sessions: data.sessions?.length || 0,
+      activeSessions: data.sessions?.filter(s => !s.endTime)?.length || 0
+    });
+    
+    return data;
   } catch (error) {
     console.error('Error loading data:', error.message);
-    // Si hay error con JSONBin.io, intentar cargar desde archivo local
-    console.log('Attempting to load from local file as fallback...');
-    return loadLocalData();
+    console.log('Using default data as fallback...');
+    return getDefaultData();
   }
 }
 
-// Función para guardar datos - JSONBin.io con cache local
+// Función para guardar datos - Almacenamiento local confiable
 async function saveData(newData) {
   try {
     // Prevenir escrituras concurrentes
@@ -76,25 +66,30 @@ async function saveData(newData) {
       activeSessions: newData.sessions?.filter(s => !s.endTime)?.length || 0
     });
     
-    // Guardar en JSONBin.io
+    // Guardar localmente como principal (más confiable)
+    const result = saveLocalData(newData);
+    
+    // Intentar guardar en JSONBin.io como respaldo (opcional)
     if (JSONBIN_API_KEY && JSONBIN_BIN_ID) {
-      console.log('☁️ Saving to JSONBin.io...');
-      await axios.put(`${JSONBIN_BASE_URL}/${JSONBIN_BIN_ID}`, newData, {
-        headers: { 
-          'X-Master-Key': JSONBIN_API_KEY,
-          'Content-Type': 'application/json'
-        },
-        timeout: 15000
-      });
-      console.log('✅ JSONBin.io save successful');
+      try {
+        console.log('☁️ Attempting backup to JSONBin.io...');
+        await axios.put(`${JSONBIN_BASE_URL}/${JSONBIN_BIN_ID}`, newData, {
+          headers: { 
+            'X-Master-Key': JSONBIN_API_KEY,
+            'Content-Type': 'application/json'
+          },
+          timeout: 15000
+        });
+        console.log('✅ JSONBin.io backup successful');
+      } catch (jsonbinError) {
+        console.log('⚠️ JSONBin.io backup failed, but local save succeeded');
+      }
     }
     
-    // También guardar localmente como backup
-    const result = saveLocalData(newData);
     writeLock = false;
     return result;
   } catch (error) {
-    console.error('Error saving local data:', error.message);
+    console.error('Error saving data:', error.message);
     writeLock = false;
     return false;
   }
