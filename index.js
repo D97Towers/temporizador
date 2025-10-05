@@ -82,6 +82,44 @@ app.post('/children', validateChild, async (req, res) => {
   }
 });
 
+// Editar niño existente
+app.put('/children/:id', async (req, res) => {
+  try {
+    const data = await loadData();
+    const childId = parseInt(req.params.id);
+    const { name, nickname, fatherName, motherName } = req.body;
+    
+    const child = data.children.find(c => c.id === childId);
+    if (!child) {
+      return res.status(404).json({ error: 'Niño no encontrado' });
+    }
+    
+    const trimmedName = name.trim();
+    
+    // Verificar que no haya otro niño con el mismo nombre (excepto el actual)
+    const existingChild = data.children.find(c => c.id !== childId && c.name.toLowerCase() === trimmedName.toLowerCase());
+    if (existingChild) {
+      return res.status(400).json({ error: 'Ya existe otro niño con ese nombre' });
+    }
+    
+    // Actualizar datos del niño
+    child.name = trimmedName;
+    child.nickname = nickname ? nickname.trim() : null;
+    child.fatherName = fatherName ? fatherName.trim() : null;
+    child.motherName = motherName ? motherName.trim() : null;
+    child.displayName = trimmedName + (nickname ? ` (${nickname.trim()})` : '');
+    child.avatar = trimmedName.charAt(0).toUpperCase();
+    
+    await saveData(data);
+    
+    console.log('Child updated:', child.name);
+    res.json(child);
+  } catch (error) {
+    console.error('Error updating child:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
 // Obtener todos los juegos
 app.get('/games', async (req, res) => {
   try {
