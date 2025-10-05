@@ -91,6 +91,40 @@ const PORT = process.env.PORT || 3010;
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
+
+// Middleware de logging detallado para pruebas en vivo
+app.use((req, res, next) => {
+  const timestamp = new Date().toISOString();
+  const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+  const userAgent = req.get('User-Agent')?.substring(0, 50) || 'unknown';
+  
+  console.log(`\n🌐 [${timestamp}] ${req.method} ${req.path}`);
+  console.log(`📍 IP: ${clientIP} | UA: ${userAgent}`);
+  
+  // Log del body para requests POST/PUT
+  if (['POST', 'PUT'].includes(req.method) && req.body) {
+    console.log(`📝 Body:`, JSON.stringify(req.body, null, 2));
+  }
+  
+  // Interceptar la respuesta para logging
+  const originalSend = res.send;
+  res.send = function(data) {
+    console.log(`📤 Response: ${res.statusCode} ${res.statusMessage}`);
+    if (res.statusCode >= 400) {
+      console.log(`❌ Error Response:`, data);
+    } else if (data && typeof data === 'string' && data.length < 200) {
+      console.log(`✅ Success Response:`, data);
+    } else {
+      console.log(`✅ Success Response: [${typeof data}] ${data?.length || 'N/A'} chars`);
+    }
+    console.log(`⏱️ Request completed in ${Date.now() - req.startTime}ms\n`);
+    originalSend.call(this, data);
+  };
+  
+  req.startTime = Date.now();
+  next();
+});
+
 app.use(rateLimit); // Aplicar rate limiting a todas las rutas
 
 // Middleware de validación

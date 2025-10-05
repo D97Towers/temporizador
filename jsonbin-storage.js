@@ -32,10 +32,11 @@ async function loadData() {
       localCache = data;
       lastSaveTime = Date.now();
       
-      console.log('JSONBin.io data loaded:', {
+      console.log('🔄 JSONBin.io data loaded:', {
         children: data.children?.length || 0,
         games: data.games?.length || 0,
-        sessions: data.sessions?.length || 0
+        sessions: data.sessions?.length || 0,
+        activeSessions: data.sessions?.filter(s => !s.endTime)?.length || 0
       });
       
       return data;
@@ -66,15 +67,16 @@ async function saveData(newData) {
     localCache = JSON.parse(JSON.stringify(newData)); // Deep copy
     lastSaveTime = Date.now();
     
-    console.log('Local cache updated immediately:', {
+    console.log('💾 Local cache updated immediately:', {
       children: newData.children?.length || 0,
       games: newData.games?.length || 0,
-      sessions: newData.sessions?.length || 0
+      sessions: newData.sessions?.length || 0,
+      activeSessions: newData.sessions?.filter(s => !s.endTime)?.length || 0
     });
     
     // Guardar en JSONBin.io
     if (JSONBIN_API_KEY && JSONBIN_BIN_ID) {
-      console.log('Saving to JSONBin.io...');
+      console.log('☁️ Saving to JSONBin.io...');
       await axios.put(`${JSONBIN_BASE_URL}/${JSONBIN_BIN_ID}`, newData, {
         headers: { 
           'X-Master-Key': JSONBIN_API_KEY,
@@ -82,7 +84,7 @@ async function saveData(newData) {
         },
         timeout: 15000
       });
-      console.log('JSONBin.io save successful');
+      console.log('✅ JSONBin.io save successful');
     }
     
     // También guardar localmente como backup
