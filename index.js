@@ -585,40 +585,41 @@ app.get('/sessions', async (req, res) => {
 // Endpoint de estado
 app.get('/admin/status', async (req, res) => {
   try {
-    const data = await loadData();
+    const stats = await db.getDashboardStats();
     res.json({
       status: 'ok',
-      children: data.children.length,
-      games: data.games.length,
-      sessions: data.sessions.length,
-      activeSessions: data.sessions.filter(s => !s.endTime).length,
+      children: stats.children,
+      games: stats.games,
+      sessions: stats.sessions,
+      activeSessions: stats.activeSessions,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ 
+      error: 'Error interno del servidor',
+      message: error.message,
+      code: error.code
+    });
   }
 });
 
 // Endpoint de diagnóstico para verificar configuración
 app.get('/admin/diagnostic', async (req, res) => {
   try {
-    const data = await loadData();
+    const stats = await db.getDashboardStats();
     res.json({
       status: 'ok',
       environment: process.env.VERCEL ? 'Vercel' : 'Local',
-      storage: process.env.JSONBIN_API_KEY ? 'JSONBin.io' : 'Local',
-      jsonbinConfigured: !!process.env.JSONBIN_API_KEY,
-      jsonbinBinId: process.env.JSONBIN_BIN_ID ? 'Configured' : 'Not configured',
-      data: {
-        children: data.children.length,
-        games: data.games.length,
-        sessions: data.sessions.length,
-        activeSessions: data.sessions.filter(s => !s.endTime).length
-      },
+      database: 'PostgreSQL',
+      data: stats,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ 
+      error: 'Error interno del servidor',
+      message: error.message,
+      code: error.code
+    });
   }
 });
 
