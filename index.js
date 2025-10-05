@@ -640,6 +640,16 @@ app.post('/admin/migrate-to-jsonbin', async (req, res) => {
   }
 });
 
+// Endpoint de prueba simple
+app.get('/test', (req, res) => {
+  res.json({
+    status: 'ok',
+    message: 'Servidor funcionando',
+    environment: process.env.VERCEL ? 'Vercel' : 'Local',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Servir archivos estáticos
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
