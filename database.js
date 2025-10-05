@@ -7,11 +7,21 @@ const { Pool } = require('pg');
 // CONFIGURACIÓN DE BASE DE DATOS
 // ============================================================================
 
+// Configurar SSL según el entorno
+let sslConfig = false;
+if (process.env.VERCEL) {
+  // En Vercel (producción) usar SSL
+  sslConfig = {
+    rejectUnauthorized: false
+  };
+} else if (process.env.DATABASE_URL?.includes('supabase')) {
+  // En desarrollo local con Supabase, deshabilitar SSL
+  sslConfig = false;
+}
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.VERCEL ? {
-    rejectUnauthorized: false
-  } : false, // SSL para producción, sin SSL para desarrollo local
+  ssl: sslConfig,
   max: 20, // Máximo de conexiones
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
