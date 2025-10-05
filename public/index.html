@@ -792,6 +792,7 @@
     @supports (-webkit-touch-callout: none) {
       .btn-small, .btn-edit {
         -webkit-appearance: none !important;
+        appearance: none !important;
         -webkit-tap-highlight-color: transparent !important;
         touch-action: manipulation !important;
       }
@@ -2979,28 +2980,6 @@
         startTimers();
         console.log('Active sessions structure updated:', visibleSessions.length, 'visible,', hiddenCount, 'hidden');
       }
-    }-${s.childId}-${s.gameId}-${s.duration}`).join('|');
-      
-      // Si no hay sesiones, mostrar mensaje
-      if (activeSessionsData.length === 0) {
-        if (list.innerHTML !== '<li class="list-item">No hay sesiones activas</li>') {
-          list.innerHTML = '<li class="list-item">No hay sesiones activas</li>';
-        }
-        return;
-      }
-      
-      // Solo re-renderizar si cambió la estructura (IDs, duración, etc.)
-      if (list.dataset.sessionHash !== sessionHash) {
-        list.innerHTML = generateActiveSessionsHTML();
-        list.dataset.sessionHash = sessionHash;
-        startTimers();
-        console.log('Active sessions structure updated:', activeSessionsData.length, 'sessions');
-      } else {
-        // Solo actualizar timers sin cambiar el DOM - menos frecuente para evitar parpadeo
-        if (activeSessionsData.length > 0) {
-        updateExistingTimers();
-        }
-      }
     }
     
     function generateActiveSessionsHTML() {
@@ -3501,7 +3480,7 @@
           
           // Manejar duplicados con sugerencias
           if (errorData.duplicate && errorData.suggestion) {
-            showStatusMessage(`⚠️ ${errorData.suggestion}`, 'warning');
+            showStatusMessage('⚠️ ' + errorData.suggestion, 'warning');
             return;
           }
           
@@ -3548,7 +3527,7 @@
         showStatusMessage('Niño agregado exitosamente', 'success');
       } catch (error) {
         console.error('Error adding child:', error);
-        showStatusMessage(`Error al agregar niño: ${error.message}`, 'error');
+            showStatusMessage('Error al agregar niño: ' + error.message, 'error');
       } finally {
         showLoading('addChildBtn', false);
       }
@@ -3582,7 +3561,7 @@
         // showStatusMessage('Juego agregado exitosamente', 'success');
       } catch (error) {
         console.error('Error adding game:', error);
-        showStatusMessage(`Error al agregar juego: ${error.message}`, 'error');
+        showStatusMessage('Error al agregar juego: ' + error.message, 'error');
       } finally {
         showLoading('addGameBtn', false);
       }
@@ -3660,7 +3639,7 @@
         clearAllSessionAlerts();
       } catch (error) {
         console.error('Error starting session:', error);
-        showStatusMessage(`Error al iniciar sesión: ${error.message}`, 'error');
+        showStatusMessage('Error al iniciar sesión: ' + error.message, 'error');
       } finally {
         showLoading('startBtn', false);
       }
@@ -3697,7 +3676,7 @@
         clearSessionAlert(sessionId);
       } catch (error) {
         console.error('Error ending session:', error);
-        showStatusMessage(`Error al finalizar sesión: ${error.message}`, 'error');
+        showStatusMessage('Error al finalizar sesión: ' + error.message, 'error');
       }
     }
 
@@ -3753,10 +3732,10 @@
         // Reiniciar timers para usar los datos actualizados
         startTimers();
         
-        showStatusMessage(`+${additionalTime} min`, 'success');
+        showStatusMessage('+' + additionalTime + ' min', 'success');
       } catch (error) {
         console.error('Error extending time:', error);
-        showStatusMessage(`Error al extender tiempo: ${error.message}`, 'error');
+        showStatusMessage('Error al extender tiempo: ' + error.message, 'error');
       }
     }
 
@@ -3784,7 +3763,7 @@
         // showStatusMessage('Niño eliminado', 'success');
       } catch (error) {
         console.error('Error deleting child:', error);
-        showStatusMessage(`Error al eliminar niño: ${error.message}`, 'error');
+        showStatusMessage('Error al eliminar niño: ' + error.message, 'error');
       }
     }
 
@@ -3811,7 +3790,7 @@
         // showStatusMessage('Juego eliminado', 'success');
       } catch (error) {
         console.error('Error deleting game:', error);
-        showStatusMessage(`Error al eliminar juego: ${error.message}`, 'error');
+        showStatusMessage('Error al eliminar juego: ' + error.message, 'error');
       }
     }
 
@@ -3884,7 +3863,7 @@
         showStatusMessage('Información del niño actualizada', 'success');
       } catch (error) {
         console.error('Error editing child:', error);
-        showStatusMessage(`Error al editar niño: ${error.message}`, 'error');
+        showStatusMessage('Error al editar niño: ' + error.message, 'error');
       }
     }
 
@@ -4172,7 +4151,7 @@
       Object.values(grouped).forEach(group => {
         if (group.count > 1) {
           alertQueue.push({
-            msg: group.alert.msg.replace('para', `para ${group.count} niños`),
+            msg: group.alert.msg.replace('para', 'para ' + group.count + ' niños'),
             type: group.alert.type,
             sessionId: group.alert.sessionId
           });
