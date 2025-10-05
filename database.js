@@ -9,7 +9,9 @@ const { Pool } = require('pg');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  ssl: process.env.VERCEL ? {
+    rejectUnauthorized: false
+  } : false, // SSL para producción, sin SSL para desarrollo local
   max: 20, // Máximo de conexiones
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
@@ -25,7 +27,7 @@ async function initializeDatabase() {
     
     // Crear tabla children
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS children (
+    CREATE TABLE IF NOT EXISTS children (
         id SERIAL PRIMARY KEY,
         name VARCHAR(50) NOT NULL UNIQUE,
         nickname VARCHAR(30),
@@ -42,7 +44,7 @@ async function initializeDatabase() {
     
     // Crear tabla games
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS games (
+    CREATE TABLE IF NOT EXISTS games (
         id SERIAL PRIMARY KEY,
         name VARCHAR(50) NOT NULL UNIQUE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -52,11 +54,11 @@ async function initializeDatabase() {
     
     // Crear tabla sessions
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS sessions (
+    CREATE TABLE IF NOT EXISTS sessions (
         id SERIAL PRIMARY KEY,
         child_id INTEGER REFERENCES children(id) ON DELETE CASCADE,
         game_id INTEGER REFERENCES games(id) ON DELETE CASCADE,
-        duration INTEGER NOT NULL,
+      duration INTEGER NOT NULL,
         start_time BIGINT NOT NULL,
         end_time BIGINT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
