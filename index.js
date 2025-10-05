@@ -2,7 +2,9 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { loadData, saveData } = require('./jsonbin-storage');
+// Importar arquitectura enterprise
+const { loadData, saveData, recordEvent } = require('./enterprise-storage');
+const atomicOps = require('./atomic-operations');
 
 // Control de concurrencia para operaciones de escritura
 const writeLock = new Map();
@@ -222,50 +224,20 @@ app.get('/children', async (req, res) => {
   }
 });
 
-// Crear nuevo niño
+// Crear nuevo niño (Enterprise Atomic Operation)
 app.post('/children', validateChild, async (req, res) => {
-  // Adquirir lock para operación de escritura
-  if (!acquireWriteLock('children')) {
-    return res.status(429).json({ error: 'Operación en progreso. Intenta de nuevo en unos segundos.' });
-  }
-  
   try {
-    const data = await loadData();
-    const { name, nickname, fatherName, motherName } = req.body;
+    const newChild = await atomicOps.createChild({
+      name: req.body.name,
+      nickname: req.body.nickname,
+      fatherName: req.body.fatherName,
+      motherName: req.body.motherName
+    });
     
-    const trimmedName = name.trim();
-    const existingChild = data.children.find(c => c.name.toLowerCase() === trimmedName.toLowerCase());
-    if (existingChild) {
-      return res.status(400).json({ error: 'Ya existe un niño con ese nombre' });
-    }
-    
-    const displayName = trimmedName + (nickname ? ` (${nickname.trim()})` : '');
-    const avatar = trimmedName.charAt(0).toUpperCase();
-    
-    const newChild = {
-      id: data.nextChildId++,
-      name: trimmedName,
-      nickname: nickname ? nickname.trim() : null,
-      fatherName: fatherName ? fatherName.trim() : null,
-      motherName: motherName ? motherName.trim() : null,
-      displayName,
-      avatar,
-      totalSessions: 0,
-      totalTimePlayed: 0,
-      createdAt: new Date().toISOString()
-    };
-    
-    data.children.push(newChild);
-    await saveData(data);
-    
-    console.log('Child created:', newChild.name);
     res.status(201).json(newChild);
   } catch (error) {
     console.error('Error creating child:', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
-  } finally {
-    // Liberar lock
-    releaseWriteLock('children');
+    res.status(400).json({ error: error.message });
   }
 });
 
