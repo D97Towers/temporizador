@@ -9,6 +9,7 @@ const JSONBIN_BASE_URL = 'https://api.jsonbin.io/v3/b';
 // Cache local para consistencia inmediata
 let localCache = null;
 let lastSaveTime = 0;
+let writeLock = false;
 
 // Función para cargar datos desde JSONBin.io con cache local
 async function loadData() {
@@ -19,9 +20,9 @@ async function loadData() {
       return loadLocalData();
     }
 
-    // Si tenemos cache local reciente (menos de 5 segundos), usarlo
+    // Si tenemos cache local reciente (menos de 10 segundos), usarlo
     const now = Date.now();
-    if (localCache && (now - lastSaveTime) < 5000) {
+    if (localCache && (now - lastSaveTime) < 10000) {
       console.log('Using local cache for immediate consistency');
       return localCache;
     }
@@ -61,13 +62,29 @@ async function loadData() {
 // Función para guardar datos en JSONBin.io con cache local
 async function saveData(newData) {
   try {
-    // Actualizar cache local inmediatamente para consistencia
-    localCache = newData;
+    // Prevenir escrituras concurrentes
+    if (writeLock) {
+      console.log('Write in progress, waiting...');
+      await new Promise(resolve => setTimeout(resolve, 100));
+      return saveData(newData); // Retry
+    }
+    
+    writeLock = true;
+    
+    // Actualizar cache local INMEDIATAMENTE para consistencia
+    localCache = JSON.parse(JSON.stringify(newData)); // Deep copy
     lastSaveTime = Date.now();
+    
+    console.log('Local cache updated immediately:', {
+      children: newData.children?.length || 0,
+      games: newData.games?.length || 0,
+      sessions: newData.sessions?.length || 0
+    });
     
     // Si no hay configuración de JSONBin.io, usar almacenamiento local
     if (!JSONBIN_API_KEY || !JSONBIN_BIN_ID) {
       console.log('JSONBin.io not configured, using local storage');
+      writeLock = false;
       return saveLocalData(newData);
     }
 
@@ -79,10 +96,12 @@ async function saveData(newData) {
     });
 
     console.log('Data saved to JSONBin.io successfully, local cache updated');
+    writeLock = false;
     return true;
   } catch (error) {
     console.error('Error saving to JSONBin.io:', error.message);
     console.log('Falling back to local storage');
+    writeLock = false;
     return saveLocalData(newData);
   }
 }
