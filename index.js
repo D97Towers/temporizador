@@ -2,8 +2,8 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-// Importar base de datos PostgreSQL real
-const db = require('./database');
+// Importar base de datos PostgreSQL real (temporalmente comentado para debugging)
+// const db = require('./database');
 
 // Control de concurrencia para operaciones de escritura
 const writeLock = new Map();
@@ -253,7 +253,7 @@ app.post('/children', validateChild, async (req, res) => {
     if (error.code === '23505') { // Unique constraint violation
       res.status(400).json({ error: 'Ya existe un niño con ese nombre' });
     } else {
-      res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: 'Error interno del servidor' });
     }
   } finally {
     releaseWriteLock('children');
@@ -470,7 +470,7 @@ app.post('/sessions/start', validateSession, async (req, res) => {
       return res.status(400).json({ error: 'Niño o juego no encontrado' });
     }
     
-    const session = {
+    const session = { 
       id: data.nextSessionId++,
       childId: parseInt(childId),
       gameId: parseInt(gameId),
@@ -652,7 +652,8 @@ app.get('/test', (req, res) => {
   });
 });
 
-// Endpoint de prueba de base de datos
+// Endpoint de prueba de base de datos (temporalmente comentado para debugging)
+/*
 app.get('/test-db', async (req, res) => {
   try {
     await ensureDatabaseInitialized();
@@ -673,13 +674,15 @@ app.get('/test-db', async (req, res) => {
     });
   }
 });
+*/
 
 // Servir archivos estáticos
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Inicialización lazy de la base de datos
+// Inicialización lazy de la base de datos (temporalmente comentado para debugging)
+/*
 let dbInitialized = false;
 async function ensureDatabaseInitialized() {
   if (!dbInitialized) {
@@ -695,6 +698,7 @@ async function ensureDatabaseInitialized() {
     }
   }
 }
+*/
 
 // Iniciar servidor sin inicializar base de datos
 const PORT = process.env.PORT || 3010;
