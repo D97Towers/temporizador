@@ -7,25 +7,38 @@ const { Pool } = require('pg');
 // CONFIGURACIÓN DE BASE DE DATOS
 // ============================================================================
 
-// Configurar SSL según el entorno
-let sslConfig = false;
-if (process.env.VERCEL) {
-  // En Vercel (producción) usar SSL
-  sslConfig = {
-    rejectUnauthorized: false
-  };
-} else if (process.env.DATABASE_URL?.includes('supabase')) {
-  // En desarrollo local con Supabase, deshabilitar SSL
-  sslConfig = false;
-}
+// Pool será creado de forma lazy
+let pool = null;
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: sslConfig,
-  max: 20, // Máximo de conexiones
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-});
+function getPool() {
+  if (!pool && process.env.DATABASE_URL) {
+    // Configurar SSL según el entorno
+    let sslConfig = false;
+    if (process.env.VERCEL) {
+      // En Vercel (producción) usar SSL
+      sslConfig = {
+        rejectUnauthorized: false
+      };
+    } else if (process.env.DATABASE_URL?.includes('supabase')) {
+      // En desarrollo local con Supabase, deshabilitar SSL
+      sslConfig = false;
+    }
+
+    pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: sslConfig,
+      max: 20, // Máximo de conexiones
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+    });
+  }
+  
+  if (!pool) {
+    throw new Error('DATABASE_URL no configurada');
+  }
+  
+  return pool;
+}
 
 // ============================================================================
 // INICIALIZACIÓN DE BASE DE DATOS
@@ -34,9 +47,10 @@ const pool = new Pool({
 async function initializeDatabase() {
   try {
     console.log('🔄 Inicializando base de datos PostgreSQL...');
+    const pool = getPool();
     
     // Crear tabla children
-    await pool.query(`
+    await getPool().query(`
     CREATE TABLE IF NOT EXISTS children (
         id SERIAL PRIMARY KEY,
         name VARCHAR(50) NOT NULL UNIQUE,
@@ -53,7 +67,7 @@ async function initializeDatabase() {
     `);
     
     // Crear tabla games
-    await pool.query(`
+    await getPool().query(`
     CREATE TABLE IF NOT EXISTS games (
         id SERIAL PRIMARY KEY,
         name VARCHAR(50) NOT NULL UNIQUE,
@@ -63,7 +77,7 @@ async function initializeDatabase() {
     `);
     
     // Crear tabla sessions
-    await pool.query(`
+    await getPool().query(`
     CREATE TABLE IF NOT EXISTS sessions (
         id SERIAL PRIMARY KEY,
         child_id INTEGER REFERENCES children(id) ON DELETE CASCADE,
@@ -77,13 +91,13 @@ async function initializeDatabase() {
     `);
     
     // Crear índices para mejor rendimiento
-    await pool.query(`
+    await getPool().query(`
       CREATE INDEX IF NOT EXISTS idx_sessions_child_id ON sessions(child_id)
     `);
-    await pool.query(`
+    await getPool().query(`
       CREATE INDEX IF NOT EXISTS idx_sessions_game_id ON sessions(game_id)
     `);
-    await pool.query(`
+    await getPool().query(`
       CREATE INDEX IF NOT EXISTS idx_sessions_end_time ON sessions(end_time)
     `);
     
@@ -116,7 +130,7 @@ async function createChild(childData) {
     childData.avatar
   ];
   
-  const result = await pool.query(query, values);
+  const result = await getPool().query(query, values);
   return result.rows[0];
 }
 
@@ -137,7 +151,7 @@ async function getChildren() {
     ORDER BY name
   `;
   
-  const result = await pool.query(query);
+  const result = await getPool().query(query);
   return result.rows;
 }
 
@@ -158,7 +172,7 @@ async function getChildById(id) {
     WHERE id = $1
   `;
   
-  const result = await pool.query(query, [id]);
+  const result = await getPool().query(query, [id]);
   return result.rows[0];
 }
 
@@ -198,13 +212,13 @@ async function updateChild(id, updateData) {
     RETURNING *
   `;
   
-  const result = await pool.query(query, values);
+  const result = await getPool().query(query, values);
   return result.rows[0];
 }
 
 async function deleteChild(id) {
   const query = 'DELETE FROM children WHERE id = $1 RETURNING *';
-  const result = await pool.query(query, [id]);
+  const result = await getPool().query(query, [id]);
   return result.rows[0];
 }
 
@@ -219,7 +233,7 @@ async function createGame(gameData) {
     RETURNING *
   `;
   
-  const result = await pool.query(query, [gameData.name]);
+  const result = await getPool().query(query, [gameData.name]);
   return result.rows[0];
 }
 
@@ -233,7 +247,7 @@ async function getGames() {
     ORDER BY name
   `;
   
-  const result = await pool.query(query);
+  const result = await getPool().query(query);
   return result.rows;
 }
 
@@ -247,13 +261,13 @@ async function getGameById(id) {
     WHERE id = $1
   `;
   
-  const result = await pool.query(query, [id]);
+  const result = await getPool().query(query, [id]);
   return result.rows[0];
 }
 
 async function deleteGame(id) {
   const query = 'DELETE FROM games WHERE id = $1 RETURNING *';
-  const result = await pool.query(query, [id]);
+  const result = await getPool().query(query, [id]);
   return result.rows[0];
 }
 
@@ -275,7 +289,7 @@ async function createSession(sessionData) {
     sessionData.startTime
   ];
   
-  const result = await pool.query(query, values);
+  const result = await getPool().query(query, values);
   return result.rows[0];
 }
 
@@ -298,7 +312,7 @@ async function getSessions() {
     ORDER BY s.created_at DESC
   `;
   
-  const result = await pool.query(query);
+  const result = await getPool().query(query);
   return result.rows;
 }
 
@@ -322,7 +336,7 @@ async function getActiveSessions() {
     ORDER BY s.created_at DESC
   `;
   
-  const result = await pool.query(query);
+  const result = await getPool().query(query);
   return result.rows;
 }
 
@@ -334,7 +348,7 @@ async function endSession(id) {
     RETURNING *
   `;
   
-  const result = await pool.query(query, [Date.now(), id]);
+  const result = await getPool().query(query, [Date.now(), id]);
   return result.rows[0];
 }
 
@@ -346,7 +360,7 @@ async function extendSession(id, additionalTime) {
     RETURNING *
   `;
   
-  const result = await pool.query(query, [additionalTime, id]);
+  const result = await getPool().query(query, [additionalTime, id]);
   return result.rows[0];
 }
 
@@ -384,21 +398,21 @@ async function migrateExistingData() {
     console.log('🔄 Migrando datos existentes a PostgreSQL...');
     
     // Verificar si ya hay datos
-    const existingChildren = await pool.query('SELECT COUNT(*) as count FROM children');
+    const existingChildren = await getPool().query('SELECT COUNT(*) as count FROM children');
     if (parseInt(existingChildren.rows[0].count) > 0) {
       console.log('✅ Datos ya migrados');
       return;
     }
     
     // Insertar datos por defecto
-    await pool.query(`
+    await getPool().query(`
       INSERT INTO children (name, nickname, father_name, mother_name, display_name, avatar)
       VALUES 
         ('David', 'Dave', 'Carlos', 'Maria', 'David (Dave)', 'D'),
         ('Santiago', 'Santi', 'Luis', 'Ana', 'Santiago (Santi)', 'S')
     `);
     
-    await pool.query(`
+    await getPool().query(`
       INSERT INTO games (name)
       VALUES 
         ('bici'),
