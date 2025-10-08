@@ -3209,11 +3209,16 @@
           const now = Date.now();
         
         // Buscar startTime en múltiples formatos posibles
-        let startTime = s.startTime || s.start;
+        let startTime = s.start || s.startTime;
+        
+        // Convertir string a timestamp si es necesario
+        if (typeof startTime === 'string') {
+          startTime = new Date(startTime).getTime();
+        }
         
         // Si no hay startTime válido, usar createdAt como fallback
         if (!startTime || isNaN(startTime)) {
-          startTime = s.createdAt ? new Date(s.createdAt).getTime() : now;
+          startTime = s.created_at ? new Date(s.created_at).getTime() : now;
         }
         
         // Asegurar que startTime es un número válido
@@ -3270,7 +3275,10 @@
       // Crear timers solo para sesiones nuevas
       activeSessionsData.forEach(s => {
         if (!timerIntervals.has(s.id)) {
-          const startTime = s.startTime || s.start || Date.now();
+          let startTime = s.start || s.startTime || Date.now();
+          if (typeof startTime === 'string') {
+            startTime = new Date(startTime).getTime();
+          }
           updateTimer(s.id, startTime, s.duration);
           const interval = setInterval(() => updateTimer(s.id, startTime, s.duration), 1000);
           timerIntervals.set(s.id, interval);
@@ -3284,7 +3292,13 @@
       
       // Usar datos actualizados de activeSessionsData si están disponibles
       const sessionData = activeSessionsData.find(s => s.id === sessionId);
-      const currentStartTime = sessionData ? (sessionData.startTime || sessionData.start || startTime) : startTime;
+      
+      // Convertir timestamp de string a número si es necesario
+      let currentStartTime = sessionData ? (sessionData.start || sessionData.startTime || startTime) : startTime;
+      if (typeof currentStartTime === 'string') {
+        currentStartTime = new Date(currentStartTime).getTime();
+      }
+      
       const currentDuration = sessionData ? sessionData.duration : duration;
       
       const now = Date.now();
@@ -4371,7 +4385,10 @@
       // Crear timers solo para sesiones nuevas
       activeSessionsData.forEach(s => {
         if (!timerIntervals.has(s.id)) {
-          const startTime = s.startTime || s.start || Date.now();
+          let startTime = s.start || s.startTime || Date.now();
+          if (typeof startTime === 'string') {
+            startTime = new Date(startTime).getTime();
+          }
           updateTimer(s.id, startTime, s.duration);
           const interval = setInterval(() => updateTimer(s.id, startTime, s.duration), TIMER_UPDATE_FREQUENCY);
           timerIntervals.set(s.id, interval);
