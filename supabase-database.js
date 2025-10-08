@@ -295,5 +295,6 @@ module.exports = {
   getActiveSessions,
   startSession,
   endSession,
-  extendSession
+  extendSession,
+  getPool
 };

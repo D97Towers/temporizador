@@ -300,6 +300,65 @@ app.post('/sessions/extend', async (req, res) => {
   }
 });
 
+// Endpoint de diagnóstico de base de datos
+app.get('/admin/diagnostic', async (req, res) => {
+  try {
+    await ensureDatabaseInitialized();
+    const pool = db.getPool();
+    
+    // Listar tablas
+    const tablesResult = await pool.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public'
+      ORDER BY table_name
+    `);
+    
+    const tables = tablesResult.rows.map(row => row.table_name);
+    
+    // Verificar estructura de tabla sessions si existe
+    let sessionsStructure = null;
+    if (tables.includes('sessions')) {
+      const structureResult = await pool.query(`
+        SELECT column_name, data_type, is_nullable
+        FROM information_schema.columns
+        WHERE table_name = 'sessions'
+        ORDER BY ordinal_position
+      `);
+      
+      sessionsStructure = structureResult.rows;
+    }
+    
+    // Verificar RLS
+    let rlsEnabled = null;
+    if (tables.includes('sessions')) {
+      const rlsResult = await pool.query(`
+        SELECT relrowsecurity 
+        FROM pg_class 
+        WHERE relname = 'sessions'
+      `);
+      
+      rlsEnabled = rlsResult.rows.length > 0 ? rlsResult.rows[0].relrowsecurity : false;
+    }
+    
+    res.json({
+      status: 'ok',
+      tables: tables,
+      sessionsStructure: sessionsStructure,
+      rlsEnabled: rlsEnabled,
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('Error in /admin/diagnostic:', error);
+    res.status(500).json({ 
+      error: 'Error interno del servidor',
+      message: error.message,
+      code: error.code
+    });
+  }
+});
+
 // ============================================================================
 // INICIALIZACIÓN
 // ============================================================================
