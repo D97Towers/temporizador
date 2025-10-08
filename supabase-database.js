@@ -86,6 +86,59 @@ async function createChild(childData) {
   }
 }
 
+async function updateChild(id, childData) {
+  try {
+    const pool = getPool();
+    const query = `
+      UPDATE children 
+      SET name = $1, nickname = $2, father_name = $3, mother_name = $4, 
+          display_name = $5, avatar = $6, updated_at = NOW()
+      WHERE id = $7
+      RETURNING *
+    `;
+    const values = [
+      childData.name,
+      childData.nickname,
+      childData.fatherName,
+      childData.motherName,
+      childData.displayName,
+      childData.avatar,
+      id
+    ];
+    
+    const result = await pool.query(query, values);
+    
+    if (result.rows.length === 0) {
+      throw new Error('Niño no encontrado');
+    }
+    
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error updating child:', error);
+    throw error;
+  }
+}
+
+async function deleteChild(id) {
+  try {
+    const pool = getPool();
+    const query = `
+      DELETE FROM children 
+      WHERE id = $1
+    `;
+    const result = await pool.query(query, [id]);
+    
+    if (result.rowCount === 0) {
+      throw new Error('Niño no encontrado');
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error deleting child:', error);
+    throw error;
+  }
+}
+
 async function getGames() {
   try {
     const pool = getPool();
@@ -109,6 +162,48 @@ async function createGame(gameData) {
     return result.rows[0];
   } catch (error) {
     console.error('Error creating game:', error);
+    throw error;
+  }
+}
+
+async function updateGame(id, gameData) {
+  try {
+    const pool = getPool();
+    const query = `
+      UPDATE games 
+      SET name = $1, updated_at = NOW()
+      WHERE id = $2
+      RETURNING *
+    `;
+    const result = await pool.query(query, [gameData.name, id]);
+    
+    if (result.rows.length === 0) {
+      throw new Error('Juego no encontrado');
+    }
+    
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error updating game:', error);
+    throw error;
+  }
+}
+
+async function deleteGame(id) {
+  try {
+    const pool = getPool();
+    const query = `
+      DELETE FROM games 
+      WHERE id = $1
+    `;
+    const result = await pool.query(query, [id]);
+    
+    if (result.rowCount === 0) {
+      throw new Error('Juego no encontrado');
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error deleting game:', error);
     throw error;
   }
 }
@@ -319,8 +414,12 @@ module.exports = {
   initializeDatabase,
   getChildren,
   createChild,
+  updateChild,
+  deleteChild,
   getGames,
   createGame,
+  updateGame,
+  deleteGame,
   getDashboardStats,
   migrateExistingData,
   getSessions,

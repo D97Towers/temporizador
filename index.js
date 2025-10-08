@@ -92,6 +92,82 @@ app.post('/children', validateChild, async (req, res) => {
   }
 });
 
+// Actualizar un niño
+app.put('/children/:id', async (req, res) => {
+  if (!acquireWriteLock('children')) {
+    return res.status(429).json({ error: 'Operación en progreso. Intenta de nuevo en unos segundos.' });
+  }
+  
+  try {
+    const { id } = req.params;
+    const { name, nickname, father_name, mother_name } = req.body;
+    
+    if (!id || isNaN(parseInt(id))) {
+      return res.status(400).json({ error: 'ID de niño inválido' });
+    }
+    
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'El nombre del niño es requerido' });
+    }
+    
+    const trimmedName = name.trim();
+    const displayName = nickname ? `${trimmedName} (${nickname.trim()})` : trimmedName;
+    const avatar = trimmedName.charAt(0).toUpperCase();
+    
+    const updatedChild = await db.updateChild(parseInt(id), {
+      name: trimmedName,
+      nickname: nickname ? nickname.trim() : null,
+      fatherName: father_name ? father_name.trim() : null,
+      motherName: mother_name ? mother_name.trim() : null,
+      displayName,
+      avatar
+    });
+    
+    console.log('Child updated:', updatedChild.name);
+    res.json(updatedChild);
+  } catch (error) {
+    console.error('Error updating child:', error);
+    if (error.message === 'Niño no encontrado') {
+      res.status(404).json({ error: error.message });
+    } else if (error.code === '23505') {
+      res.status(400).json({ error: 'Ya existe un niño con ese nombre' });
+    } else {
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  } finally {
+    releaseWriteLock('children');
+  }
+});
+
+// Eliminar un niño
+app.delete('/children/:id', async (req, res) => {
+  if (!acquireWriteLock('children')) {
+    return res.status(429).json({ error: 'Operación en progreso. Intenta de nuevo en unos segundos.' });
+  }
+  
+  try {
+    const { id } = req.params;
+    
+    if (!id || isNaN(parseInt(id))) {
+      return res.status(400).json({ error: 'ID de niño inválido' });
+    }
+    
+    await db.deleteChild(parseInt(id));
+    
+    console.log('Child deleted:', id);
+    res.json({ message: 'Niño eliminado correctamente' });
+  } catch (error) {
+    console.error('Error deleting child:', error);
+    if (error.message === 'Niño no encontrado') {
+      res.status(404).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  } finally {
+    releaseWriteLock('children');
+  }
+});
+
 // Obtener todos los juegos
 app.get('/games', async (req, res) => {
   try {
@@ -128,6 +204,75 @@ app.post('/games', async (req, res) => {
     console.error('Error creating game:', error);
     if (error.code === '23505') { // Unique constraint violation
       res.status(400).json({ error: 'Ya existe un juego con ese nombre' });
+    } else {
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  } finally {
+    releaseWriteLock('games');
+  }
+});
+
+// Actualizar un juego
+app.put('/games/:id', async (req, res) => {
+  if (!acquireWriteLock('games')) {
+    return res.status(429).json({ error: 'Operación en progreso. Intenta de nuevo en unos segundos.' });
+  }
+  
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+    
+    if (!id || isNaN(parseInt(id))) {
+      return res.status(400).json({ error: 'ID de juego inválido' });
+    }
+    
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'El nombre del juego es requerido' });
+    }
+    
+    const updatedGame = await db.updateGame(parseInt(id), {
+      name: name.trim()
+    });
+    
+    console.log('Game updated:', updatedGame.name);
+    res.json(updatedGame);
+  } catch (error) {
+    console.error('Error updating game:', error);
+    if (error.message === 'Juego no encontrado') {
+      res.status(404).json({ error: error.message });
+    } else if (error.code === '23505') {
+      res.status(400).json({ error: 'Ya existe un juego con ese nombre' });
+    } else {
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  } finally {
+    releaseWriteLock('games');
+  }
+});
+
+// Eliminar un juego
+app.delete('/games/:id', async (req, res) => {
+  if (!acquireWriteLock('games')) {
+    return res.status(429).json({ error: 'Operación en progreso. Intenta de nuevo en unos segundos.' });
+  }
+  
+  try {
+    const { id } = req.params;
+    
+    if (!id || isNaN(parseInt(id))) {
+      return res.status(400).json({ error: 'ID de juego inválido' });
+    }
+    
+    await db.deleteGame(parseInt(id));
+    
+    console.log('Game deleted:', id);
+    res.json({ message: 'Juego eliminado correctamente' });
+  } catch (error) {
+    console.error('Error deleting game:', error);
+    if (error.message === 'Juego no encontrado') {
+      res.status(404).json({ error: error.message });
+    } else if (error.code === '23503') {
+      res.status(400).json({ error: 'No se puede eliminar el juego porque tiene sesiones asociadas' });
     } else {
       res.status(500).json({ error: 'Error interno del servidor' });
     }
