@@ -173,7 +173,9 @@ async function getSessions() {
   try {
     const pool = getPool();
     const query = `
-      SELECT s.*, c.name as child_name, g.name as game_name
+      SELECT s.id, s.child_id as childId, s.game_id as gameId, s.duration_minutes as duration, 
+             s.start_time as start, s.end_time as end, s.created_at, s.updated_at,
+             c.name as child_name, g.name as game_name
       FROM game_sessions s
       LEFT JOIN children c ON s.child_id = c.id
       LEFT JOIN games g ON s.game_id = g.id
@@ -191,7 +193,9 @@ async function getActiveSessions() {
   try {
     const pool = getPool();
     const query = `
-      SELECT s.*, c.name as child_name, g.name as game_name
+      SELECT s.id, s.child_id as childId, s.game_id as gameId, s.duration_minutes as duration, 
+             s.start_time as start, s.end_time as end, s.created_at, s.updated_at,
+             c.name as child_name, g.name as game_name
       FROM game_sessions s
       LEFT JOIN children c ON s.child_id = c.id
       LEFT JOIN games g ON s.game_id = g.id
@@ -226,7 +230,8 @@ async function startSession(sessionData) {
     const query = `
       INSERT INTO game_sessions (child_id, game_id, duration_minutes, start_time)
       VALUES ($1, $2, $3, NOW())
-      RETURNING *
+      RETURNING id, child_id as childId, game_id as gameId, duration_minutes as duration, 
+                start_time as start, end_time as end, created_at, updated_at
     `;
     const values = [
       sessionData.child_id,
@@ -250,7 +255,8 @@ async function endSession(sessionId) {
       UPDATE game_sessions 
       SET end_time = NOW()
       WHERE id = $1 AND end_time IS NULL
-      RETURNING *
+      RETURNING id, child_id as childId, game_id as gameId, duration_minutes as duration, 
+                start_time as start, end_time as end, created_at, updated_at
     `;
     
     const result = await pool.query(query, [sessionId]);
@@ -274,7 +280,8 @@ async function extendSession(sessionId, additionalMinutes) {
       UPDATE game_sessions 
       SET duration_minutes = duration_minutes + $2
       WHERE id = $1 AND end_time IS NULL
-      RETURNING *
+      RETURNING id, child_id as childId, game_id as gameId, duration_minutes as duration, 
+                start_time as start, end_time as end, created_at, updated_at
     `;
     
     const result = await pool.query(query, [sessionId, additionalMinutes]);
