@@ -195,6 +195,112 @@ app.get('/admin/status', async (req, res) => {
 });
 
 // ============================================================================
+// ENDPOINTS DE SESIONES
+// ============================================================================
+
+// Obtener todas las sesiones
+app.get('/sessions', async (req, res) => {
+  try {
+    await ensureDatabaseInitialized();
+    const sessions = await db.getSessions();
+    console.log('GET /sessions - returning', sessions.length, 'sessions');
+    res.json(sessions);
+  } catch (error) {
+    console.error('Error in GET /sessions:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// Obtener sesiones activas
+app.get('/sessions/active', async (req, res) => {
+  try {
+    await ensureDatabaseInitialized();
+    const activeSessions = await db.getActiveSessions();
+    console.log('GET /sessions/active - returning', activeSessions.length, 'active sessions');
+    res.json(activeSessions);
+  } catch (error) {
+    console.error('Error in GET /sessions/active:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// Iniciar una sesión
+app.post('/sessions/start', async (req, res) => {
+  try {
+    await ensureDatabaseInitialized();
+    
+    const { child_id, game_id, duration } = req.body;
+    
+    if (!child_id || !game_id || !duration) {
+      return res.status(400).json({ error: 'child_id, game_id y duration son requeridos' });
+    }
+    
+    const sessionData = { child_id, game_id, duration };
+    const newSession = await db.startSession(sessionData);
+    
+    console.log('POST /sessions/start - created session:', newSession.id);
+    res.status(201).json(newSession);
+  } catch (error) {
+    console.error('Error in POST /sessions/start:', error);
+    if (error.message === 'Niño no encontrado' || error.message === 'Juego no encontrado') {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  }
+});
+
+// Finalizar una sesión
+app.post('/sessions/end', async (req, res) => {
+  try {
+    await ensureDatabaseInitialized();
+    
+    const { session_id } = req.body;
+    
+    if (!session_id) {
+      return res.status(400).json({ error: 'session_id es requerido' });
+    }
+    
+    const endedSession = await db.endSession(session_id);
+    
+    console.log('POST /sessions/end - ended session:', session_id);
+    res.json(endedSession);
+  } catch (error) {
+    console.error('Error in POST /sessions/end:', error);
+    if (error.message === 'Sesión no encontrada o ya finalizada') {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  }
+});
+
+// Extender una sesión
+app.post('/sessions/extend', async (req, res) => {
+  try {
+    await ensureDatabaseInitialized();
+    
+    const { session_id, additional_minutes } = req.body;
+    
+    if (!session_id || !additional_minutes) {
+      return res.status(400).json({ error: 'session_id y additional_minutes son requeridos' });
+    }
+    
+    const extendedSession = await db.extendSession(session_id, additional_minutes);
+    
+    console.log('POST /sessions/extend - extended session:', session_id, 'by', additional_minutes, 'minutes');
+    res.json(extendedSession);
+  } catch (error) {
+    console.error('Error in POST /sessions/extend:', error);
+    if (error.message === 'Sesión no encontrada o ya finalizada') {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  }
+});
+
+// ============================================================================
 // INICIALIZACIÓN
 // ============================================================================
 

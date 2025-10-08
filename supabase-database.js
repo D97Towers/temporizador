@@ -155,6 +155,131 @@ async function migrateExistingData() {
 }
 
 // ============================================================================
+// FUNCIONES DE SESIONES
+// ============================================================================
+
+async function getSessions() {
+  try {
+    const pool = getPool();
+    const query = `
+      SELECT s.*, c.name as child_name, g.name as game_name
+      FROM sessions s
+      LEFT JOIN children c ON s.child_id = c.id
+      LEFT JOIN games g ON s.game_id = g.id
+      ORDER BY s.start_time DESC
+    `;
+    const result = await pool.query(query);
+    return result.rows;
+  } catch (error) {
+    console.error('Error getting sessions:', error);
+    throw error;
+  }
+}
+
+async function getActiveSessions() {
+  try {
+    const pool = getPool();
+    const query = `
+      SELECT s.*, c.name as child_name, g.name as game_name
+      FROM sessions s
+      LEFT JOIN children c ON s.child_id = c.id
+      LEFT JOIN games g ON s.game_id = g.id
+      WHERE s.end_time IS NULL
+      ORDER BY s.start_time DESC
+    `;
+    const result = await pool.query(query);
+    return result.rows;
+  } catch (error) {
+    console.error('Error getting active sessions:', error);
+    throw error;
+  }
+}
+
+async function startSession(sessionData) {
+  try {
+    const pool = getPool();
+    
+    // Verificar que el niño y el juego existen
+    const childExists = await pool.query('SELECT id FROM children WHERE id = $1', [sessionData.child_id]);
+    const gameExists = await pool.query('SELECT id FROM games WHERE id = $1', [sessionData.game_id]);
+    
+    if (childExists.rows.length === 0) {
+      throw new Error('Niño no encontrado');
+    }
+    
+    if (gameExists.rows.length === 0) {
+      throw new Error('Juego no encontrado');
+    }
+    
+    // Crear la sesión
+    const query = `
+      INSERT INTO sessions (child_id, game_id, duration_minutes, start_time)
+      VALUES ($1, $2, $3, NOW())
+      RETURNING *
+    `;
+    const values = [
+      sessionData.child_id,
+      sessionData.game_id,
+      sessionData.duration
+    ];
+    
+    const result = await pool.query(query, values);
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error starting session:', error);
+    throw error;
+  }
+}
+
+async function endSession(sessionId) {
+  try {
+    const pool = getPool();
+    
+    const query = `
+      UPDATE sessions 
+      SET end_time = NOW()
+      WHERE id = $1 AND end_time IS NULL
+      RETURNING *
+    `;
+    
+    const result = await pool.query(query, [sessionId]);
+    
+    if (result.rows.length === 0) {
+      throw new Error('Sesión no encontrada o ya finalizada');
+    }
+    
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error ending session:', error);
+    throw error;
+  }
+}
+
+async function extendSession(sessionId, additionalMinutes) {
+  try {
+    const pool = getPool();
+    
+    const query = `
+      UPDATE sessions 
+      SET duration_minutes = duration_minutes + $2
+      WHERE id = $1 AND end_time IS NULL
+      RETURNING *
+    `;
+    
+    const result = await pool.query(query, [sessionId, additionalMinutes]);
+    
+    if (result.rows.length === 0) {
+      throw new Error('Sesión no encontrada o ya finalizada');
+    }
+    
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error extending session:', error);
+    throw error;
+  }
+}
+
+// ============================================================================
 // EXPORTAR FUNCIONES
 // ============================================================================
 
@@ -165,5 +290,10 @@ module.exports = {
   getGames,
   createGame,
   getDashboardStats,
-  migrateExistingData
+  migrateExistingData,
+  getSessions,
+  getActiveSessions,
+  startSession,
+  endSession,
+  extendSession
 };
