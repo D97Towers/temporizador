@@ -194,6 +194,22 @@ app.get('/admin/status', async (req, res) => {
   }
 });
 
+// Endpoint de estadísticas del dashboard
+app.get('/admin/stats', async (req, res) => {
+  try {
+    await ensureDatabaseInitialized();
+    const stats = await db.getDashboardStats();
+    console.log('GET /admin/stats - returning stats:', stats);
+    res.json(stats);
+  } catch (error) {
+    console.error('Error in GET /admin/stats:', error);
+    res.status(500).json({ 
+      error: 'Error al obtener estadísticas',
+      message: error.message 
+    });
+  }
+});
+
 // ============================================================================
 // ENDPOINTS DE SESIONES
 // ============================================================================
