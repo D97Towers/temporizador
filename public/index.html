@@ -2383,6 +2383,162 @@
     let timerIntervals = new Map();
     let currentExtendSession = null;
     let currentEditChild = null; // Para almacenar el ID del niño que se está editando
+
+    // ============================================================================
+    // FUNCIONES DE SEGURIDAD CRÍTICAS PARA PRODUCCIÓN
+    // ============================================================================
+    
+    // Sanitización HTML para prevenir XSS
+    function sanitizeHTML(str) {
+      if (typeof str !== 'string') return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+    
+    // Validación robusta de entrada
+    function validateInput(input, type, min = null, max = null) {
+      if (typeof input !== 'string') return null;
+      
+      const trimmed = input.trim();
+      if (trimmed.length === 0) return null;
+      
+      switch (type) {
+        case 'name':
+          // Solo letras, espacios, números y caracteres básicos
+          if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\d\-\.]+$/.test(trimmed)) return null;
+          if (trimmed.length < 1 || trimmed.length > 50) return null;
+          break;
+        case 'number':
+          const num = parseInt(trimmed);
+          if (isNaN(num)) return null;
+          if (min !== null && num < min) return null;
+          if (max !== null && num > max) return null;
+          return num;
+        case 'id':
+          const id = parseInt(trimmed);
+          if (isNaN(id) || id <= 0) return null;
+          return id;
+        default:
+          return trimmed;
+      }
+      
+      return trimmed;
+    }
+    
+    // Validación específica para duración
+    function validateDuration(input) {
+      const duration = validateInput(input, 'number', 1, 1440); // 1 min a 24 horas
+      if (duration === null) {
+        throw new Error('Duración inválida. Debe ser un número entre 1 y 1440 minutos.');
+      }
+      return duration;
+    }
+    
+    // Validación específica para IDs
+    function validateId(input, fieldName) {
+      const id = validateInput(input, 'id');
+      if (id === null) {
+        throw new Error(`${fieldName} inválido. Debe ser un número positivo.`);
+      }
+      return id;
+    }
+    
+    // Validación específica para nombres
+    function validateName(input, fieldName) {
+      const name = validateInput(input, 'name');
+      if (name === null) {
+        throw new Error(`${fieldName} inválido. Solo se permiten letras, números y espacios.`);
+      }
+      return name;
+    }
+    
+    // Circuit Breaker para APIs
+    class CircuitBreaker {
+      constructor(threshold = 5, timeout = 60000) {
+        this.failures = 0;
+        this.threshold = threshold;
+        this.timeout = timeout;
+        this.state = 'CLOSED'; // CLOSED, OPEN, HALF_OPEN
+        this.nextAttempt = Date.now();
+      }
+      
+      async execute(fn) {
+        if (this.state === 'OPEN') {
+          if (Date.now() < this.nextAttempt) {
+            throw new Error('Circuit breaker is OPEN. Servicio temporalmente no disponible.');
+          }
+          this.state = 'HALF_OPEN';
+        }
+        
+        try {
+          const result = await fn();
+          this.onSuccess();
+          return result;
+        } catch (error) {
+          this.onFailure();
+          throw error;
+        }
+      }
+      
+      onSuccess() {
+        this.failures = 0;
+        this.state = 'CLOSED';
+      }
+      
+      onFailure() {
+        this.failures++;
+        if (this.failures >= this.threshold) {
+          this.state = 'OPEN';
+          this.nextAttempt = Date.now() + this.timeout;
+        }
+      }
+    }
+    
+    // Circuit breakers por endpoint
+    const circuitBreakers = {
+      children: new CircuitBreaker(3, 30000),
+      games: new CircuitBreaker(3, 30000),
+      sessions: new CircuitBreaker(3, 30000)
+    };
+    
+    // Rate Limiting para operaciones del usuario
+    class RateLimiter {
+      constructor(maxRequests = 10, windowMs = 60000) {
+        this.maxRequests = maxRequests;
+        this.windowMs = windowMs;
+        this.requests = [];
+      }
+      
+      canMakeRequest() {
+        const now = Date.now();
+        // Limpiar requests antiguos
+        this.requests = this.requests.filter(time => now - time < this.windowMs);
+        
+        if (this.requests.length >= this.maxRequests) {
+          return false;
+        }
+        
+        this.requests.push(now);
+        return true;
+      }
+      
+      getTimeUntilReset() {
+        if (this.requests.length === 0) return 0;
+        const oldestRequest = Math.min(...this.requests);
+        return Math.max(0, this.windowMs - (Date.now() - oldestRequest));
+      }
+    }
+    
+    const rateLimiter = new RateLimiter(15, 60000); // 15 requests por minuto
+    
+    // Función para verificar rate limit antes de operaciones
+    function checkRateLimit(operation) {
+      if (!rateLimiter.canMakeRequest()) {
+        const timeLeft = Math.ceil(rateLimiter.getTimeUntilReset() / 1000);
+        throw new Error(`Demasiadas solicitudes. Espere ${timeLeft} segundos antes de intentar nuevamente.`);
+      }
+    }
     let isInitialized = false;
     let isFirstLoad = true;
     let alertedSessions = new Set(); // Para evitar alertas duplicadas
@@ -2882,17 +3038,20 @@
       
       console.log('Rendering children list with', children.length, 'items');
         list.innerHTML = children.map(child => {
-          const displayName = child.displayName || child.name;
-          const avatar = child.avatar || child.name.charAt(0).toUpperCase();
+          const displayName = sanitizeHTML(child.displayName || child.name);
+          const avatar = sanitizeHTML(child.avatar || child.name.charAt(0).toUpperCase());
+          const fatherName = sanitizeHTML(child.fatherName || '');
+          const motherName = sanitizeHTML(child.motherName || '');
+          const totalTime = child.totalTimePlayed || 0;
           
           // Información de padres simplificada
           let parentsInfo = '';
           if (child.fatherName && child.motherName) {
-            parentsInfo = `<div class="child-parents">${child.fatherName} & ${child.motherName}</div>`;
+            parentsInfo = `<div class="child-parents">${fatherName} & ${motherName}</div>`;
           } else if (child.fatherName) {
-            parentsInfo = `<div class="child-parents">Papá: ${child.fatherName}</div>`;
+            parentsInfo = `<div class="child-parents">Papá: ${fatherName}</div>`;
           } else if (child.motherName) {
-            parentsInfo = `<div class="child-parents">Mamá: ${child.motherName}</div>`;
+            parentsInfo = `<div class="child-parents">Mamá: ${motherName}</div>`;
           }
 
           return `<li class="list-item child-item">
@@ -2901,7 +3060,7 @@
               <div class="child-details">
                 <div class="child-name">${displayName}</div>
                 ${parentsInfo}
-                <div class="child-time">${child.totalTimePlayed || 0} min</div>
+                <div class="child-time">${totalTime} min</div>
               </div>
             </div>
             <div class="delete-button-container" style="flex-shrink: 0;">
@@ -2932,7 +3091,7 @@
       list.innerHTML = games.map(game => 
         `<li class="list-item">
           <div style="flex: 1; margin-right: 10px;">
-          <span><i class="fas fa-dice"></i> ${game.name}</span>
+          <span><i class="fas fa-dice"></i> ${sanitizeHTML(game.name)}</span>
           </div>
           <div class="delete-button-container" style="flex-shrink: 0;">
             <button onclick="deleteGame(${game.id})" class="btn-danger btn-small">
@@ -2949,13 +3108,13 @@
       
       select.innerHTML = '<option value="">Seleccione un niño</option>' +
         (children || []).map(child => {
-          const displayName = child.displayName || child.name;
+          const displayName = sanitizeHTML(child.displayName || child.name);
           
           // Agregar información de padres si existe para diferenciar
           let parentInfo = '';
           if (child.fatherName || child.motherName) {
-            const father = child.fatherName ? child.fatherName : '';
-            const mother = child.motherName ? child.motherName : '';
+            const father = sanitizeHTML(child.fatherName || '');
+            const mother = sanitizeHTML(child.motherName || '');
             const separator = father && mother ? ', ' : '';
             parentInfo = ` (${father}${separator}${mother})`;
           }
@@ -2969,7 +3128,7 @@
       if (!select) return;
       
       select.innerHTML = '<option value="">Seleccione un juego</option>' +
-        (games || []).map(game => `<option value="${game.id}">${game.name}</option>`).join('');
+        (games || []).map(game => `<option value="${game.id}">${sanitizeHTML(game.name)}</option>`).join('');
     }
 
     // Función para forzar la recarga de juegos
@@ -3301,6 +3460,13 @@
       
       const currentDuration = sessionData ? sessionData.duration : duration;
       
+      // VALIDACIÓN CRÍTICA DE DURACIÓN
+      if (!currentDuration || typeof currentDuration !== 'number' || currentDuration <= 0) {
+        console.error('Invalid duration in updateTimer:', { sessionId, currentDuration, sessionData });
+        timerSpan.textContent = '⏱️ Duración inválida';
+        return;
+      }
+      
       const now = Date.now();
       
       // Validar que currentStartTime es un número válido
@@ -3311,8 +3477,15 @@
       }
       
       const elapsedSeconds = Math.floor((now - currentStartTime) / 1000);
-      const totalSeconds = currentDuration * 60;
+      const totalSeconds = Math.floor(currentDuration * 60);
       const remainingSeconds = totalSeconds - elapsedSeconds;
+      
+      // VALIDACIÓN CRÍTICA DE CÁLCULOS
+      if (isNaN(elapsedSeconds) || isNaN(totalSeconds) || isNaN(remainingSeconds)) {
+        console.error('Invalid timer calculations:', { sessionId, elapsedSeconds, totalSeconds, remainingSeconds });
+        timerSpan.textContent = '⏱️ Error de cálculo';
+        return;
+      }
       
       const h = String(Math.floor(remainingSeconds / 3600)).padStart(2, '0');
       const m = String(Math.floor((remainingSeconds % 3600) / 60)).padStart(2, '0');
@@ -3335,7 +3508,7 @@
           endSession(sessionId);
         }
       } else if (remainingSeconds <= 60) {
-        timerSpan.innerHTML = '<strong>Restante:</strong> ' + m + ':' + s + '<br><small>Transcurrido: ' + elapsedMinutes + ':' + String(elapsedSecs).padStart(2, '0') + '</small>';
+        timerSpan.innerHTML = '<strong>Restante:</strong> ' + sanitizeHTML(m) + ':' + sanitizeHTML(s) + '<br><small>Transcurrido: ' + sanitizeHTML(String(elapsedMinutes)) + ':' + sanitizeHTML(String(elapsedSecs).padStart(2, '0')) + '</small>';
         timerSpan.classList.add('warning');
         // Alerta cuando quedan 30 segundos
         if (remainingSeconds <= 30 && !timerSpan.classList.contains('alerted-30')) {
@@ -3358,7 +3531,7 @@
           showStatusMessage(`¡Atención! A ${childDisplayName}${parentsText} le quedan solo ${remainingSeconds} segundos`, 'warning', sessionId);
         }
       } else {
-        timerSpan.innerHTML = '<strong>Restante:</strong> ' + h + ':' + m + ':' + s + '<br><small>Transcurrido: ' + elapsedMinutes + ':' + String(elapsedSecs).padStart(2, '0') + '</small>';
+        timerSpan.innerHTML = '<strong>Restante:</strong> ' + sanitizeHTML(h) + ':' + sanitizeHTML(m) + ':' + sanitizeHTML(s) + '<br><small>Transcurrido: ' + sanitizeHTML(String(elapsedMinutes)) + ':' + sanitizeHTML(String(elapsedSecs).padStart(2, '0')) + '</small>';
       }
     }
 
@@ -3616,20 +3789,35 @@
 
     // Funciones principales ROBUSTAS
     async function addChild() {
-      const name = document.getElementById('childName').value.trim();
-      const nickname = document.getElementById('childNickname').value.trim();
-      const fatherName = document.getElementById('fatherName').value.trim();
-      const motherName = document.getElementById('motherName').value.trim();
+      try {
+        checkRateLimit('addChild');
+      } catch (error) {
+        showStatusMessage(error.message, 'error');
+        return;
+      }
       
-      if (!validateName(name, 'nombre del niño')) return;
+      const name = document.getElementById('childName').value;
+      const nickname = document.getElementById('childNickname').value;
+      const fatherName = document.getElementById('fatherName').value;
+      const motherName = document.getElementById('motherName').value;
+      
+      try {
+        const validatedName = validateName(name, 'nombre del niño');
+        const validatedNickname = nickname ? validateName(nickname, 'apodo del niño') : null;
+        const validatedFatherName = fatherName ? validateName(fatherName, 'nombre del padre') : null;
+        const validatedMotherName = motherName ? validateName(motherName, 'nombre de la madre') : null;
+      } catch (error) {
+        showStatusMessage(error.message, 'error');
+        return;
+      }
       
       showLoading('addChildBtn', true);
       try {
         const requestData = { 
-          name,
-          nickname: nickname || undefined,
-          fatherName: fatherName || undefined,
-          motherName: motherName || undefined
+          name: validatedName,
+          nickname: validatedNickname || undefined,
+          fatherName: validatedFatherName || undefined,
+          motherName: validatedMotherName || undefined
         };
         
         // console.log('Adding child:', requestData);
@@ -3686,9 +3874,14 @@
           console.log('Children list updated with', childrenCache.length, 'items');
         } catch (error) {
           console.error('Error reloading fresh data:', error);
-          // Fallback: recargar página completa
+          // NO recargar página - mantener estado del usuario
+          showStatusMessage('Error al recargar datos. Por favor, intente nuevamente.', 'error');
+          // Intentar recargar datos en segundo plano después de 5 segundos
           setTimeout(() => {
-            window.location.reload();
+            console.log('Reintentando recarga de datos en segundo plano...');
+            fetchChildren(true).catch(() => {
+              console.log('Recarga en segundo plano falló, continuando con datos actuales');
+            });
           }, 1000);
         }
         
@@ -3741,7 +3934,7 @@
 
     // Variable para controlar si ya hay una operación en progreso
     let isStartingSession = false;
-    
+
     async function startSession() {
       // Prevenir doble-clic
       if (isStartingSession) {
@@ -3753,16 +3946,16 @@
         isStartingSession = true;
         
         const selectedChildId = document.getElementById('selectedChildId').value;
-        const gameId = document.getElementById('gameSelect').value;
-        const durationInput = document.getElementById('durationInput').value;
-        
-        // Validar que el input no esté vacío y parsear correctamente
-        if (!durationInput || durationInput.trim() === '') {
-          showStatusMessage('Por favor ingrese un tiempo válido', 'error');
-          return;
-        }
-        
-        const duration = parseInt(durationInput.trim());
+      const gameId = document.getElementById('gameSelect').value;
+      const durationInput = document.getElementById('durationInput').value;
+      
+      // Validar que el input no esté vacío y parsear correctamente
+      if (!durationInput || durationInput.trim() === '') {
+        showStatusMessage('Por favor ingrese un tiempo válido', 'error');
+        return;
+      }
+      
+        const duration = validateDuration(durationInput);
         
         console.log('Starting session:', { selectedChildId, gameId, duration, originalInput: durationInput });
         
@@ -3774,23 +3967,23 @@
         
         // Verificar que el niño y juego existen en el caché después de recargar
         const child = childrenCache.find(c => c.id == selectedChildId);
-        const game = gamesCache.find(g => g.id == gameId);
-        
-        if (!child) {
+      const game = gamesCache.find(g => g.id == gameId);
+      
+      if (!child) {
           console.error('Child not found after refresh:', selectedChildId, 'Available children:', childrenCache.map(c => `${c.id}:${c.name}`));
           showStatusMessage('Error: Niño no encontrado después de recargar datos', 'error');
           // Limpiar el select de niños para evitar futuros errores
           document.getElementById('selectedChildId').value = '';
-          return;
-        }
-        
-        if (!game) {
+        return;
+      }
+      
+      if (!game) {
           console.error('Game not found after refresh:', gameId, 'Available games:', gamesCache.map(g => `${g.id}:${g.name}`));
           showStatusMessage('Error: Juego no encontrado después de recargar datos', 'error');
           // Limpiar el select de juegos para evitar futuros errores
           document.getElementById('gameSelect').value = '';
-          return;
-        }
+        return;
+      }
         
         console.log('Validación exitosa - Iniciando sesión:', {
           childId: selectedChildId,
@@ -3799,13 +3992,13 @@
           childName: child.name,
           gameName: game.name
         });
-        
-        showLoading('startBtn', true);
+      
+      showLoading('startBtn', true);
         
         const requestBody = { 
-          childId: Number(selectedChildId), 
-          gameId: Number(gameId), 
-          duration: Number(duration) 
+          childId: validateId(selectedChildId, 'ID del niño'), 
+          gameId: validateId(gameId, 'ID del juego'), 
+          duration: duration 
         };
         
         console.log('Request body:', requestBody);
@@ -3889,8 +4082,8 @@
         return;
       }
       
-      const additionalTime = parseInt(document.getElementById('extendTimeInput').value);
-      if (isNaN(additionalTime) || additionalTime < 1 || additionalTime > 60) {
+      const additionalTime = validateInput(document.getElementById('extendTimeInput').value, 'number', 1, 60);
+      if (additionalTime === null) {
         showStatusMessage('El tiempo adicional debe estar entre 1 y 60 minutos', 'error');
         return;
       }
