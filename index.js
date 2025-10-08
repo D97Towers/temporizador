@@ -359,6 +359,72 @@ app.get('/admin/diagnostic', async (req, res) => {
   }
 });
 
+// Endpoint para crear tabla de sesiones de juegos
+app.post('/admin/create-game-sessions-table', async (req, res) => {
+  try {
+    await ensureDatabaseInitialized();
+    const pool = db.getPool();
+    
+    // Verificar si ya existe la tabla
+    const checkResult = await pool.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' AND table_name = 'game_sessions'
+    `);
+    
+    if (checkResult.rows.length > 0) {
+      return res.json({
+        status: 'ok',
+        message: 'Tabla "game_sessions" ya existe',
+        action: 'none'
+      });
+    }
+    
+    // Crear la tabla
+    await pool.query(`
+      CREATE TABLE game_sessions (
+        id SERIAL PRIMARY KEY,
+        child_id INTEGER NOT NULL REFERENCES children(id) ON DELETE CASCADE,
+        game_id INTEGER NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+        duration_minutes INTEGER NOT NULL,
+        start_time TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        end_time TIMESTAMP WITH TIME ZONE NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+    
+    // Habilitar RLS
+    await pool.query('ALTER TABLE game_sessions ENABLE ROW LEVEL SECURITY');
+    
+    // Crear políticas permisivas
+    await pool.query(`
+      CREATE POLICY "Allow all operations on game_sessions" 
+      ON game_sessions FOR ALL 
+      USING (true)
+    `);
+    
+    // Crear índices
+    await pool.query(`CREATE INDEX idx_game_sessions_child_id ON game_sessions(child_id)`);
+    await pool.query(`CREATE INDEX idx_game_sessions_game_id ON game_sessions(game_id)`);
+    await pool.query(`CREATE INDEX idx_game_sessions_active ON game_sessions(end_time) WHERE end_time IS NULL`);
+    
+    res.json({
+      status: 'ok',
+      message: 'Tabla "game_sessions" creada exitosamente',
+      action: 'created'
+    });
+    
+  } catch (error) {
+    console.error('Error creating game_sessions table:', error);
+    res.status(500).json({ 
+      error: 'Error interno del servidor',
+      message: error.message,
+      code: error.code
+    });
+  }
+});
+
 // ============================================================================
 // INICIALIZACIÓN
 // ============================================================================

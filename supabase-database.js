@@ -120,14 +120,25 @@ async function getDashboardStats() {
     // Obtener conteos
     const childrenResult = await pool.query('SELECT COUNT(*) as count FROM children');
     const gamesResult = await pool.query('SELECT COUNT(*) as count FROM games');
-    const sessionsResult = await pool.query('SELECT COUNT(*) as count FROM sessions');
-    const activeSessionsResult = await pool.query('SELECT COUNT(*) as count FROM sessions WHERE end_time IS NULL');
+    
+    // Intentar obtener estadísticas de game_sessions, si no existe usar 0
+    let sessionsCount = 0;
+    let activeSessionsCount = 0;
+    
+    try {
+      const sessionsResult = await pool.query('SELECT COUNT(*) as count FROM game_sessions');
+      const activeSessionsResult = await pool.query('SELECT COUNT(*) as count FROM game_sessions WHERE end_time IS NULL');
+      sessionsCount = parseInt(sessionsResult.rows[0].count);
+      activeSessionsCount = parseInt(activeSessionsResult.rows[0].count);
+    } catch (sessionsError) {
+      console.log('Tabla game_sessions no existe aún, usando valores por defecto');
+    }
     
     return {
       children: parseInt(childrenResult.rows[0].count),
       games: parseInt(gamesResult.rows[0].count),
-      sessions: parseInt(sessionsResult.rows[0].count),
-      activeSessions: parseInt(activeSessionsResult.rows[0].count)
+      sessions: sessionsCount,
+      activeSessions: activeSessionsCount
     };
   } catch (error) {
     console.error('Error getting dashboard stats:', error);
@@ -163,7 +174,7 @@ async function getSessions() {
     const pool = getPool();
     const query = `
       SELECT s.*, c.name as child_name, g.name as game_name
-      FROM sessions s
+      FROM game_sessions s
       LEFT JOIN children c ON s.child_id = c.id
       LEFT JOIN games g ON s.game_id = g.id
       ORDER BY s.start_time DESC
@@ -181,7 +192,7 @@ async function getActiveSessions() {
     const pool = getPool();
     const query = `
       SELECT s.*, c.name as child_name, g.name as game_name
-      FROM sessions s
+      FROM game_sessions s
       LEFT JOIN children c ON s.child_id = c.id
       LEFT JOIN games g ON s.game_id = g.id
       WHERE s.end_time IS NULL
@@ -213,7 +224,7 @@ async function startSession(sessionData) {
     
     // Crear la sesión
     const query = `
-      INSERT INTO sessions (child_id, game_id, duration_minutes, start_time)
+      INSERT INTO game_sessions (child_id, game_id, duration_minutes, start_time)
       VALUES ($1, $2, $3, NOW())
       RETURNING *
     `;
@@ -236,7 +247,7 @@ async function endSession(sessionId) {
     const pool = getPool();
     
     const query = `
-      UPDATE sessions 
+      UPDATE game_sessions 
       SET end_time = NOW()
       WHERE id = $1 AND end_time IS NULL
       RETURNING *
@@ -260,7 +271,7 @@ async function extendSession(sessionId, additionalMinutes) {
     const pool = getPool();
     
     const query = `
-      UPDATE sessions 
+      UPDATE game_sessions 
       SET duration_minutes = duration_minutes + $2
       WHERE id = $1 AND end_time IS NULL
       RETURNING *
