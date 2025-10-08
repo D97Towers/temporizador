@@ -266,7 +266,7 @@ app.post('/sessions/start', async (req, res) => {
   }
 });
 
-// Finalizar una sesión
+// Finalizar una sesión (por body)
 app.post('/sessions/end', async (req, res) => {
   try {
     await ensureDatabaseInitialized();
@@ -285,6 +285,32 @@ app.post('/sessions/end', async (req, res) => {
     console.error('Error in POST /sessions/end:', error);
     if (error.message === 'Sesión no encontrada o ya finalizada') {
       res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  }
+});
+
+// Finalizar una sesión (por URL parameter)
+app.post('/sessions/:id/end', async (req, res) => {
+  try {
+    await ensureDatabaseInitialized();
+    
+    const { id } = req.params;
+    const session_id = parseInt(id);
+    
+    if (!session_id || isNaN(session_id)) {
+      return res.status(400).json({ error: 'ID de sesión inválido' });
+    }
+    
+    const endedSession = await db.endSession(session_id);
+    
+    console.log('POST /sessions/:id/end - ended session:', session_id);
+    res.json(endedSession);
+  } catch (error) {
+    console.error('Error in POST /sessions/:id/end:', error);
+    if (error.message === 'Sesión no encontrada o ya finalizada') {
+      res.status(404).json({ error: error.message });
     } else {
       res.status(500).json({ error: 'Error interno del servidor' });
     }
