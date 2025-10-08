@@ -3125,10 +3125,23 @@
 
     function updateGameSelect(games) {
       const select = document.getElementById('gameSelect');
-      if (!select) return;
+      if (!select) {
+        console.warn('Game select element not found');
+        return;
+      }
+      
+      console.log('Updating game select with games:', games ? games.length : 0, 'games');
+      
+      if (!games || !Array.isArray(games) || games.length === 0) {
+        console.warn('No games provided to updateGameSelect');
+        select.innerHTML = '<option value="">Seleccione un juego</option>';
+        return;
+      }
       
       select.innerHTML = '<option value="">Seleccione un juego</option>' +
-        (games || []).map(game => `<option value="${game.id}">${sanitizeHTML(game.name)}</option>`).join('');
+        games.map(game => `<option value="${game.id}">${sanitizeHTML(game.name)}</option>`).join('');
+        
+      console.log('Game select updated with', games.length, 'options');
     }
 
     // Función para forzar la recarga de juegos
@@ -3633,32 +3646,51 @@
         if (s.endTime || s.end) {
           // Sesión finalizada
           const endTimeValue = s.endTime || s.end;
-          const duration = Math.round((endTimeValue - startTimeValue) / 60000);
+          const endTime = new Date(endTimeValue);
+          
+          // Verificar que las fechas sean válidas
+          if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+            console.warn('Invalid dates for session:', s.id, 'start:', startTimeValue, 'end:', endTimeValue);
+            durationText = `${s.duration || 0}min`;
+          } else {
+            const duration = Math.round((endTime.getTime() - startTime.getTime()) / 60000);
+            durationText = `${Math.max(0, duration)}min`;
+          }
+          
           statusClass = 'completed';
           iconClass = 'completed';
-          durationText = `${duration}min`;
           durationClass = 'completed';
         } else {
           // Sesión en curso - usar la misma lógica que renderActiveSessions
           const currentTime = Date.now();
-          const elapsedSeconds = Math.floor((currentTime - startTimeValue) / 1000);
-          const totalSeconds = (s.duration || 15) * 60;
-          const remainingSeconds = Math.max(0, totalSeconds - elapsedSeconds);
           
-          // Convertir a minutos para mostrar
-          const elapsedMinutes = Math.floor(elapsedSeconds / 60);
-          const totalMinutes = s.duration || 15;
-          
-          if (remainingSeconds <= 0) {
-            statusClass = 'expired';
-            iconClass = 'expired';
-            durationText = 'Agotado';
-            durationClass = 'expired';
-          } else {
+          // Verificar que startTimeValue sea válido
+          if (isNaN(startTime.getTime())) {
+            console.warn('Invalid start time for session:', s.id, 'start:', startTimeValue);
+            durationText = `${s.duration || 0}min`;
             statusClass = 'active';
             iconClass = 'active';
-            durationText = `${elapsedMinutes}/${totalMinutes}min`;
             durationClass = 'active';
+          } else {
+            const elapsedSeconds = Math.floor((currentTime - startTime.getTime()) / 1000);
+            const totalSeconds = (s.duration || 15) * 60;
+            const remainingSeconds = Math.max(0, totalSeconds - elapsedSeconds);
+            
+            // Convertir a minutos para mostrar
+            const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+            const totalMinutes = s.duration || 15;
+          
+            if (remainingSeconds <= 0) {
+              statusClass = 'expired';
+              iconClass = 'expired';
+              durationText = 'Agotado';
+              durationClass = 'expired';
+            } else {
+              statusClass = 'active';
+              iconClass = 'active';
+              durationText = `${elapsedMinutes}/${totalMinutes}min`;
+              durationClass = 'active';
+            }
           }
         }
         
@@ -3945,25 +3977,27 @@
       try {
         isStartingSession = true;
         
-        const selectedChildId = document.getElementById('selectedChildId').value;
-      const gameId = document.getElementById('gameSelect').value;
-      const durationInput = document.getElementById('durationInput').value;
-      
-      // Validar que el input no esté vacío y parsear correctamente
-      if (!durationInput || durationInput.trim() === '') {
-        showStatusMessage('Por favor ingrese un tiempo válido', 'error');
-        return;
-      }
-      
+        const durationInput = document.getElementById('durationInput').value;
+        
+        // Validar duración primero
+        if (!durationInput || durationInput.trim() === '') {
+          showStatusMessage('Por favor ingrese un tiempo válido', 'error');
+          return;
+        }
+        
         const duration = validateDuration(durationInput);
         
+        // RECARGAR DATOS FRESCOS ANTES DE OBTENER VALORES
+        console.log('Recargando datos frescos antes de iniciar sesión...');
+        await Promise.all([fetchChildren(true), fetchGames()]);
+        
+        // OBTENER VALORES DESPUÉS DE RECARGAR
+        const selectedChildId = document.getElementById('selectedChildId').value;
+        const gameId = document.getElementById('gameSelect').value;
+      
         console.log('Starting session:', { selectedChildId, gameId, duration, originalInput: durationInput });
         
         if (!validateSession(selectedChildId, gameId, duration)) return;
-        
-        // RECARGAR DATOS FRESCOS ANTES DE VALIDAR
-        console.log('Recargando datos frescos antes de iniciar sesión...');
-        await Promise.all([fetchChildren(), fetchGames()]);
         
         // Verificar que el niño y juego existen en el caché después de recargar
         const child = childrenCache.find(c => c.id == selectedChildId);
