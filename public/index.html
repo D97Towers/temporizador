@@ -1288,6 +1288,33 @@
       z-index: 1000;
       transform: translateX(400px);
       transition: transform 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      max-width: 400px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .status-text {
+      flex: 1;
+      word-wrap: break-word;
+    }
+
+    .status-close {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      opacity: 0.8;
+      transition: opacity 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .status-close:hover {
+      opacity: 1;
+      background: rgba(255, 255, 255, 0.1);
     }
 
     .status-message.show {
@@ -2000,7 +2027,12 @@
   </div> <!-- Cerrar main-content -->
 
   <!-- Status Message -->
-  <div id="statusMessage" class="status-message"></div>
+  <div id="statusMessage" class="status-message">
+    <span class="status-text"></span>
+    <button class="status-close" onclick="hideStatusMessage()" title="Cerrar">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
 
   <!-- Modal -->
   <div id="customModal" class="modal">
@@ -2590,7 +2622,13 @@
         clearTimeout(msg.timeoutId);
       }
       
-      msg.textContent = text;
+      // Usar el span para el texto
+      const textSpan = msg.querySelector('.status-text');
+      if (textSpan) {
+        textSpan.textContent = text;
+      } else {
+        msg.textContent = text; // Fallback para compatibilidad
+      }
       msg.className = `status-message ${type} show`;
       
       // Marcar sesión como alertada si es una alerta de sesión
@@ -2598,11 +2636,31 @@
         alertedSessions.add(sessionId);
       }
       
-      // Auto-ocultar después de 1.5 segundos para mensajes más cortos
-      const timeoutDuration = text.length < 10 ? 1500 : 3000;
+      // Auto-ocultar después de tiempo apropiado según el tipo
+      let timeoutDuration;
+      if (type === 'error') {
+        timeoutDuration = 6000; // Errores más tiempo para leer
+      } else if (type === 'warning') {
+        timeoutDuration = 5000; // Advertencias tiempo medio
+      } else {
+        timeoutDuration = text.length < 10 ? 2000 : 4000; // Éxito menos tiempo
+      }
+      
       msg.timeoutId = setTimeout(() => {
+        // Ocultar mensaje con transición suave
         msg.classList.remove('show');
         msg.timeoutId = null;
+        
+        // Limpiar contenido después de la transición
+        setTimeout(() => {
+          const textSpan = msg.querySelector('.status-text');
+          if (textSpan) {
+            textSpan.textContent = '';
+          } else {
+            msg.textContent = '';
+          }
+          msg.className = 'status-message';
+        }, 300); // Esperar a que termine la transición CSS
         
         // Limpiar alerta de sesión después de mostrar
         if (sessionId) {
@@ -2611,6 +2669,31 @@
           }, 1000);
         }
       }, timeoutDuration);
+    }
+
+    // Función para ocultar manualmente el mensaje de estado
+    function hideStatusMessage() {
+      const msg = document.getElementById('statusMessage');
+      
+      // Limpiar timeout si existe
+      if (msg.timeoutId) {
+        clearTimeout(msg.timeoutId);
+        msg.timeoutId = null;
+      }
+      
+      // Ocultar con transición suave
+      msg.classList.remove('show');
+      
+      // Limpiar contenido después de la transición
+      setTimeout(() => {
+        const textSpan = msg.querySelector('.status-text');
+        if (textSpan) {
+          textSpan.textContent = '';
+        } else {
+          msg.textContent = '';
+        }
+        msg.className = 'status-message';
+      }, 300); // Esperar a que termine la transición CSS
     }
 
     function showLoading(buttonId, show = true) {
@@ -3852,11 +3935,14 @@
       const fatherName = document.getElementById('fatherName').value;
       const motherName = document.getElementById('motherName').value;
       
+      // Validar datos y declarar variables en el scope correcto
+      let validatedName, validatedNickname, validatedFatherName, validatedMotherName;
+      
       try {
-        const validatedName = validateName(name, 'nombre del niño');
-        const validatedNickname = nickname ? validateName(nickname, 'apodo del niño') : null;
-        const validatedFatherName = fatherName ? validateName(fatherName, 'nombre del padre') : null;
-        const validatedMotherName = motherName ? validateName(motherName, 'nombre de la madre') : null;
+        validatedName = validateName(name, 'nombre del niño');
+        validatedNickname = nickname ? validateName(nickname, 'apodo del niño') : null;
+        validatedFatherName = fatherName ? validateName(fatherName, 'nombre del padre') : null;
+        validatedMotherName = motherName ? validateName(motherName, 'nombre de la madre') : null;
       } catch (error) {
         showStatusMessage(error.message, 'error');
         return;
