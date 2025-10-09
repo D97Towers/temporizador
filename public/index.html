@@ -4670,94 +4670,209 @@
       return AppState.formValues;
     }
 
-    // Función principal para iniciar sesión - arquitectura robusta
+    // ============================================================================
+    // API ADAPTER PATTERN - Senior Level Implementation
+    // ============================================================================
+    
+    /**
+     * Adapter para transformar datos del frontend al formato esperado por la API
+     * Implementa el patrón Adapter para desacoplar la lógica de negocio
+     */
+    class SessionAPIAdapter {
+      /**
+       * Transforma los datos del formulario al formato de la API
+       * @param {Object} formData - Datos del formulario
+       * @returns {Object} - Datos en formato API
+       */
+      static transformToAPIFormat(formData) {
+        return {
+          child_id: formData.selectedChildId,
+          game_id: formData.gameId,
+          duration: parseInt(formData.duration, 10)
+        };
+      }
+      
+      /**
+       * Valida los datos antes de enviarlos a la API
+       * @param {Object} formData - Datos del formulario
+       * @returns {Object} - Resultado de la validación
+       */
+      static validateFormData(formData) {
+        const errors = [];
+        
+        if (!formData.selectedChildId || formData.selectedChildId.trim() === '') {
+          errors.push('Por favor seleccione un niño');
+        }
+        
+        if (!formData.gameId || formData.gameId.trim() === '') {
+          errors.push('Por favor seleccione un juego');
+        }
+        
+        const duration = parseInt(formData.duration, 10);
+        if (isNaN(duration) || duration < 1 || duration > 180) {
+          errors.push('El tiempo debe estar entre 1 y 180 minutos');
+        }
+        
+        return {
+          isValid: errors.length === 0,
+          errors,
+          validatedData: {
+            selectedChildId: formData.selectedChildId,
+            gameId: formData.gameId,
+            duration
+          }
+        };
+      }
+    }
+    
+    /**
+     * Servicio para manejo de sesiones con logging estructurado
+     */
+    class SessionService {
+      /**
+       * Inicia una nueva sesión con manejo robusto de errores
+       * @param {Object} formData - Datos del formulario
+       * @returns {Promise<Object>} - Resultado de la operación
+       */
+      static async startSession(formData) {
+        const startTime = Date.now();
+        
+        try {
+          // 1. Validación de datos
+          const validation = SessionAPIAdapter.validateFormData(formData);
+          if (!validation.isValid) {
+            throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
+          }
+          
+          // 2. Verificación de existencia en caché
+          const child = childrenCache.find(c => c.id == validation.validatedData.selectedChildId);
+          const game = gamesCache.find(g => g.id == validation.validatedData.gameId);
+          
+          if (!child) {
+            throw new Error('Child not found in cache');
+          }
+          
+          if (!game) {
+            throw new Error('Game not found in cache');
+          }
+          
+          // 3. Transformación a formato API
+          const apiData = SessionAPIAdapter.transformToAPIFormat(validation.validatedData);
+          
+          // 4. Logging estructurado
+          console.group('🚀 Session Start Request');
+          console.log('📊 Form Data:', formData);
+          console.log('✅ Validation Result:', validation);
+          console.log('🔄 API Data:', apiData);
+          console.log('👶 Child:', { id: child.id, name: child.name });
+          console.log('🎮 Game:', { id: game.id, name: game.name });
+          console.groupEnd();
+          
+          // 5. Llamada a la API
+          const response = await fetchWithRetry(api + '/sessions/start', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'X-Request-ID': `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+            },
+            body: JSON.stringify(apiData)
+          });
+          
+          const responseTime = Date.now() - startTime;
+          
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ 
+              error: 'Unknown server error',
+              code: 'UNKNOWN_ERROR'
+            }));
+            
+            console.group('❌ Session Start Error');
+            console.error('📊 Response Status:', response.status);
+            console.error('📊 Response Headers:', Object.fromEntries(response.headers.entries()));
+            console.error('📊 Error Data:', errorData);
+            console.error('⏱️ Response Time:', `${responseTime}ms`);
+            console.groupEnd();
+            
+            throw new Error(`API Error ${response.status}: ${errorData.error || 'Unknown error'}`);
+          }
+          
+          const result = await response.json();
+          
+          console.group('✅ Session Start Success');
+          console.log('📊 Result:', result);
+          console.log('⏱️ Total Time:', `${responseTime}ms`);
+          console.groupEnd();
+          
+          return {
+            success: true,
+            data: result,
+            responseTime,
+            child,
+            game
+          };
+          
+        } catch (error) {
+          const responseTime = Date.now() - startTime;
+          
+          console.group('💥 Session Start Exception');
+          console.error('📊 Error:', error);
+          console.error('📊 Stack:', error.stack);
+          console.error('⏱️ Time to Error:', `${responseTime}ms`);
+          console.groupEnd();
+          
+          return {
+            success: false,
+            error: error.message,
+            responseTime
+          };
+        }
+      }
+    }
+
+    // ============================================================================
+    // MAIN SESSION HANDLER - Clean Architecture Implementation
+    // ============================================================================
+    
+    /**
+     * Función principal para iniciar sesión - Arquitectura Limpia
+     * Implementa el patrón Command con manejo de estado robusto
+     */
     async function handleStartSession() {
+      // Prevención de concurrencia
       if (AppState.isStartingSession) {
         showStatusMessage('⏳ Iniciando sesión, por favor espera...', 'warning');
         return;
       }
 
+      AppState.isStartingSession = true;
+      showLoading('startBtn', true);
+
       try {
-        AppState.isStartingSession = true;
-        
-        // 1. Capturar valores del formulario INMEDIATAMENTE
+        // 1. Captura de datos del formulario
         const formValues = captureFormValues();
         
-        // 2. Validaciones básicas
-        if (!formValues.selectedChildId) {
-          showStatusMessage('Por favor seleccione un niño', 'error');
-          return;
-        }
+        // 2. Procesamiento mediante el servicio
+        const result = await SessionService.startSession(formValues);
         
-        if (!formValues.gameId) {
-          showStatusMessage('Por favor seleccione un juego', 'error');
-          return;
-        }
-        
-        if (!formValues.duration || formValues.duration < 1 || formValues.duration > 180) {
-          showStatusMessage('El tiempo debe estar entre 1 y 180 minutos', 'error');
-          return;
-        }
-        
-        // 3. Verificar que los datos existen en caché
-        const child = childrenCache.find(c => c.id == formValues.selectedChildId);
-        const game = gamesCache.find(g => g.id == formValues.gameId);
-        
-        if (!child) {
-          showStatusMessage('Error: Niño no encontrado. Por favor recargue la página.', 'error');
-          return;
-        }
-        
-        if (!game) {
-          showStatusMessage('Error: Juego no encontrado. Por favor recargue la página.', 'error');
-          return;
-        }
-        
-        // 4. Mostrar loading y enviar request
-        showLoading('startBtn', true);
-        
-        const requestBody = {
-          childId: formValues.selectedChildId,
-          gameId: formValues.gameId,
-          duration: formValues.duration
-        };
-        
-        console.log('📤 Enviando request:', requestBody);
-        console.log('📤 Child encontrado:', child);
-        console.log('📤 Game encontrado:', game);
-        
-        const res = await fetchWithRetry(api + '/sessions/start', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody)
-        });
-        
-        console.log('📥 Response status:', res.status);
-        
-        if (!res.ok) {
-          console.error('❌ Error response status:', res.status);
-          console.error('❌ Error response headers:', res.headers);
+        if (result.success) {
+          // 3. Actualización del UI después del éxito
+          await Promise.all([
+            fetchActiveSessions(),
+            fetchSessionHistory()
+          ]);
           
-          const errorData = await res.json().catch(() => ({ error: 'Error desconocido' }));
-          console.error('❌ Error response body:', errorData);
-          
-          throw new Error(`HTTP ${res.status}: ${errorData.error || errorData.message || 'Error al iniciar sesión'}`);
+          clearAllSessionAlerts();
+          showStatusMessage(`✅ Sesión iniciada: ${result.child.name} - ${result.game.name}`, 'success');
+        } else {
+          // 4. Manejo de errores
+          showStatusMessage(`❌ Error: ${result.error}`, 'error');
         }
-        
-        const result = await res.json();
-        
-        // 5. Actualizar UI después del éxito
-        await Promise.all([
-          fetchActiveSessions(),
-          fetchSessionHistory()
-        ]);
-        
-        clearAllSessionAlerts();
         
       } catch (error) {
-        console.error('Error starting session:', error);
-        showStatusMessage('Error al iniciar sesión: ' + error.message, 'error');
+        console.error('💥 Unexpected error in handleStartSession:', error);
+        showStatusMessage('❌ Error inesperado al iniciar sesión', 'error');
       } finally {
+        // 5. Limpieza garantizada
         showLoading('startBtn', false);
         AppState.isStartingSession = false;
       }
