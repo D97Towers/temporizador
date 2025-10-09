@@ -2332,11 +2332,23 @@
       const totalGames = gamesCache.length;
       const activeSessions = activeSessionsData.length;
       
-      // Calcular tiempo total jugado desde el caché
+      // Calcular tiempo total jugado desde el caché - CON DEBUGGING
       let totalTimePlayed = 0;
-      childrenCache.forEach(child => {
-        totalTimePlayed += child.totalTimePlayed || 0;
+      console.group('📊 Dashboard Stats Calculation');
+      console.log('📊 Children Cache:', childrenCache);
+      
+      childrenCache.forEach((child, index) => {
+        const childTime = child.totalTimePlayed || 0;
+        totalTimePlayed += childTime;
+        console.log(`👶 Child ${index + 1}:`, {
+          name: child.name,
+          totalTimePlayed: childTime,
+          hasTimeData: !!child.totalTimePlayed
+        });
       });
+      
+      console.log('📊 Total Time Played:', totalTimePlayed);
+      console.groupEnd();
 
       // Actualizar estadísticas principales
       document.getElementById('totalChildren').textContent = totalChildren;
@@ -2344,18 +2356,34 @@
       document.getElementById('activeSessionsCount').textContent = activeSessions;
       document.getElementById('totalTimePlayed').textContent = totalTimePlayed;
 
-      // Actualizar ranking de niños basado en tiempo jugado
+      // Actualizar ranking de niños basado en tiempo jugado - VERSIÓN MEJORADA
       const childrenRanking = document.getElementById('childrenRanking');
       const sortedChildren = [...childrenCache].sort((a, b) => (b.totalTimePlayed || 0) - (a.totalTimePlayed || 0));
       
       if (sortedChildren.length > 0) {
-        childrenRanking.innerHTML = sortedChildren.slice(0, 5).map((child, index) => `
-          <li class="ranking-item">
-            <div class="ranking-position">${index + 1}°</div>
-            <div class="ranking-name">${child.name}</div>
-            <div class="ranking-time">${child.totalTimePlayed || 0} min</div>
-          </li>
-        `).join('');
+        childrenRanking.innerHTML = sortedChildren.slice(0, 5).map((child, index) => {
+          // Información de padres para diferenciación en el ranking
+          let parentsInfo = '';
+          if (child.fatherName || child.motherName) {
+            if (child.fatherName && child.motherName) {
+              parentsInfo = `<br><small style="color: #666; font-size: 11px;">${child.fatherName} & ${child.motherName}</small>`;
+            } else if (child.fatherName) {
+              parentsInfo = `<br><small style="color: #666; font-size: 11px;">Papá: ${child.fatherName}</small>`;
+            } else if (child.motherName) {
+              parentsInfo = `<br><small style="color: #666; font-size: 11px;">Mamá: ${child.motherName}</small>`;
+            }
+          }
+          
+          return `
+            <li class="ranking-item">
+              <div class="ranking-position">${index + 1}°</div>
+              <div class="ranking-name">
+                ${child.displayName || child.name}${parentsInfo}
+              </div>
+              <div class="ranking-time">${child.totalTimePlayed || 0} min</div>
+            </li>
+          `;
+        }).join('');
       } else {
         childrenRanking.innerHTML = '<li class="ranking-item">No hay datos disponibles</li>';
       }
@@ -3037,14 +3065,20 @@
           const motherName = sanitizeHTML(child.motherName || '');
           const totalTime = child.totalTimePlayed || 0;
           
-          // Información de padres simplificada
+          // Información de padres mejorada para mejor diferenciación
           let parentsInfo = '';
           if (child.fatherName && child.motherName) {
-            parentsInfo = `<div class="child-parents">${fatherName} & ${motherName}</div>`;
+            parentsInfo = `<div class="child-parents" style="color: #555; font-size: 12px; font-style: italic; margin-top: 2px;">
+              <i class="fas fa-users" style="margin-right: 4px;"></i>${fatherName} & ${motherName}
+            </div>`;
           } else if (child.fatherName) {
-            parentsInfo = `<div class="child-parents">Papá: ${fatherName}</div>`;
+            parentsInfo = `<div class="child-parents" style="color: #555; font-size: 12px; font-style: italic; margin-top: 2px;">
+              <i class="fas fa-male" style="margin-right: 4px;"></i>Papá: ${fatherName}
+            </div>`;
           } else if (child.motherName) {
-            parentsInfo = `<div class="child-parents">Mamá: ${motherName}</div>`;
+            parentsInfo = `<div class="child-parents" style="color: #555; font-size: 12px; font-style: italic; margin-top: 2px;">
+              <i class="fas fa-female" style="margin-right: 4px;"></i>Mamá: ${motherName}
+            </div>`;
           }
 
           return `<li class="list-item child-item">
@@ -4128,8 +4162,8 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            sessionId: currentExtendSession, 
-            additionalTime: additionalTime 
+            session_id: currentExtendSession, 
+            additional_minutes: additionalTime 
           })
         });
         

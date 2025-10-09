@@ -406,6 +406,42 @@ async function extendSession(sessionId, additionalMinutes) {
   }
 }
 
+/**
+ * Obtiene el tiempo total jugado por un niño específico
+ * @param {string} childId - ID del niño
+ * @returns {Promise<number>} - Tiempo total en minutos
+ */
+async function getChildTotalTimePlayed(childId) {
+  try {
+    const pool = getPool();
+    
+    // Calcular tiempo total jugado sumando todas las sesiones completadas
+    const query = `
+      SELECT COALESCE(SUM(
+        CASE 
+          WHEN end_time IS NOT NULL THEN 
+            EXTRACT(EPOCH FROM (end_time - start_time)) / 60
+          ELSE 
+            EXTRACT(EPOCH FROM (NOW() - start_time)) / 60
+        END
+      ), 0) as total_time_played
+      FROM game_sessions 
+      WHERE child_id = $1
+    `;
+    
+    const result = await pool.query(query, [childId]);
+    const totalMinutes = Math.floor(parseFloat(result.rows[0].total_time_played) || 0);
+    
+    console.log(`Child ${childId} total time played: ${totalMinutes} minutes`);
+    return totalMinutes;
+    
+  } catch (error) {
+    console.error(`Error calculating total time for child ${childId}:`, error);
+    // Si hay error, devolver 0 en lugar de fallar
+    return 0;
+  }
+}
+
 // ============================================================================
 // EXPORTAR FUNCIONES
 // ============================================================================
@@ -427,5 +463,6 @@ module.exports = {
   startSession,
   endSession,
   extendSession,
+  getChildTotalTimePlayed,
   getPool
 };

@@ -43,13 +43,31 @@ function validateChild(req, res, next) {
 // RUTAS API
 // ============================================================================
 
-// Obtener todos los niños
+// Obtener todos los niños con tiempo total jugado
 app.get('/children', async (req, res) => {
   try {
     await ensureDatabaseInitialized();
     const children = await db.getChildren();
-    console.log('GET /children - returning', children.length, 'children');
-    res.json(children);
+    
+    // Calcular tiempo total jugado para cada niño
+    const childrenWithTime = await Promise.all(children.map(async (child) => {
+      try {
+        const totalTime = await db.getChildTotalTimePlayed(child.id);
+        return {
+          ...child,
+          totalTimePlayed: totalTime || 0
+        };
+      } catch (error) {
+        console.error(`Error calculating total time for child ${child.id}:`, error);
+        return {
+          ...child,
+          totalTimePlayed: 0
+        };
+      }
+    }));
+    
+    console.log('GET /children - returning', childrenWithTime.length, 'children with total time');
+    res.json(childrenWithTime);
   } catch (error) {
     console.error('Error in GET /children:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
