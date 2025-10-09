@@ -3150,6 +3150,8 @@
           
           // Información de padres mejorada para mejor diferenciación
           let parentsInfo = '';
+          console.log(`Child ${child.name} parent data:`, { fatherName: child.fatherName, motherName: child.motherName });
+          
           if (child.fatherName && child.motherName) {
             parentsInfo = `<div class="child-parents" style="color: #555; font-size: 12px; font-style: italic; margin-top: 2px;">
               <i class="fas fa-users" style="margin-right: 4px;"></i>${fatherName} & ${motherName}
@@ -4371,7 +4373,8 @@
       const fatherName = document.getElementById('editFatherName').value.trim();
       const motherName = document.getElementById('editMotherName').value.trim();
       
-      if (!validateName(name, 'nombre del niño')) {
+      if (!name || name.trim().length < 2) {
+        showStatusMessage('El nombre del niño debe tener al menos 2 caracteres', 'error');
         return;
       }
       
@@ -4381,9 +4384,9 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             name,
-            nickname: nickname || undefined,
-            fatherName: fatherName || undefined,
-            motherName: motherName || undefined
+            nickname: nickname || null,
+            fatherName: fatherName || null,
+            motherName: motherName || null
           })
         });
         
