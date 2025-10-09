@@ -1919,7 +1919,7 @@
           <label><i class="fas fa-clock"></i> Tiempo (minutos):</label>
           <input type="number" id="durationInput" min="1" max="180" value="15">
         </div>
-        <button onclick="startSession()" id="startBtn">
+        <button id="startBtn" type="button">
           <i class="fas fa-play"></i> Iniciar Sesión
         </button>
       </div>
@@ -2850,14 +2850,7 @@
     }
 
     function validateSession(childId, gameId, duration) {
-      if (!childId) {
-        showStatusMessage('Por favor seleccione un niño', 'error');
-        return false;
-      }
-      if (!gameId) {
-        showStatusMessage('Por favor seleccione un juego', 'error');
-        return false;
-      }
+      // Solo validar duración aquí, los otros valores ya se validaron arriba
       if (isNaN(duration)) {
         showStatusMessage('El tiempo debe ser un número válido', 'error');
         return false;
@@ -3262,13 +3255,9 @@
       const child = childrenCache.find(c => c.id === s.childId);
       const game = gamesCache.find(g => g.id === s.gameId);
       
-      // Si no encontramos el niño o juego, intentar recargar los datos
+      // Si no encontramos el niño o juego, solo mostrar datos desconocidos
       if (!child || !game) {
-        console.warn('Missing child or game data, triggering refresh...');
-        setTimeout(() => {
-          fetchChildren();
-          fetchGames();
-        }, 100);
+        console.warn('Missing child or game data for session:', s.id);
       }
       
       // Usar displayName si existe y no es null/undefined, sino el nombre original
@@ -3317,13 +3306,9 @@
         const child = childrenCache.find(c => c.id === s.childId);
         const game = gamesCache.find(g => g.id === s.gameId);
         
-        // Si no encontramos el niño o juego, intentar recargar los datos
+        // Si no encontramos el niño o juego, solo mostrar datos desconocidos
         if (!child || !game) {
-          console.warn('Missing child or game data, triggering refresh...');
-          setTimeout(() => {
-            fetchChildren();
-            fetchGames();
-          }, 100);
+          console.warn('Missing child or game data for session:', s.id);
         }
         
         // Usar displayName si existe y no es null/undefined, sino el nombre original
@@ -3964,18 +3949,16 @@
       }
     }
 
-    // Variable para controlar si ya hay una operación en progreso
-    let isStartingSession = false;
 
     async function startSession() {
       // Prevenir doble-clic
-      if (isStartingSession) {
+      if (AppState?.isStartingSession) {
         showStatusMessage('⏳ Iniciando sesión, por favor espera...', 'warning');
         return;
       }
       
       try {
-        isStartingSession = true;
+        AppState.isStartingSession = true;
         
         const durationInput = document.getElementById('durationInput').value;
         
@@ -3987,34 +3970,44 @@
         
         const duration = validateDuration(durationInput);
         
-        // RECARGAR DATOS FRESCOS ANTES DE OBTENER VALORES
-        console.log('Recargando datos frescos antes de iniciar sesión...');
-        await Promise.all([fetchChildren(true), fetchGames()]);
-        
-        // OBTENER VALORES DESPUÉS DE RECARGAR
+        // OBTENER VALORES INMEDIATAMENTE - NO ESPERAR
         const selectedChildId = document.getElementById('selectedChildId').value;
         const gameId = document.getElementById('gameSelect').value;
-      
+        
+        // VALIDAR INMEDIATAMENTE - NO HACER NADA MÁS SI FALTA ALGO
+        if (!selectedChildId) {
+          showStatusMessage('Por favor seleccione un niño', 'error');
+          AppState.isStartingSession = false;
+          return;
+        }
+        
+        if (!gameId) {
+          showStatusMessage('Por favor seleccione un juego', 'error');
+          AppState.isStartingSession = false;
+          return;
+        }
+        
         console.log('Starting session:', { selectedChildId, gameId, duration, originalInput: durationInput });
         
-        if (!validateSession(selectedChildId, gameId, duration)) return;
+        if (!validateSession(selectedChildId, gameId, duration)) {
+          AppState.isStartingSession = false;
+          return;
+        }
         
-        // Verificar que el niño y juego existen en el caché después de recargar
+        // Verificar que el niño y juego existen en el caché
         const child = childrenCache.find(c => c.id == selectedChildId);
-      const game = gamesCache.find(g => g.id == gameId);
+        const game = gamesCache.find(g => g.id == gameId);
       
       if (!child) {
-          console.error('Child not found after refresh:', selectedChildId, 'Available children:', childrenCache.map(c => `${c.id}:${c.name}`));
-          showStatusMessage('Error: Niño no encontrado después de recargar datos', 'error');
-          // Limpiar el select de niños para evitar futuros errores
+          console.error('Child not found:', selectedChildId, 'Available children:', childrenCache.map(c => `${c.id}:${c.name}`));
+          showStatusMessage('Error: Niño no encontrado. Por favor selecciona un niño válido.', 'error');
           document.getElementById('selectedChildId').value = '';
         return;
       }
       
       if (!game) {
-          console.error('Game not found after refresh:', gameId, 'Available games:', gamesCache.map(g => `${g.id}:${g.name}`));
-          showStatusMessage('Error: Juego no encontrado después de recargar datos', 'error');
-          // Limpiar el select de juegos para evitar futuros errores
+          console.error('Game not found:', gameId, 'Available games:', gamesCache.map(g => `${g.id}:${g.name}`));
+          showStatusMessage('Error: Juego no encontrado. Por favor selecciona un juego válido.', 'error');
           document.getElementById('gameSelect').value = '';
         return;
       }
@@ -4057,8 +4050,7 @@
         await Promise.all([
           fetchActiveSessions(),
           fetchSessionHistory(),
-          fetchChildren(), // Asegurar datos actualizados
-          fetchGames()
+          fetchChildren() // Asegurar datos actualizados
         ]);
         // showStatusMessage('Sesión iniciada exitosamente', 'success');
         
@@ -4070,7 +4062,7 @@
         showStatusMessage('Error al iniciar sesión: ' + error.message, 'error');
       } finally {
         showLoading('startBtn', false);
-        isStartingSession = false; // Liberar el lock
+        AppState.isStartingSession = false; // Liberar el lock
       }
     }
 
@@ -4096,8 +4088,7 @@
         await Promise.all([
           fetchActiveSessions(),
           fetchSessionHistory(),
-          fetchChildren(), // Asegurar datos actualizados
-          fetchGames()
+          fetchChildren() // Asegurar datos actualizados
         ]);
         // showStatusMessage('Sesión finalizada', 'success');
         
@@ -4527,13 +4518,6 @@
       }
     });
 
-    // Inicializar cuando se carga la página
-    document.addEventListener('DOMContentLoaded', () => {
-      initializeApp().catch(() => {
-        console.log('Initial initialization failed, starting recovery...');
-        setTimeout(recoverFromErrors, 2000);
-      });
-    });
   
     // Sistema de alertas optimizado
     let alertQueue = [];
@@ -4658,6 +4642,138 @@
       }, getOptimalPollingInterval());
       
       return interval;
-    }</script>
+    }
+
+    // Estado global para controlar la aplicación
+    const AppState = {
+      isInitialized: false,
+      isStartingSession: false,
+      formValues: {
+        selectedChildId: '',
+        gameId: '',
+        duration: 0
+      }
+    };
+
+    // Función para capturar valores del formulario de forma segura
+    function captureFormValues() {
+      const selectedChildId = document.getElementById('selectedChildId')?.value || '';
+      const gameId = document.getElementById('gameSelect')?.value || '';
+      const durationInput = document.getElementById('durationInput')?.value || '';
+      
+      AppState.formValues = {
+        selectedChildId,
+        gameId,
+        duration: parseInt(durationInput) || 0
+      };
+      
+      return AppState.formValues;
+    }
+
+    // Función principal para iniciar sesión - arquitectura robusta
+    async function handleStartSession() {
+      if (AppState.isStartingSession) {
+        showStatusMessage('⏳ Iniciando sesión, por favor espera...', 'warning');
+        return;
+      }
+
+      try {
+        AppState.isStartingSession = true;
+        
+        // 1. Capturar valores del formulario INMEDIATAMENTE
+        const formValues = captureFormValues();
+        
+        // 2. Validaciones básicas
+        if (!formValues.selectedChildId) {
+          showStatusMessage('Por favor seleccione un niño', 'error');
+          return;
+        }
+        
+        if (!formValues.gameId) {
+          showStatusMessage('Por favor seleccione un juego', 'error');
+          return;
+        }
+        
+        if (!formValues.duration || formValues.duration < 1 || formValues.duration > 180) {
+          showStatusMessage('El tiempo debe estar entre 1 y 180 minutos', 'error');
+          return;
+        }
+        
+        // 3. Verificar que los datos existen en caché
+        const child = childrenCache.find(c => c.id == formValues.selectedChildId);
+        const game = gamesCache.find(g => g.id == formValues.gameId);
+        
+        if (!child) {
+          showStatusMessage('Error: Niño no encontrado. Por favor recargue la página.', 'error');
+          return;
+        }
+        
+        if (!game) {
+          showStatusMessage('Error: Juego no encontrado. Por favor recargue la página.', 'error');
+          return;
+        }
+        
+        // 4. Mostrar loading y enviar request
+        showLoading('startBtn', true);
+        
+        const requestBody = {
+          childId: parseInt(formValues.selectedChildId),
+          gameId: parseInt(formValues.gameId),
+          duration: formValues.duration
+        };
+        
+        const res = await fetchWithRetry(api + '/sessions/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody)
+        });
+        
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({ error: 'Error desconocido' }));
+          throw new Error(errorData.error || 'Error al iniciar sesión');
+        }
+        
+        const result = await res.json();
+        
+        // 5. Actualizar UI después del éxito
+        await Promise.all([
+          fetchActiveSessions(),
+          fetchSessionHistory()
+        ]);
+        
+        clearAllSessionAlerts();
+        
+      } catch (error) {
+        console.error('Error starting session:', error);
+        showStatusMessage('Error al iniciar sesión: ' + error.message, 'error');
+      } finally {
+        showLoading('startBtn', false);
+        AppState.isStartingSession = false;
+      }
+    }
+
+    // Inicialización de la aplicación
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        await initializeApp();
+        AppState.isInitialized = true;
+        
+        // Configurar event listener del botón
+        const startBtn = document.getElementById('startBtn');
+        if (startBtn) {
+          startBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleStartSession();
+          });
+        }
+        
+      } catch (error) {
+        console.error('Failed to initialize app:', error);
+        setTimeout(recoverFromErrors, 2000);
+      }
+    });
+
+</script>
 </body>
 </html>
