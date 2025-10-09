@@ -3938,23 +3938,24 @@
       // Validar datos y declarar variables en el scope correcto
       let validatedName, validatedNickname, validatedFatherName, validatedMotherName;
       
-      try {
-        validatedName = validateName(name, 'nombre del niño');
-        validatedNickname = nickname ? validateName(nickname, 'apodo del niño') : null;
-        validatedFatherName = fatherName ? validateName(fatherName, 'nombre del padre') : null;
-        validatedMotherName = motherName ? validateName(motherName, 'nombre de la madre') : null;
-      } catch (error) {
-        showStatusMessage(error.message, 'error');
+      // Validación simple y directa
+      if (!name || name.trim().length < 2) {
+        showStatusMessage('El nombre del niño debe tener al menos 2 caracteres', 'error');
         return;
       }
+      
+      validatedName = name.trim();
+      validatedNickname = nickname ? nickname.trim() : null;
+      validatedFatherName = fatherName ? fatherName.trim() : null;
+      validatedMotherName = motherName ? motherName.trim() : null;
       
       showLoading('addChildBtn', true);
       try {
         const requestData = { 
           name: validatedName,
-          nickname: validatedNickname || undefined,
-          fatherName: validatedFatherName || undefined,
-          motherName: validatedMotherName || undefined
+          nickname: validatedNickname,
+          fatherName: validatedFatherName,
+          motherName: validatedMotherName
         };
         
         // console.log('Adding child:', requestData);
