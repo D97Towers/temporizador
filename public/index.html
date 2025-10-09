@@ -4354,11 +4354,11 @@
 
       currentEditChild = childId;
       
-      // Llenar el modal con los datos actuales
+      // Llenar el modal con los datos actuales (usando nombres correctos del backend)
       document.getElementById('editChildName').value = child.name || '';
       document.getElementById('editChildNickname').value = child.nickname || '';
-      document.getElementById('editFatherName').value = child.fatherName || '';
-      document.getElementById('editMotherName').value = child.motherName || '';
+      document.getElementById('editFatherName').value = (child.father_name || child.fatherName) || '';
+      document.getElementById('editMotherName').value = (child.mother_name || child.motherName) || '';
       
       // Mostrar el modal
       document.getElementById('editChildModal').classList.add('show');
