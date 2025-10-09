@@ -63,7 +63,10 @@ async function getChildren() {
 
 async function createChild(childData) {
   try {
+    console.log('createChild - Input data:', childData);
     const pool = getPool();
+    console.log('createChild - Pool obtained');
+    
     const query = `
       INSERT INTO children (name, nickname, father_name, mother_name, display_name, avatar)
       VALUES ($1, $2, $3, $4, $5, $6)
@@ -78,10 +81,17 @@ async function createChild(childData) {
       childData.avatar
     ];
     
+    console.log('createChild - Query prepared:', query);
+    console.log('createChild - Values:', values);
+    
     const result = await pool.query(query, values);
+    console.log('createChild - Query executed successfully, result:', result.rows[0]);
     return result.rows[0];
   } catch (error) {
-    console.error('Error creating child:', error);
+    console.error('createChild - Error creating child:', error);
+    console.error('createChild - Error code:', error.code);
+    console.error('createChild - Error detail:', error.detail);
+    console.error('createChild - Error stack:', error.stack);
     throw error;
   }
 }
@@ -414,6 +424,21 @@ async function extendSession(sessionId, additionalMinutes) {
 async function getChildTotalTimePlayed(childId) {
   try {
     const pool = getPool();
+    
+    // Verificar si la tabla game_sessions existe
+    const tableCheckQuery = `
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'game_sessions'
+      );
+    `;
+    
+    const tableExists = await pool.query(tableCheckQuery);
+    if (!tableExists.rows[0].exists) {
+      console.log(`Table game_sessions does not exist yet for child ${childId}`);
+      return 0;
+    }
     
     // Calcular tiempo total jugado sumando todas las sesiones completadas
     const query = `

@@ -76,16 +76,25 @@ app.get('/children', async (req, res) => {
 
 // Crear nuevo niño
 app.post('/children', validateChild, async (req, res) => {
+  console.log('POST /children - Request received:', req.body);
+  
   if (!acquireWriteLock('children')) {
+    console.log('POST /children - Lock acquired, proceeding...');
     return res.status(429).json({ error: 'Operación en progreso. Intenta de nuevo en unos segundos.' });
   }
   
   try {
+    await ensureDatabaseInitialized();
+    console.log('POST /children - Database initialized');
+    
     const { name, nickname, fatherName, motherName } = req.body;
+    console.log('POST /children - Processing data:', { name, nickname, fatherName, motherName });
     
     const trimmedName = name.trim();
     const displayName = trimmedName + (nickname ? ` (${nickname.trim()})` : '');
     const avatar = trimmedName.charAt(0).toUpperCase();
+    
+    console.log('POST /children - Prepared data:', { trimmedName, displayName, avatar });
     
     const newChild = await db.createChild({
       name: trimmedName,
@@ -96,17 +105,22 @@ app.post('/children', validateChild, async (req, res) => {
       avatar
     });
     
-    console.log('Child created:', newChild.name);
+    console.log('POST /children - Child created successfully:', newChild);
     res.status(201).json(newChild);
   } catch (error) {
-    console.error('Error creating child:', error);
+    console.error('POST /children - Error creating child:', error);
+    console.error('POST /children - Error stack:', error.stack);
+    
     if (error.code === '23505') { // Unique constraint violation
+      console.log('POST /children - Duplicate name error');
       res.status(400).json({ error: 'Ya existe un niño con ese nombre' });
     } else {
-      res.status(500).json({ error: 'Error interno del servidor' });
+      console.log('POST /children - Generic error, returning 500');
+      res.status(500).json({ error: 'Error interno del servidor', details: error.message });
     }
   } finally {
     releaseWriteLock('children');
+    console.log('POST /children - Lock released');
   }
 });
 
