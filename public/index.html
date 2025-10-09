@@ -4717,10 +4717,14 @@
         showLoading('startBtn', true);
         
         const requestBody = {
-          childId: parseInt(formValues.selectedChildId),
-          gameId: parseInt(formValues.gameId),
+          childId: formValues.selectedChildId,
+          gameId: formValues.gameId,
           duration: formValues.duration
         };
+        
+        console.log('📤 Enviando request:', requestBody);
+        console.log('📤 Child encontrado:', child);
+        console.log('📤 Game encontrado:', game);
         
         const res = await fetchWithRetry(api + '/sessions/start', {
           method: 'POST',
@@ -4728,9 +4732,16 @@
           body: JSON.stringify(requestBody)
         });
         
+        console.log('📥 Response status:', res.status);
+        
         if (!res.ok) {
+          console.error('❌ Error response status:', res.status);
+          console.error('❌ Error response headers:', res.headers);
+          
           const errorData = await res.json().catch(() => ({ error: 'Error desconocido' }));
-          throw new Error(errorData.error || 'Error al iniciar sesión');
+          console.error('❌ Error response body:', errorData);
+          
+          throw new Error(`HTTP ${res.status}: ${errorData.error || errorData.message || 'Error al iniciar sesión'}`);
         }
         
         const result = await res.json();
