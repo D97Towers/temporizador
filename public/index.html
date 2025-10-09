@@ -3144,25 +3144,32 @@
         list.innerHTML = children.map(child => {
           const displayName = sanitizeHTML(child.displayName || child.name);
           const avatar = sanitizeHTML(child.avatar || child.name.charAt(0).toUpperCase());
-          const fatherName = sanitizeHTML(child.fatherName || '');
-          const motherName = sanitizeHTML(child.motherName || '');
+          const fatherName = sanitizeHTML((child.father_name || child.fatherName) || '');
+          const motherName = sanitizeHTML((child.mother_name || child.motherName) || '');
           const totalTime = child.totalTimePlayed || 0;
           
           // Información de padres mejorada para mejor diferenciación
           let parentsInfo = '';
-          console.log(`Child ${child.name} parent data:`, { fatherName: child.fatherName, motherName: child.motherName });
+          // Usar los nombres correctos del backend (con guión bajo)
+          const backendFatherName = child.father_name || child.fatherName;
+          const backendMotherName = child.mother_name || child.motherName;
           
-          if (child.fatherName && child.motherName) {
+          console.log(`Child ${child.name} parent data:`, { 
+            fatherName: backendFatherName, 
+            motherName: backendMotherName 
+          });
+          
+          if (backendFatherName && backendMotherName) {
             parentsInfo = `<div class="child-parents" style="color: #555; font-size: 12px; font-style: italic; margin-top: 2px;">
-              <i class="fas fa-users" style="margin-right: 4px;"></i>${fatherName} & ${motherName}
+              <i class="fas fa-users" style="margin-right: 4px;"></i>${backendFatherName} & ${backendMotherName}
             </div>`;
-          } else if (child.fatherName) {
+          } else if (backendFatherName) {
             parentsInfo = `<div class="child-parents" style="color: #555; font-size: 12px; font-style: italic; margin-top: 2px;">
-              <i class="fas fa-male" style="margin-right: 4px;"></i>Papá: ${fatherName}
+              <i class="fas fa-male" style="margin-right: 4px;"></i>Papá: ${backendFatherName}
             </div>`;
-          } else if (child.motherName) {
+          } else if (backendMotherName) {
             parentsInfo = `<div class="child-parents" style="color: #555; font-size: 12px; font-style: italic; margin-top: 2px;">
-              <i class="fas fa-female" style="margin-right: 4px;"></i>Mamá: ${motherName}
+              <i class="fas fa-female" style="margin-right: 4px;"></i>Mamá: ${backendMotherName}
             </div>`;
           }
 
