@@ -3941,8 +3941,14 @@
           const duration = Math.round((endTime.getTime() - startTime.getTime()) / 60000);
           const totalMinutes = s.duration || 15;
           
-          // Si la duración es muy cercana al tiempo total (diferencia ≤ 2 minutos), fue automática
-          if (Math.abs(duration - totalMinutes) <= 2) {
+          // Validar que duration no sea NaN o inválido
+          if (isNaN(duration) || !isFinite(duration) || duration < 0) {
+            // Si no podemos calcular la duración, asumir que fue finalizada manualmente
+            durationText = 'FINALIZADO'; // Usuario presionó FIN
+            statusClass = 'completed';
+            iconClass = 'completed';
+            durationClass = 'completed';
+          } else if (Math.abs(duration - totalMinutes) <= 2) {
             durationText = 'TERMINADO'; // Tiempo se agotó automáticamente
             statusClass = 'expired';
             iconClass = 'expired';
