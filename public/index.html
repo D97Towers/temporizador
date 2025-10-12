@@ -1145,6 +1145,9 @@
 
     .history-duration.completed {
       background: #2196F3;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .history-duration.expired {
@@ -3983,7 +3986,7 @@
         return `
         <div class="history-item ${statusClass}">
           <div class="history-icon ${iconClass}">
-            <i class="fas fa-${s.end ? 'check' : (statusClass === 'expired' ? 'exclamation' : 'play')}"></i>
+            <i class="fas fa-${s.endTime || s.end ? 'check-circle' : (statusClass === 'expired' ? 'exclamation-triangle' : 'play-circle')}"></i>
           </div>
           <div class="history-content">
             <div class="history-title">
@@ -3998,7 +4001,7 @@
           </div>
           <div class="history-meta">
             <div class="history-duration ${durationClass}">
-              ${durationText}
+              ${s.endTime || s.end ? 'TERMINADO' : durationText}
             </div>
             <div class="history-time">
               ${dateStr} ${timeStr}
