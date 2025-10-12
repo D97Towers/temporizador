@@ -494,6 +494,29 @@
       opacity: 0.9;
     }
 
+    .dismiss-all-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      opacity: 0.8;
+    }
+
+    .dismiss-all-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.5);
+      opacity: 1;
+      transform: translateY(-1px);
+    }
+
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -1766,6 +1789,11 @@
         display: none !important;
       }
       
+      /* Ocultar botón de cerrar alertas en móvil */
+      .dismiss-all-btn {
+        display: none !important;
+      }
+      
       .persistent-alert {
         margin-bottom: 6px;
         border-radius: 6px;
@@ -1940,6 +1968,9 @@
     <div class="header">
       <h1><i class="fas fa-gamepad"></i> Temporizador de Juegos</h1>
       <p>Controla el tiempo de juego de los niños de forma divertida</p>
+      <button onclick="dismissAllAlerts()" class="dismiss-all-btn" title="Cerrar todas las alertas (Ctrl+Delete)">
+        <i class="fas fa-times-circle"></i> Cerrar Alertas
+      </button>
     </div>
 
     <!-- Dashboard Section -->
@@ -2174,7 +2205,8 @@
       '2': () => showSection('sessions'),
       '3': () => showSection('children'),
       '4': () => showSection('games'),
-      'Escape': () => closeModal() || closeExtendModal() || closeEditChildModal()
+      'Escape': () => closeModal() || closeExtendModal() || closeEditChildModal(),
+      'Delete': () => dismissAllAlerts() // Ctrl+Delete para cerrar todas las alertas
     };
 
     // Funciones de notificaciones push
@@ -2662,6 +2694,8 @@
     let isInitialized = false;
     let isFirstLoad = true;
     let alertedSessions = new Set(); // Para evitar alertas duplicadas
+    let pendingTimeAlerts = new Map(); // Para consolidar alertas de tiempo terminado
+    let timeAlertTimeout = null; // Para agrupar alertas cercanas en tiempo
 
     // Utilidades mejoradas
     function showStatusMessage(text, type = 'success', sessionId = null) {
@@ -2779,6 +2813,11 @@
     // Función para limpiar todas las alertas de sesiones
     function clearAllSessionAlerts() {
       alertedSessions.clear();
+      pendingTimeAlerts.clear();
+      if (timeAlertTimeout) {
+        clearTimeout(timeAlertTimeout);
+        timeAlertTimeout = null;
+      }
       const msg = document.getElementById('statusMessage');
       if (msg) {
         if (msg.timeoutId) {
@@ -2789,6 +2828,12 @@
         msg.textContent = '';
         msg.className = 'status-message';
       }
+    }
+
+    // Función para cerrar manualmente todas las alertas (para casos críticos)
+    function dismissAllAlerts() {
+      clearAllSessionAlerts();
+      showStatusMessage('✅ Todas las alertas cerradas', 'success');
     }
 
     // Función para limpiar alerta específica de sesión
@@ -2804,6 +2849,43 @@
         msg.textContent = '';
         msg.className = 'status-message';
       }
+    }
+
+    // Función para consolidar alertas de tiempo terminado
+    function showConsolidatedTimeAlert(childName, parentsInfo) {
+      // Agregar a la lista de alertas pendientes
+      pendingTimeAlerts.set(childName, parentsInfo);
+      
+      // Limpiar timeout anterior si existe
+      if (timeAlertTimeout) {
+        clearTimeout(timeAlertTimeout);
+      }
+      
+      // Esperar 2 segundos para agrupar alertas cercanas
+      timeAlertTimeout = setTimeout(() => {
+        const alertCount = pendingTimeAlerts.size;
+        let alertText;
+        
+        if (alertCount === 1) {
+          // Una sola alerta
+          const [name, parents] = pendingTimeAlerts.entries().next().value;
+          alertText = `⏰ ${name}${parents ? ` (${parents})` : ''} terminó su tiempo de juego`;
+        } else if (alertCount <= 3) {
+          // 2-3 alertas: mostrar nombres
+          const names = Array.from(pendingTimeAlerts.keys()).join(', ');
+          alertText = `⏰ Tiempo terminado para: ${names}`;
+        } else {
+          // Más de 3: mostrar contador
+          alertText = `⏰ Tiempo terminado para ${alertCount} niños`;
+        }
+        
+        // Mostrar alerta consolidada
+        showStatusMessage(alertText, 'warning');
+        
+        // Limpiar lista de alertas pendientes
+        pendingTimeAlerts.clear();
+        timeAlertTimeout = null;
+      }, 2000);
     }
 
     // Sistema de notificaciones con sonido
