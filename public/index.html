@@ -3950,10 +3950,10 @@
           // Verificar que startTimeValue sea válido
           if (isNaN(startTime.getTime())) {
             console.warn('Invalid start time for session:', s.id, 'start:', startTimeValue);
-            durationText = `${s.duration || 0}min`;
-            statusClass = 'active';
-            iconClass = 'active';
-            durationClass = 'active';
+            durationText = 'FINALIZADO'; // Sesión antigua con datos corruptos
+            statusClass = 'completed';
+            iconClass = 'completed';
+            durationClass = 'completed';
           } else {
             const elapsedSeconds = Math.floor((currentTime - startTime.getTime()) / 1000);
             const totalSeconds = (s.duration || 15) * 60;
