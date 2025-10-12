@@ -2333,16 +2333,25 @@
     }
 
     function searchChildren(query) {
+      console.log('🔍 Search query:', query);
+      console.log('📊 Children cache:', childrenCache);
+      
       const results = childrenCache.filter(child => {
         const name = (child.displayName || child.name).toLowerCase();
         const fatherName = ((child.father_name || child.fatherName) || '').toLowerCase();
         const motherName = ((child.mother_name || child.motherName) || '').toLowerCase();
         
-        return name.includes(query) || 
+        console.log(`👶 Child: ${name}, Father: ${fatherName}, Mother: ${motherName}`);
+        
+        const matches = name.includes(query) || 
                fatherName.includes(query) || 
                motherName.includes(query);
+               
+        console.log(`✅ Match for ${name}:`, matches);
+        return matches;
       });
 
+      console.log('🎯 Search results:', results);
       displaySearchResults(results);
     }
 
