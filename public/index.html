@@ -141,9 +141,14 @@
              width: calc(100% - 250px);
            }
            
-           .mobile-menu-toggle {
-             display: none !important;
-           }
+        .mobile-menu-toggle {
+          display: none !important;
+        }
+        
+        /* Ocultar botón X en móvil */
+        .close-button {
+          display: none !important;
+        }
            
            .header {
              padding-left: 20px !important;
@@ -1628,6 +1633,18 @@
       
       .mobile-menu-toggle {
         display: block !important;
+        position: fixed !important;
+        top: 20px !important;
+        left: 20px !important;
+        z-index: 9999 !important;
+        transform: none !important;
+        transition: none !important;
+      }
+      
+      /* Asegurar que el botón hamburguesa se mantenga fijo */
+      .mobile-menu-toggle:hover {
+        background: rgba(255, 255, 255, 0.2) !important;
+        border-color: rgba(255, 255, 255, 0.5) !important;
       }
       
       .main-nav {
@@ -1701,6 +1718,11 @@
         left: 10px;
         max-width: none;
         max-height: 50vh;
+      }
+      
+      /* Ocultar botón X en alertas móviles */
+      .alert-close {
+        display: none !important;
       }
       
       .persistent-alert {
@@ -1938,9 +1960,6 @@
           <select id="gameSelect">
             <option value="">Seleccione un juego</option>
           </select>
-          <button onclick="forceRefreshGames()" class="btn-refresh" title="Refrescar lista de juegos" style="margin-left: 8px; padding: 4px 8px; font-size: 12px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;">
-            🔄
-          </button>
         </div>
         <div class="form-group">
           <label><i class="fas fa-clock"></i> Tiempo (minutos):</label>
@@ -3731,13 +3750,16 @@
         
         // Información de padres para diferenciación
         let parentsInfo = '';
-        if (child && (child.fatherName || child.motherName)) {
-          if (child.fatherName && child.motherName) {
-            parentsInfo = `<div class="history-parents"><i class="fas fa-users"></i> ${child.fatherName} & ${child.motherName}</div>`;
-          } else if (child.fatherName) {
-            parentsInfo = `<div class="history-parents"><i class="fas fa-users"></i> Papá: ${child.fatherName}</div>`;
-          } else if (child.motherName) {
-            parentsInfo = `<div class="history-parents"><i class="fas fa-users"></i> Mamá: ${child.motherName}</div>`;
+        if (child && ((child.father_name || child.fatherName) || (child.mother_name || child.motherName))) {
+          const fatherName = child.father_name || child.fatherName;
+          const motherName = child.mother_name || child.motherName;
+          
+          if (fatherName && motherName) {
+            parentsInfo = `<div class="history-parents"><i class="fas fa-users"></i> ${fatherName} & ${motherName}</div>`;
+          } else if (fatherName) {
+            parentsInfo = `<div class="history-parents"><i class="fas fa-users"></i> Papá: ${fatherName}</div>`;
+          } else if (motherName) {
+            parentsInfo = `<div class="history-parents"><i class="fas fa-users"></i> Mamá: ${motherName}</div>`;
           }
         }
         
@@ -3842,6 +3864,21 @@
           const childName = child ? (child.displayName && child.displayName !== 'null' ? child.displayName : child.name) : 'Niño desconocido';
           const gameName = game ? game.name : 'Juego desconocido';
           
+          // Información de padres para diferenciación
+          let parentsInfo = '';
+          if (child && ((child.father_name || child.fatherName) || (child.mother_name || child.motherName))) {
+            const fatherName = child.father_name || child.fatherName;
+            const motherName = child.mother_name || child.motherName;
+            
+            if (fatherName && motherName) {
+              parentsInfo = `<div class="history-parents"><i class="fas fa-users"></i> ${fatherName} & ${motherName}</div>`;
+            } else if (fatherName) {
+              parentsInfo = `<div class="history-parents"><i class="fas fa-users"></i> Papá: ${fatherName}</div>`;
+            } else if (motherName) {
+              parentsInfo = `<div class="history-parents"><i class="fas fa-users"></i> Mamá: ${motherName}</div>`;
+            }
+          }
+          
           const startTime = new Date(s.start);
           const timeStr = startTime.toLocaleTimeString('es-ES', {
             hour: '2-digit',
@@ -3889,6 +3926,7 @@
                 <i class="fas fa-child"></i>
                 ${childName}
               </div>
+              ${parentsInfo}
               <div class="history-subtitle">
                 <i class="fas fa-gamepad"></i>
                 ${gameName}
