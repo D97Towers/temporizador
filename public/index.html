@@ -517,6 +517,29 @@
       transform: translateY(-1px);
     }
 
+    .test-data-btn {
+      position: absolute;
+      top: 20px;
+      right: 140px;
+      background: rgba(255, 193, 7, 0.2);
+      color: #ffc107;
+      border: 1px solid rgba(255, 193, 7, 0.4);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      opacity: 0.8;
+    }
+
+    .test-data-btn:hover {
+      background: rgba(255, 193, 7, 0.3);
+      border-color: rgba(255, 193, 7, 0.6);
+      opacity: 1;
+      transform: translateY(-1px);
+    }
+
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -1789,8 +1812,9 @@
         display: none !important;
       }
       
-      /* Ocultar botón de cerrar alertas en móvil */
-      .dismiss-all-btn {
+      /* Ocultar botones en móvil */
+      .dismiss-all-btn,
+      .test-data-btn {
         display: none !important;
       }
       
@@ -1970,6 +1994,9 @@
       <p>Controla el tiempo de juego de los niños de forma divertida</p>
       <button onclick="dismissAllAlerts()" class="dismiss-all-btn" title="Cerrar todas las alertas (Ctrl+Delete)">
         <i class="fas fa-times-circle"></i> Cerrar Alertas
+      </button>
+      <button onclick="createTestData()" class="test-data-btn" title="Crear datos de prueba (SOLO DESARROLLO)">
+        <i class="fas fa-flask"></i> Datos Prueba
       </button>
     </div>
 
@@ -2836,6 +2863,63 @@
       showStatusMessage('✅ Todas las alertas cerradas', 'success');
     }
 
+    // Función para ocultar botón de datos de prueba en producción
+    function hideTestButtonIfProduction() {
+      const testBtn = document.querySelector('.test-data-btn');
+      if (testBtn) {
+        // Ocultar en producción
+        if (window.location.hostname === 'temporizador-juegos.vercel.app' || 
+            window.location.hostname === 'temporizadorjuegos.vercel.app' ||
+            window.location.hostname.includes('vercel.app')) {
+          testBtn.style.display = 'none';
+        }
+      }
+    }
+
+    // Función para crear datos de prueba SOLO en rama desarrollo
+    async function createTestData() {
+      // Verificar que estamos en desarrollo (no en producción)
+      if (window.location.hostname === 'temporizador-juegos.vercel.app' || 
+          window.location.hostname === 'temporizadorjuegos.vercel.app' ||
+          window.location.hostname.includes('vercel.app')) {
+        console.log('❌ No se pueden crear datos de prueba en producción');
+        showStatusMessage('❌ Datos de prueba no disponibles en producción', 'error');
+        return;
+      }
+
+      console.log('🧪 Creando datos de prueba para desarrollo...');
+      
+      const testChildren = [
+        { name: 'David', nickname: 'Dave', fatherName: 'Carlos', motherName: 'María' },
+        { name: 'David', nickname: 'Davi', fatherName: 'Luis', motherName: 'Ana' },
+        { name: 'Sofia', nickname: 'Sofi', fatherName: 'Pedro', motherName: 'Carmen' }
+      ];
+
+      try {
+        for (const child of testChildren) {
+          const response = await fetchWithRetry(api + '/children', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(child)
+          });
+          
+          if (response.ok) {
+            console.log(`✅ Niño de prueba creado: ${child.name} (${child.fatherName} & ${child.motherName})`);
+          } else {
+            console.log(`⚠️ Niño ya existe: ${child.name}`);
+          }
+        }
+        
+        // Recargar datos después de crear
+        await fetchChildren();
+        showStatusMessage('🧪 Datos de prueba creados (3 niños: 2 David, 1 Sofia)', 'success');
+        
+      } catch (error) {
+        console.error('Error creando datos de prueba:', error);
+        showStatusMessage('Error creando datos de prueba', 'error');
+      }
+    }
+
     // Función para limpiar alerta específica de sesión
     function clearSessionAlert(sessionId) {
       alertedSessions.delete(sessionId);
@@ -2853,8 +2937,11 @@
 
     // Función para consolidar alertas de tiempo terminado
     function showConsolidatedTimeAlert(childName, parentsInfo) {
+      // Crear clave única usando nombre + padres para evitar duplicados
+      const uniqueKey = `${childName}|${parentsInfo || 'sin_padres'}`;
+      
       // Agregar a la lista de alertas pendientes
-      pendingTimeAlerts.set(childName, parentsInfo);
+      pendingTimeAlerts.set(uniqueKey, { name: childName, parents: parentsInfo });
       
       // Limpiar timeout anterior si existe
       if (timeAlertTimeout) {
@@ -2868,12 +2955,14 @@
         
         if (alertCount === 1) {
           // Una sola alerta
-          const [name, parents] = pendingTimeAlerts.entries().next().value;
+          const { name, parents } = pendingTimeAlerts.values().next().value;
           alertText = `⏰ ${name}${parents ? ` (${parents})` : ''} terminó su tiempo de juego`;
         } else if (alertCount <= 3) {
-          // 2-3 alertas: mostrar nombres
-          const names = Array.from(pendingTimeAlerts.keys()).join(', ');
-          alertText = `⏰ Tiempo terminado para: ${names}`;
+          // 2-3 alertas: mostrar nombres con diferenciación
+          const childrenList = Array.from(pendingTimeAlerts.values()).map(child => {
+            return child.parents ? `${child.name} (${child.parents})` : child.name;
+          });
+          alertText = `⏰ Tiempo terminado para: ${childrenList.join(', ')}`;
         } else {
           // Más de 3: mostrar contador
           alertText = `⏰ Tiempo terminado para ${alertCount} niños`;
@@ -4696,6 +4785,9 @@
              } catch (error) {
                console.error('Failed to initialize child search system, continuing...', error);
         }
+        
+        // Ocultar botón de datos de prueba en producción
+        hideTestButtonIfProduction();
         
         // Configurar intervalos de actualización - Optimizados para evitar parpadeo
         // Actualizar sesiones activas cada 30 segundos para mantener datos actualizados sin parpadeo
