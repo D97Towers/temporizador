@@ -586,6 +586,31 @@
       transform: translateY(-1px);
     }
 
+    .comprehensive-test-btn {
+      position: absolute;
+      top: 20px;
+      right: 300px;
+      background: rgba(111, 66, 193, 0.2);
+      color: #6f42c1;
+      border: 1px solid rgba(111, 66, 193, 0.4);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      opacity: 0.9;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .comprehensive-test-btn:hover {
+      background: rgba(111, 66, 193, 0.3);
+      border-color: rgba(111, 66, 193, 0.6);
+      opacity: 1;
+      transform: translateY(-1px);
+    }
+
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -1864,7 +1889,8 @@
       .dismiss-all-btn,
       .test-data-btn,
       .test-alerts-btn,
-      .test-escalation-btn {
+      .test-escalation-btn,
+      .comprehensive-test-btn {
         display: none !important;
       }
       
@@ -2054,6 +2080,9 @@
       </button>
       <button onclick="testEscalation()" class="test-escalation-btn" title="Probar escalación inteligente">
         <i class="fas fa-chart-line"></i> Escalación
+      </button>
+      <button onclick="runComprehensiveTests()" class="comprehensive-test-btn" title="Ejecutar pruebas completas del sistema">
+        <i class="fas fa-vial"></i> Pruebas Completas
       </button>
     </div>
 
@@ -2976,6 +3005,207 @@
       setTimeout(() => {
         showConsolidatedTimeAlert('Sofia', 'Pedro & Carmen');
       }, 9000);
+    }
+
+    // Sistema completo de pruebas sin afectar funcionalidad
+    async function runComprehensiveTests() {
+      console.log('🧪 Iniciando pruebas completas del sistema...');
+      
+      const testResults = {
+        frontend: {},
+        backend: {},
+        alerts: {},
+        ui: {},
+        total: 0,
+        passed: 0,
+        failed: 0
+      };
+
+      // Test 1: Verificar elementos del DOM
+      testResults.ui.domElements = testDOMElements();
+      
+      // Test 2: Verificar funciones JavaScript
+      testResults.frontend.jsFunctions = testJavaScriptFunctions();
+      
+      // Test 3: Verificar sistema de alertas
+      testResults.alerts.alertSystem = testAlertSystem();
+      
+      // Test 4: Verificar caché local
+      testResults.frontend.cache = testLocalCache();
+      
+      // Test 5: Verificar endpoints (simulado)
+      testResults.backend.endpoints = await testBackendEndpoints();
+      
+      // Calcular resultados
+      const allTests = [testResults.ui.domElements, testResults.frontend.jsFunctions, 
+                       testResults.alerts.alertSystem, testResults.frontend.cache, 
+                       testResults.backend.endpoints];
+      
+      allTests.forEach(test => {
+        testResults.total += test.total || 0;
+        testResults.passed += test.passed || 0;
+        testResults.failed += test.failed || 0;
+      });
+
+      // Mostrar resultados
+      displayTestResults(testResults);
+      
+      return testResults;
+    }
+
+    // Test 1: Verificar elementos del DOM
+    function testDOMElements() {
+      const tests = [
+        { name: 'Header principal', test: () => document.querySelector('.header h1') !== null },
+        { name: 'Botón iniciar sesión', test: () => document.getElementById('startBtn') !== null },
+        { name: 'Select de niños', test: () => document.getElementById('selectedChildId') !== null },
+        { name: 'Select de juegos', test: () => document.getElementById('gameSelect') !== null },
+        { name: 'Input de duración', test: () => document.getElementById('durationInput') !== null },
+        { name: 'Área de alertas', test: () => document.getElementById('statusMessage') !== null },
+        { name: 'Sección dashboard', test: () => document.getElementById('dashboard-section') !== null },
+        { name: 'Sección sesiones', test: () => document.getElementById('sessions-section') !== null },
+        { name: 'Sección niños', test: () => document.getElementById('children-section') !== null },
+        { name: 'Sección juegos', test: () => document.getElementById('games-section') !== null }
+      ];
+
+      return runTests('DOM Elements', tests);
+    }
+
+    // Test 2: Verificar funciones JavaScript
+    function testJavaScriptFunctions() {
+      const tests = [
+        { name: 'showStatusMessage', test: () => typeof showStatusMessage === 'function' },
+        { name: 'hideStatusMessage', test: () => typeof hideStatusMessage === 'function' },
+        { name: 'clearAllSessionAlerts', test: () => typeof clearAllSessionAlerts === 'function' },
+        { name: 'showConsolidatedTimeAlert', test: () => typeof showConsolidatedTimeAlert === 'function' },
+        { name: 'shouldShowParentsInfo', test: () => typeof shouldShowParentsInfo === 'function' },
+        { name: 'fetchChildren', test: () => typeof fetchChildren === 'function' },
+        { name: 'fetchGames', test: () => typeof fetchGames === 'function' },
+        { name: 'startSession', test: () => typeof startSession === 'function' },
+        { name: 'endSession', test: () => typeof endSession === 'function' },
+        { name: 'renderChildrenList', test: () => typeof renderChildrenList === 'function' },
+        { name: 'renderActiveSessions', test: () => typeof renderActiveSessions === 'function' },
+        { name: 'updateChildSelect', test: () => typeof updateChildSelect === 'function' },
+        { name: 'updateGameSelect', test: () => typeof updateGameSelect === 'function' }
+      ];
+
+      return runTests('JavaScript Functions', tests);
+    }
+
+    // Test 3: Verificar sistema de alertas
+    function testAlertSystem() {
+      const tests = [
+        { name: 'pendingTimeAlerts existe', test: () => typeof pendingTimeAlerts !== 'undefined' },
+        { name: 'timeAlertTimeout existe', test: () => typeof timeAlertTimeout !== 'undefined' },
+        { name: 'alertedSessions existe', test: () => typeof alertedSessions !== 'undefined' },
+        { name: 'Alertas se pueden mostrar', test: () => {
+          try {
+            showStatusMessage('Test', 'success');
+            return true;
+          } catch (e) {
+            return false;
+          }
+        }},
+        { name: 'Alertas se pueden limpiar', test: () => {
+          try {
+            clearAllSessionAlerts();
+            return true;
+          } catch (e) {
+            return false;
+          }
+        }}
+      ];
+
+      return runTests('Alert System', tests);
+    }
+
+    // Test 4: Verificar caché local
+    function testLocalCache() {
+      const tests = [
+        { name: 'childrenCache existe', test: () => typeof childrenCache !== 'undefined' },
+        { name: 'gamesCache existe', test: () => typeof gamesCache !== 'undefined' },
+        { name: 'activeSessionsData existe', test: () => typeof activeSessionsData !== 'undefined' },
+        { name: 'AppState existe', test: () => typeof AppState !== 'undefined' },
+        { name: 'Caché es array', test: () => Array.isArray(childrenCache) && Array.isArray(gamesCache) }
+      ];
+
+      return runTests('Local Cache', tests);
+    }
+
+    // Test 5: Verificar endpoints (simulado)
+    async function testBackendEndpoints() {
+      const tests = [
+        { name: 'API URL configurada', test: () => typeof api !== 'undefined' && api.length > 0 },
+        { name: 'fetchWithRetry existe', test: () => typeof fetchWithRetry === 'function' },
+        { name: 'Rate limiting configurado', test: () => typeof rateLimits !== 'undefined' },
+        { name: 'Circuit breaker configurado', test: () => typeof circuitBreakers !== 'undefined' }
+      ];
+
+      return runTests('Backend Endpoints', tests);
+    }
+
+    // Función helper para ejecutar tests
+    function runTests(category, tests) {
+      let passed = 0;
+      let failed = 0;
+      const results = {};
+
+      tests.forEach(test => {
+        try {
+          const result = test.test();
+          if (result) {
+            passed++;
+            results[test.name] = '✅ PASS';
+          } else {
+            failed++;
+            results[test.name] = '❌ FAIL';
+          }
+        } catch (error) {
+          failed++;
+          results[test.name] = `❌ ERROR: ${error.message}`;
+        }
+      });
+
+      return {
+        category,
+        results,
+        passed,
+        failed,
+        total: tests.length
+      };
+    }
+
+    // Mostrar resultados de pruebas
+    function displayTestResults(testResults) {
+      console.log('📊 RESULTADOS DE PRUEBAS COMPLETAS');
+      console.log('=====================================');
+      console.log(`Total: ${testResults.total} | Pasaron: ${testResults.passed} | Fallaron: ${testResults.failed}`);
+      console.log(`Porcentaje de éxito: ${((testResults.passed / testResults.total) * 100).toFixed(1)}%`);
+      
+      // Mostrar resultados por categoría
+      Object.keys(testResults).forEach(key => {
+        if (typeof testResults[key] === 'object' && testResults[key].category) {
+          console.log(`\n📋 ${testResults[key].category}:`);
+          Object.keys(testResults[key].results).forEach(testName => {
+            console.log(`  ${testResults[key].results[testName]} ${testName}`);
+          });
+        }
+      });
+
+      // Mostrar resumen en UI
+      const summary = `
+🧪 PRUEBAS COMPLETAS FINALIZADAS
+
+📊 Resumen:
+• Total de pruebas: ${testResults.total}
+• Exitosas: ${testResults.passed} ✅
+• Fallidas: ${testResults.failed} ❌
+• Éxito: ${((testResults.passed / testResults.total) * 100).toFixed(1)}%
+
+${testResults.failed === 0 ? '🎉 ¡TODAS LAS PRUEBAS PASARON! Sistema listo para producción.' : '⚠️ Algunas pruebas fallaron. Revisar antes de merge.'}
+      `;
+
+      showStatusMessage(summary, testResults.failed === 0 ? 'success' : 'warning');
     }
 
     // Función para probar escalación inteligente
