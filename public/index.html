@@ -1576,6 +1576,7 @@
       font-size: 13px;
       line-height: 1.3;
       word-wrap: break-word;
+      white-space: pre-line; /* Permitir saltos de línea */
       overflow-wrap: break-word;
       hyphens: auto;
     }
@@ -1696,6 +1697,7 @@
       .alert-message {
         font-size: 14px;
         line-height: 1.4;
+        white-space: pre-line; /* Permitir saltos de línea */
       }
       
       /* Ocultar botón X en desktop también */
@@ -1831,6 +1833,7 @@
       .alert-message {
         font-size: 12px;
         line-height: 1.3;
+        white-space: pre-line; /* Permitir saltos de línea */
       }
       
       .alert-close {
@@ -2762,7 +2765,8 @@
       if (type === 'error') {
         timeoutDuration = 6000; // Errores más tiempo para leer
       } else if (type === 'warning') {
-        timeoutDuration = 5000; // Advertencias tiempo medio
+        // Alertas de warning con texto largo (nombres + padres) necesitan más tiempo
+        timeoutDuration = text.length > 50 ? 8000 : 6000; // Más tiempo para texto largo
       } else {
         timeoutDuration = text.length < 10 ? 2000 : 4000; // Éxito menos tiempo
       }
@@ -2998,11 +3002,11 @@
           const { name, parents } = pendingTimeAlerts.values().next().value;
           alertText = `⏰ ${name}${parents ? ` (${parents})` : ''} terminó su tiempo de juego`;
         } else if (alertCount <= 3) {
-          // 2-3 alertas: mostrar nombres con diferenciación
+          // 2-3 alertas: mostrar nombres con diferenciación clara
           const childrenList = Array.from(pendingTimeAlerts.values()).map(child => {
             return child.parents ? `${child.name} (${child.parents})` : child.name;
           });
-          alertText = `⏰ Tiempo terminado para: ${childrenList.join(', ')}`;
+          alertText = `⏰ Tiempo terminado para:\n${childrenList.join('\n')}`;
         } else {
           // Más de 3: mostrar contador
           alertText = `⏰ Tiempo terminado para ${alertCount} niños`;
