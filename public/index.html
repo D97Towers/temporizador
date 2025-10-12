@@ -3937,11 +3937,22 @@
           const endTimeValue = s.endTime || s.end;
           const endTime = new Date(endTimeValue);
           
-          // Si tiene endTime, significa que fue finalizada manualmente con botón FIN
-          durationText = 'FINALIZADO'; // Usuario presionó FIN
-          statusClass = 'completed';
-          iconClass = 'completed';
-          durationClass = 'completed';
+          // Verificar si fue finalizada manualmente vs automáticamente
+          const duration = Math.round((endTime.getTime() - startTime.getTime()) / 60000);
+          const totalMinutes = s.duration || 15;
+          
+          // Si la duración es muy cercana al tiempo total (diferencia ≤ 2 minutos), fue automática
+          if (Math.abs(duration - totalMinutes) <= 2) {
+            durationText = 'TERMINADO'; // Tiempo se agotó automáticamente
+            statusClass = 'expired';
+            iconClass = 'expired';
+            durationClass = 'expired';
+          } else {
+            durationText = 'FINALIZADO'; // Usuario presionó FIN
+            statusClass = 'completed';
+            iconClass = 'completed';
+            durationClass = 'completed';
+          }
         } else {
           // Sesión en curso - usar la misma lógica que renderActiveSessions
           const currentTime = Date.now();
