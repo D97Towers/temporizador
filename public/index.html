@@ -3948,17 +3948,17 @@
             const duration = Math.round((endTime.getTime() - startTime.getTime()) / 60000);
             const totalMinutes = s.duration || 15;
             
-            // Si la duración real es muy cercana al tiempo total, probablemente se agotó automáticamente
-            if (Math.abs(duration - totalMinutes) <= 1) {
-              durationText = 'TERMINADO'; // Tiempo se agotó automáticamente
-              statusClass = 'expired';
-              iconClass = 'expired';
-              durationClass = 'expired';
-            } else {
+            // Si la duración real es menor al tiempo total, fue finalizada manualmente
+            if (duration < totalMinutes - 1) {
               durationText = 'FINALIZADO'; // Usuario presionó FIN antes de tiempo
               statusClass = 'completed';
               iconClass = 'completed';
               durationClass = 'completed';
+            } else {
+              durationText = 'TERMINADO'; // Tiempo se agotó automáticamente
+              statusClass = 'expired';
+              iconClass = 'expired';
+              durationClass = 'expired';
             }
           }
         } else {
