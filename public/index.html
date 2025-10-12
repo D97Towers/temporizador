@@ -494,33 +494,6 @@
       opacity: 0.9;
     }
 
-    .dismiss-all-btn {
-      position: absolute;
-      top: 50%;
-      right: 20px;
-      transform: translateY(-50%);
-      background: rgba(255, 255, 255, 0.15);
-      color: white;
-      border: 1px solid rgba(255, 255, 255, 0.4);
-      border-radius: 20px;
-      padding: 8px 16px;
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      backdrop-filter: blur(15px);
-      opacity: 0.9;
-      z-index: 1000;
-      font-weight: 500;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .dismiss-all-btn:hover {
-      background: rgba(255, 255, 255, 0.25);
-      border-color: rgba(255, 255, 255, 0.6);
-      opacity: 1;
-      transform: translateY(-50%) translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
 
 
     .grid {
@@ -1797,10 +1770,6 @@
         display: none !important;
       }
       
-      /* Ocultar botones en móvil */
-      .dismiss-all-btn {
-        display: none !important;
-      }
       
       .persistent-alert {
         margin-bottom: 6px;
@@ -1977,9 +1946,6 @@
     <div class="header">
       <h1><i class="fas fa-gamepad"></i> Temporizador de Juegos</h1>
       <p>Controla el tiempo de juego de los niños de forma divertida</p>
-      <button onclick="dismissAllAlerts()" class="dismiss-all-btn" title="Cerrar todas las alertas (Ctrl+Delete)">
-        <i class="fas fa-times-circle"></i> Cerrar Alertas
-      </button>
     </div>
 
     <!-- Dashboard Section -->
