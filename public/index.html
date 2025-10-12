@@ -563,6 +563,29 @@
       transform: translateY(-1px);
     }
 
+    .test-escalation-btn {
+      position: absolute;
+      top: 20px;
+      right: 420px;
+      background: rgba(40, 167, 69, 0.2);
+      color: #28a745;
+      border: 1px solid rgba(40, 167, 69, 0.4);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      opacity: 0.8;
+    }
+
+    .test-escalation-btn:hover {
+      background: rgba(40, 167, 69, 0.3);
+      border-color: rgba(40, 167, 69, 0.6);
+      opacity: 1;
+      transform: translateY(-1px);
+    }
+
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -1840,7 +1863,8 @@
       /* Ocultar botones en móvil */
       .dismiss-all-btn,
       .test-data-btn,
-      .test-alerts-btn {
+      .test-alerts-btn,
+      .test-escalation-btn {
         display: none !important;
       }
       
@@ -2027,6 +2051,9 @@
       </button>
       <button onclick="testAlerts()" class="test-alerts-btn" title="Probar sistema de alertas">
         <i class="fas fa-bell"></i> Probar Alertas
+      </button>
+      <button onclick="testEscalation()" class="test-escalation-btn" title="Probar escalación inteligente">
+        <i class="fas fa-chart-line"></i> Escalación
       </button>
     </div>
 
@@ -2949,6 +2976,89 @@
       setTimeout(() => {
         showConsolidatedTimeAlert('Sofia', 'Pedro & Carmen');
       }, 9000);
+    }
+
+    // Función para probar escalación inteligente
+    function testEscalation() {
+      console.log('🧪 Probando escalación inteligente...');
+      
+      // Limpiar alertas previas
+      clearAllSessionAlerts();
+      
+      // Escenario 1: 1 niño
+      setTimeout(() => {
+        showConsolidatedTimeAlert('Juan', 'Pedro & Ana');
+        showStatusMessage('📊 Escenario 1: 1 niño (individual)', 'info');
+      }, 1000);
+      
+      // Escenario 2: 2 niños
+      setTimeout(() => {
+        clearAllSessionAlerts();
+        showConsolidatedTimeAlert('María', 'Carlos & Elena');
+      }, 4000);
+      
+      setTimeout(() => {
+        showConsolidatedTimeAlert('Pedro', 'Luis & Carmen');
+        showStatusMessage('📊 Escenario 2: 2 niños (lista simple)', 'info');
+      }, 4500);
+      
+      // Escenario 3: 5 niños
+      setTimeout(() => {
+        clearAllSessionAlerts();
+        showConsolidatedTimeAlert('David', 'Carlos & María');
+      }, 9000);
+      
+      setTimeout(() => {
+        showConsolidatedTimeAlert('David', 'Luis & Ana');
+      }, 9200);
+      
+      setTimeout(() => {
+        showConsolidatedTimeAlert('Sofia', 'Pedro & Carmen');
+      }, 9400);
+      
+      setTimeout(() => {
+        showConsolidatedTimeAlert('Ana', 'Miguel & Rosa');
+      }, 9600);
+      
+      setTimeout(() => {
+        showConsolidatedTimeAlert('Luis', 'Jorge & Laura');
+        showStatusMessage('📊 Escenario 3: 5 niños (consolidada completa)', 'info');
+      }, 9800);
+      
+      // Escenario 4: 8 niños (simulado)
+      setTimeout(() => {
+        clearAllSessionAlerts();
+        showConsolidatedTimeAlert('Niño1', 'Padre1 & Madre1');
+      }, 14000);
+      
+      setTimeout(() => {
+        showConsolidatedTimeAlert('Niño2', 'Padre2 & Madre2');
+      }, 14200);
+      
+      setTimeout(() => {
+        showConsolidatedTimeAlert('Niño3', 'Padre3 & Madre3');
+      }, 14400);
+      
+      setTimeout(() => {
+        showConsolidatedTimeAlert('Niño4', 'Padre4 & Madre4');
+      }, 14600);
+      
+      setTimeout(() => {
+        showConsolidatedTimeAlert('Niño5', 'Padre5 & Madre5');
+      }, 14800);
+      
+      setTimeout(() => {
+        showConsolidatedTimeAlert('Niño6', 'Padre6 & Madre6');
+      }, 15000);
+      
+      setTimeout(() => {
+        showConsolidatedTimeAlert('Niño7', 'Padre7 & Madre7');
+      }, 15200);
+      
+      setTimeout(() => {
+        showConsolidatedTimeAlert('Niño8', 'Padre8 & Madre8');
+        showStatusMessage('📊 Escenario 4: 8 niños (resumen + historial)', 'info');
+      }, 15400);
     }
 
     // Función para ocultar botón de datos de prueba en producción
