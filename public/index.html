@@ -141,10 +141,10 @@
              width: calc(100% - 250px);
            }
            
-        .mobile-menu-toggle {
-          display: none !important;
-        }
-        
+           .mobile-menu-toggle {
+             display: none !important;
+           }
+           
         /* Ocultar botón X en móvil */
         .close-button {
           display: none !important;
@@ -2480,13 +2480,13 @@
           }
           
           return `
-            <li class="ranking-item">
-              <div class="ranking-position">${index + 1}°</div>
+          <li class="ranking-item">
+            <div class="ranking-position">${index + 1}°</div>
               <div class="ranking-name">
                 ${child.displayName || child.name}${parentsInfo}
               </div>
-              <div class="ranking-time">${child.totalTimePlayed || 0} min</div>
-            </li>
+            <div class="ranking-time">${child.totalTimePlayed || 0} min</div>
+          </li>
           `;
         }).join('');
       } else {
@@ -4310,7 +4310,7 @@
           AppState.isStartingSession = false;
           return;
         }
-        
+      
         console.log('Starting session:', { selectedChildId, gameId, duration, originalInput: durationInput });
         
         if (!validateSession(selectedChildId, gameId, duration)) {
@@ -4320,7 +4320,7 @@
         
         // Verificar que el niño y juego existen en el caché
         const child = childrenCache.find(c => c.id == selectedChildId);
-        const game = gamesCache.find(g => g.id == gameId);
+      const game = gamesCache.find(g => g.id == gameId);
       
       if (!child) {
           console.error('Child not found:', selectedChildId, 'Available children:', childrenCache.map(c => `${c.id}:${c.name}`));
@@ -4392,15 +4392,20 @@
 
     async function endSession(sessionId) {
       try {
+        console.log('🚨 Ending session:', sessionId);
         const res = await fetchWithRetry(api + '/sessions/' + sessionId + '/end', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }
         });
         
+        console.log('🚨 End session response status:', res.status);
+        
         if (!res.ok) {
           const errorData = await res.json().catch(() => ({ error: 'Error desconocido' }));
           throw new Error(errorData.error || 'Error al finalizar sesión');
         }
+        
+        console.log('✅ Session ended successfully');
         
         // Limpiar timer
         if (timerIntervals.has(sessionId)) {
@@ -4409,12 +4414,15 @@
         }
         
         // Actualizar datos inmediatamente después de finalizar sesión
+        console.log('🔄 Refreshing data after ending session...');
         await Promise.all([
           fetchActiveSessions(),
           fetchSessionHistory(),
           fetchChildren() // Asegurar datos actualizados
         ]);
-        // showStatusMessage('Sesión finalizada', 'success');
+        console.log('✅ Data refreshed after ending session');
+        
+        showStatusMessage('Sesión finalizada correctamente', 'success');
         
         // Limpiar alertas de esta sesión
         clearSessionAlert(sessionId);
