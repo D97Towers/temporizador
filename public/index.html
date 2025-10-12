@@ -2335,8 +2335,8 @@
     function searchChildren(query) {
       const results = childrenCache.filter(child => {
         const name = (child.displayName || child.name).toLowerCase();
-        const fatherName = (child.fatherName || '').toLowerCase();
-        const motherName = (child.motherName || '').toLowerCase();
+        const fatherName = ((child.father_name || child.fatherName) || '').toLowerCase();
+        const motherName = ((child.mother_name || child.motherName) || '').toLowerCase();
         
         return name.includes(query) || 
                fatherName.includes(query) || 
@@ -2360,12 +2360,15 @@
           const avatar = child.avatar || child.name.charAt(0).toUpperCase();
           
           let parentsInfo = '';
-          if (child.fatherName && child.motherName) {
-            parentsInfo = `${child.fatherName} & ${child.motherName}`;
-          } else if (child.fatherName) {
-            parentsInfo = `Papá: ${child.fatherName}`;
-          } else if (child.motherName) {
-            parentsInfo = `Mamá: ${child.motherName}`;
+          const fatherName = child.father_name || child.fatherName;
+          const motherName = child.mother_name || child.motherName;
+          
+          if (fatherName && motherName) {
+            parentsInfo = `${fatherName} & ${motherName}`;
+          } else if (fatherName) {
+            parentsInfo = `Papá: ${fatherName}`;
+          } else if (motherName) {
+            parentsInfo = `Mamá: ${motherName}`;
           }
 
           return `
