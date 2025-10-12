@@ -3407,9 +3407,11 @@
           
           // Agregar información de padres si existe para diferenciar
           let parentInfo = '';
-          if (child.fatherName || child.motherName) {
-            const father = sanitizeHTML(child.fatherName || '');
-            const mother = sanitizeHTML(child.motherName || '');
+          const fatherName = child.father_name || child.fatherName;
+          const motherName = child.mother_name || child.motherName;
+          if (fatherName || motherName) {
+            const father = sanitizeHTML(fatherName || '');
+            const mother = sanitizeHTML(motherName || '');
             const separator = father && mother ? ', ' : '';
             parentInfo = ` (${father}${separator}${mother})`;
           }
@@ -4587,8 +4589,8 @@
           body: JSON.stringify({ 
             name,
             nickname: nickname || null,
-            fatherName: fatherName || null,
-            motherName: motherName || null
+            father_name: fatherName || null,
+            mother_name: motherName || null
           })
         });
         
