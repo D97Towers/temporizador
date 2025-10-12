@@ -4045,7 +4045,7 @@
             const duration = Math.round((s.end - s.start) / 60000);
             statusClass = 'completed';
             iconClass = 'completed';
-            durationText = `${duration}min`;
+            durationText = 'FINALIZADO'; // Siempre FINALIZADO para sesiones con end
             durationClass = 'completed';
           } else {
             const currentTime = Date.now();
