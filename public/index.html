@@ -3937,30 +3937,11 @@
           const endTimeValue = s.endTime || s.end;
           const endTime = new Date(endTimeValue);
           
-          // Verificar que las fechas sean válidas
-          if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
-            console.warn('Invalid dates for session:', s.id, 'start:', startTimeValue, 'end:', endTimeValue);
-            durationText = 'FINALIZADO'; // Usuario presionó FIN
-            statusClass = 'completed';
-            iconClass = 'completed';
-            durationClass = 'completed';
-          } else {
-            const duration = Math.round((endTime.getTime() - startTime.getTime()) / 60000);
-            const totalMinutes = s.duration || 15;
-            
-            // Si la duración real es menor al tiempo total, fue finalizada manualmente
-            if (duration < totalMinutes - 1) {
-              durationText = 'FINALIZADO'; // Usuario presionó FIN antes de tiempo
-              statusClass = 'completed';
-              iconClass = 'completed';
-              durationClass = 'completed';
-            } else {
-              durationText = 'TERMINADO'; // Tiempo se agotó automáticamente
-              statusClass = 'expired';
-              iconClass = 'expired';
-              durationClass = 'expired';
-            }
-          }
+          // Si tiene endTime, significa que fue finalizada manualmente con botón FIN
+          durationText = 'FINALIZADO'; // Usuario presionó FIN
+          statusClass = 'completed';
+          iconClass = 'completed';
+          durationClass = 'completed';
         } else {
           // Sesión en curso - usar la misma lógica que renderActiveSessions
           const currentTime = Date.now();
