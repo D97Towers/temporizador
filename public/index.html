@@ -2894,6 +2894,35 @@
       showStatusMessage('✅ Todas las alertas cerradas', 'success');
     }
 
+    // Función inteligente para determinar si mostrar información de padres
+    function shouldShowParentsInfo(context, children) {
+      switch(context) {
+        case 'search':
+        case 'list':
+        case 'history':
+          return true; // Siempre mostrar en estos contextos
+          
+        case 'alert':
+          // En alertas, solo si hay nombres duplicados
+          const nameCount = {};
+          children.forEach(child => {
+            nameCount[child.name] = (nameCount[child.name] || 0) + 1;
+          });
+          return Object.values(nameCount).some(count => count > 1);
+          
+        case 'ranking':
+          // En ranking, solo si hay duplicados
+          const rankingNames = {};
+          children.forEach(child => {
+            rankingNames[child.name] = (rankingNames[child.name] || 0) + 1;
+          });
+          return Object.values(rankingNames).some(count => count > 1);
+          
+        default:
+          return false;
+      }
+    }
+
     // Función de prueba para verificar alertas
     function testAlerts() {
       console.log('🧪 Probando sistema de alertas...');
@@ -3066,18 +3095,28 @@
         let alertText;
         
         if (alertCount === 1) {
-          // Una sola alerta
+          // Una sola alerta - mostrar individualmente
           const { name, parents } = pendingTimeAlerts.values().next().value;
           alertText = `⏰ ${name}${parents ? ` (${parents})` : ''} terminó su tiempo de juego`;
-        } else if (alertCount <= 3) {
-          // 2-3 alertas: mostrar nombres con diferenciación clara
+        } else if (alertCount === 2) {
+          // Dos alertas - mostrar ambas individualmente
+          const childrenList = Array.from(pendingTimeAlerts.values()).map(child => {
+            return child.parents ? `${child.name} (${child.parents})` : child.name;
+          });
+          alertText = `⏰ Tiempo terminado para:\n${childrenList.join('\n')}`;
+        } else if (alertCount <= 5) {
+          // 3-5 alertas: mostrar lista consolidada
           const childrenList = Array.from(pendingTimeAlerts.values()).map(child => {
             return child.parents ? `${child.name} (${child.parents})` : child.name;
           });
           alertText = `⏰ Tiempo terminado para:\n${childrenList.join('\n')}`;
         } else {
-          // Más de 3: mostrar contador
-          alertText = `⏰ Tiempo terminado para ${alertCount} niños`;
+          // Más de 5: mostrar contador + algunos nombres
+          const childrenList = Array.from(pendingTimeAlerts.values()).slice(0, 3).map(child => {
+            return child.parents ? `${child.name} (${child.parents})` : child.name;
+          });
+          const remaining = alertCount - 3;
+          alertText = `⏰ Tiempo terminado para ${alertCount} niños:\n${childrenList.join('\n')}\n+ ${remaining} más (ver historial)`;
         }
         
         // Mostrar alerta consolidada
