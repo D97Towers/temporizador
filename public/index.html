@@ -540,6 +540,29 @@
       transform: translateY(-1px);
     }
 
+    .test-alerts-btn {
+      position: absolute;
+      top: 20px;
+      right: 280px;
+      background: rgba(0, 123, 255, 0.2);
+      color: #007bff;
+      border: 1px solid rgba(0, 123, 255, 0.4);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      opacity: 0.8;
+    }
+
+    .test-alerts-btn:hover {
+      background: rgba(0, 123, 255, 0.3);
+      border-color: rgba(0, 123, 255, 0.6);
+      opacity: 1;
+      transform: translateY(-1px);
+    }
+
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -1816,7 +1839,8 @@
       
       /* Ocultar botones en móvil */
       .dismiss-all-btn,
-      .test-data-btn {
+      .test-data-btn,
+      .test-alerts-btn {
         display: none !important;
       }
       
@@ -2000,6 +2024,9 @@
       </button>
       <button onclick="createTestData()" class="test-data-btn" title="Crear datos de prueba (SOLO DESARROLLO)">
         <i class="fas fa-flask"></i> Datos Prueba
+      </button>
+      <button onclick="testAlerts()" class="test-alerts-btn" title="Probar sistema de alertas">
+        <i class="fas fa-bell"></i> Probar Alertas
       </button>
     </div>
 
@@ -2867,6 +2894,34 @@
       showStatusMessage('✅ Todas las alertas cerradas', 'success');
     }
 
+    // Función de prueba para verificar alertas
+    function testAlerts() {
+      console.log('🧪 Probando sistema de alertas...');
+      
+      // Probar alerta simple
+      showStatusMessage('🧪 Prueba 1: Alerta simple', 'success');
+      
+      setTimeout(() => {
+        showStatusMessage('🧪 Prueba 2: Alerta warning con tiempo extendido', 'warning');
+      }, 2000);
+      
+      setTimeout(() => {
+        showStatusMessage('🧪 Prueba 3: Alerta con texto largo para verificar timeout', 'warning');
+      }, 5000);
+      
+      setTimeout(() => {
+        showConsolidatedTimeAlert('David', 'Carlos & María');
+      }, 8000);
+      
+      setTimeout(() => {
+        showConsolidatedTimeAlert('David', 'Luis & Ana');
+      }, 8500);
+      
+      setTimeout(() => {
+        showConsolidatedTimeAlert('Sofia', 'Pedro & Carmen');
+      }, 9000);
+    }
+
     // Función para ocultar botón de datos de prueba en producción
     function hideTestButtonIfProduction() {
       const testBtns = document.querySelectorAll('.test-data-btn');
@@ -2947,16 +3002,29 @@
         
         // Simular alertas de tiempo terminado para probar la diferenciación
         setTimeout(() => {
-          showConsolidatedTimeAlert('David', 'Carlos & María');
+          showStatusMessage('⏰ David (Carlos & María) terminó su tiempo de juego', 'warning');
         }, 1000);
         
         setTimeout(() => {
+          showStatusMessage('⏰ David (Luis & Ana) terminó su tiempo de juego', 'warning');
+        }, 3000);
+        
+        setTimeout(() => {
+          showStatusMessage('⏰ Sofia (Pedro & Carmen) terminó su tiempo de juego', 'warning');
+        }, 5000);
+        
+        // Probar consolidación después
+        setTimeout(() => {
+          showConsolidatedTimeAlert('David', 'Carlos & María');
+        }, 8000);
+        
+        setTimeout(() => {
           showConsolidatedTimeAlert('David', 'Luis & Ana');
-        }, 1500);
+        }, 8500);
         
         setTimeout(() => {
           showConsolidatedTimeAlert('Sofia', 'Pedro & Carmen');
-        }, 2000);
+        }, 9000);
         
       } catch (error) {
         console.error('Error creando datos de prueba:', error);
