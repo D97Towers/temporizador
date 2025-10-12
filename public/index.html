@@ -3562,13 +3562,16 @@
       
       // Información de padres para diferenciación
       let parentsInfo = '';
-      if (child && (child.fatherName || child.motherName)) {
-        if (child.fatherName && child.motherName) {
-          parentsInfo = '<br><small class="parents-info"><i class="fas fa-users"></i> ' + child.fatherName + ' & ' + child.motherName + '</small>';
-        } else if (child.fatherName) {
-          parentsInfo = '<br><small class="parents-info"><i class="fas fa-users"></i> Papá: ' + child.fatherName + '</small>';
-        } else if (child.motherName) {
-          parentsInfo = '<br><small class="parents-info"><i class="fas fa-users"></i> Mamá: ' + child.motherName + '</small>';
+      if (child) {
+        const fatherName = child.father_name || child.fatherName;
+        const motherName = child.mother_name || child.motherName;
+        
+        if (fatherName && motherName) {
+          parentsInfo = '<br><small class="parents-info"><i class="fas fa-users"></i> ' + fatherName + ' & ' + motherName + '</small>';
+        } else if (fatherName) {
+          parentsInfo = '<br><small class="parents-info"><i class="fas fa-users"></i> Papá: ' + fatherName + '</small>';
+        } else if (motherName) {
+          parentsInfo = '<br><small class="parents-info"><i class="fas fa-users"></i> Mamá: ' + motherName + '</small>';
         }
       }
       
