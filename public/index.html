@@ -3940,10 +3940,10 @@
           // Verificar que las fechas sean válidas
           if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
             console.warn('Invalid dates for session:', s.id, 'start:', startTimeValue, 'end:', endTimeValue);
-            durationText = `${s.duration || 0}min`;
+            durationText = 'FINALIZADO'; // Usuario presionó FIN
           } else {
             const duration = Math.round((endTime.getTime() - startTime.getTime()) / 60000);
-            durationText = `${Math.max(0, duration)}min`;
+            durationText = 'FINALIZADO'; // Usuario presionó FIN
           }
           
           statusClass = 'completed';
@@ -4001,7 +4001,7 @@
           </div>
           <div class="history-meta">
             <div class="history-duration ${durationClass}">
-              ${s.endTime || s.end ? 'TERMINADO' : durationText}
+              ${durationText}
             </div>
             <div class="history-time">
               ${dateStr} ${timeStr}
