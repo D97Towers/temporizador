@@ -43,6 +43,40 @@
       padding-right: 20px;
     }
 
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .header-text {
+      flex: 1;
+      text-align: center;
+    }
+
+    .logout-btn {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logout-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.5);
+      transform: translateY(-1px);
+    }
+
     .header h1 {
       font-size: 2.5rem;
       margin-bottom: 10px;
@@ -1709,6 +1743,20 @@
         text-align: center !important;
       }
 
+      .header-content {
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .header-text {
+        order: 1;
+      }
+
+      .logout-btn {
+        order: 2;
+        align-self: center;
+      }
+
       .header h1 {
         font-size: 1.5rem;
         margin-left: 0;
@@ -1947,8 +1995,15 @@
 
   <div class="main-content">
     <div class="header">
-      <h1><i class="fas fa-gamepad"></i> Temporizador de Juegos</h1>
-      <p>Controla el tiempo de juego de los niños de forma divertida</p>
+      <div class="header-content">
+        <div class="header-text">
+          <h1><i class="fas fa-gamepad"></i> Temporizador de Juegos</h1>
+          <p>Controla el tiempo de juego de los niños de forma divertida</p>
+        </div>
+        <button onclick="logout()" class="logout-btn" title="Cerrar sesión">
+          <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+        </button>
+      </div>
     </div>
 
     <!-- Dashboard Section -->
@@ -5226,6 +5281,35 @@
         setTimeout(recoverFromErrors, 2000);
       }
     });
+
+    // Función para cerrar sesión
+    async function logout() {
+      try {
+        console.log('🔒 Cerrando sesión...');
+        
+        // Llamar al endpoint de logout
+        const response = await fetch('/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          console.log('✅ Sesión cerrada exitosamente');
+          // Recargar la página para forzar el login
+          window.location.reload();
+        } else {
+          console.error('❌ Error al cerrar sesión:', response.status);
+          // Aún así recargar la página
+          window.location.reload();
+        }
+      } catch (error) {
+        console.error('❌ Error al cerrar sesión:', error);
+        // Aún así recargar la página
+        window.location.reload();
+      }
+    }
 
 </script>
 </body>
