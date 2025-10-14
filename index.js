@@ -121,7 +121,13 @@ app.post('/logout', (_req, res) => {
 });
 
 // Servir estáticos después del gate
-app.use(express.static('public'));
+// IMPORTANTE: Solo servir archivos estáticos DESPUÉS de la autenticación
+app.use('/public', express.static('public'));
+
+// Ruta específica para servir index.html (después de autenticación)
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // Control de concurrencia simple
 const writeLock = new Map();
