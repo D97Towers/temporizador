@@ -22,6 +22,15 @@ const ACCESS_COOKIE = 'ACCESS_TOKEN';
 const APP_PASSWORD = process.env.APP_ACCESS_PASSWORD || '';
 const APP_SECRET = process.env.APP_ACCESS_SECRET || 'temporary-secret-change-me';
 
+// Debug: Log environment variables at startup
+console.log('🚀 STARTUP DEBUG:', {
+  NODE_ENV: process.env.NODE_ENV,
+  APP_ACCESS_PASSWORD: process.env.APP_ACCESS_PASSWORD ? 'SET' : 'NOT SET',
+  APP_ACCESS_SECRET: process.env.APP_ACCESS_SECRET ? 'SET' : 'NOT SET',
+  APP_PASSWORD: APP_PASSWORD ? 'SET' : 'NOT SET',
+  APP_SECRET: APP_SECRET ? 'SET' : 'NOT SET'
+});
+
 function generateToken() {
   // Token estable por despliegue: HMAC(password)
   return crypto.createHmac('sha256', APP_SECRET).update(APP_PASSWORD).digest('hex');
