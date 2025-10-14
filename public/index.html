@@ -43,38 +43,32 @@
       padding-right: 20px;
     }
 
-    .header-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 20px;
+
+    /* Estilos para botones de logout en sidebar */
+    .logout-btn-sidebar {
+      background: rgba(255, 255, 255, 0.1) !important;
+      border: 1px solid rgba(255, 255, 255, 0.3) !important;
+      color: white !important;
+      margin-top: 20px !important;
+      border-radius: 8px !important;
     }
 
-    .header-text {
-      flex: 1;
-      text-align: center;
+    .logout-btn-sidebar:hover {
+      background: rgba(255, 255, 255, 0.2) !important;
+      border-color: rgba(255, 255, 255, 0.5) !important;
     }
 
-    .logout-btn {
-      background: rgba(255, 255, 255, 0.1);
-      color: white;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 8px;
-      padding: 10px 16px;
-      font-size: 14px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      backdrop-filter: blur(10px);
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .logout-btn-desktop {
+      background: rgba(255, 255, 255, 0.1) !important;
+      border: 1px solid rgba(255, 255, 255, 0.3) !important;
+      color: white !important;
+      margin-top: 20px !important;
+      border-radius: 8px !important;
     }
 
-    .logout-btn:hover {
-      background: rgba(255, 255, 255, 0.2);
-      border-color: rgba(255, 255, 255, 0.5);
-      transform: translateY(-1px);
+    .logout-btn-desktop:hover {
+      background: rgba(255, 255, 255, 0.2) !important;
+      border-color: rgba(255, 255, 255, 0.5) !important;
     }
 
     .header h1 {
@@ -1743,19 +1737,6 @@
         text-align: center !important;
       }
 
-      .header-content {
-        flex-direction: column;
-        gap: 15px;
-      }
-
-      .header-text {
-        order: 1;
-      }
-
-      .logout-btn {
-        order: 2;
-        align-self: center;
-      }
 
       .header h1 {
         font-size: 1.5rem;
@@ -1970,6 +1951,9 @@
       <button onclick="showSection('games')" class="nav-btn" id="nav-games">
         <i class="fas fa-gamepad"></i> Juegos <span class="shortcut-key">4</span>
       </button>
+      <button onclick="logout()" class="nav-btn logout-btn-sidebar" title="Cerrar sesión">
+        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+      </button>
     </div>
 
   <!-- Desktop Sidebar -->
@@ -1990,20 +1974,16 @@
       <button onclick="showSection('games')" class="desktop-nav-btn" id="nav-games">
         <i class="fas fa-gamepad"></i> Juegos
       </button>
+      <button onclick="logout()" class="desktop-nav-btn logout-btn-desktop" title="Cerrar sesión">
+        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+      </button>
     </nav>
   </div>
 
   <div class="main-content">
     <div class="header">
-      <div class="header-content">
-        <div class="header-text">
-          <h1><i class="fas fa-gamepad"></i> Temporizador de Juegos</h1>
-          <p>Controla el tiempo de juego de los niños de forma divertida</p>
-        </div>
-        <button onclick="logout()" class="logout-btn" title="Cerrar sesión">
-          <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-        </button>
-      </div>
+      <h1><i class="fas fa-gamepad"></i> Temporizador de Juegos</h1>
+      <p>Controla el tiempo de juego de los niños de forma divertida</p>
     </div>
 
     <!-- Dashboard Section -->
