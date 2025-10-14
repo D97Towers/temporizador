@@ -44,12 +44,48 @@
     }
 
 
+    /* Estilos para sidebar con footer separado */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .nav-buttons {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Desktop sidebar layout */
+    .desktop-nav-container {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 80px);
+    }
+
+    .desktop-nav {
+      flex: 1;
+    }
+
+    .desktop-sidebar-footer {
+      margin-top: auto;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
     /* Estilos para botones de logout en sidebar */
     .logout-btn-sidebar {
       background: rgba(255, 255, 255, 0.1) !important;
       border: 1px solid rgba(255, 255, 255, 0.3) !important;
       color: white !important;
-      margin-top: 20px !important;
+      margin-top: 0 !important;
       border-radius: 8px !important;
     }
 
@@ -62,7 +98,7 @@
       background: rgba(255, 255, 255, 0.1) !important;
       border: 1px solid rgba(255, 255, 255, 0.3) !important;
       color: white !important;
-      margin-top: 20px !important;
+      margin-top: 0 !important;
       border-radius: 8px !important;
     }
 
@@ -1939,21 +1975,25 @@
     <div class="sidebar-overlay" onclick="closeMobileMenu()"></div>
     
     <div class="sidebar" id="sidebar">
-      <button onclick="showSection('dashboard')" class="nav-btn" id="nav-dashboard">
-        <i class="fas fa-chart-bar"></i> Dashboard <span class="shortcut-key">1</span>
-      </button>
-      <button onclick="showSection('sessions')" class="nav-btn" id="nav-sessions">
-        <i class="fas fa-play-circle"></i> Sesiones <span class="shortcut-key">2</span>
-      </button>
-      <button onclick="showSection('children')" class="nav-btn" id="nav-children">
-        <i class="fas fa-child"></i> Niños <span class="shortcut-key">3</span>
-      </button>
-      <button onclick="showSection('games')" class="nav-btn" id="nav-games">
-        <i class="fas fa-gamepad"></i> Juegos <span class="shortcut-key">4</span>
-      </button>
-      <button onclick="logout()" class="nav-btn logout-btn-sidebar" title="Cerrar sesión">
-        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-      </button>
+      <div class="nav-buttons">
+        <button onclick="showSection('dashboard')" class="nav-btn" id="nav-dashboard">
+          <i class="fas fa-chart-bar"></i> Dashboard <span class="shortcut-key">1</span>
+        </button>
+        <button onclick="showSection('sessions')" class="nav-btn" id="nav-sessions">
+          <i class="fas fa-play-circle"></i> Sesiones <span class="shortcut-key">2</span>
+        </button>
+        <button onclick="showSection('children')" class="nav-btn" id="nav-children">
+          <i class="fas fa-child"></i> Niños <span class="shortcut-key">3</span>
+        </button>
+        <button onclick="showSection('games')" class="nav-btn" id="nav-games">
+          <i class="fas fa-gamepad"></i> Juegos <span class="shortcut-key">4</span>
+        </button>
+      </div>
+      <div class="sidebar-footer">
+        <button onclick="logout()" class="nav-btn logout-btn-sidebar" title="Cerrar sesión">
+          <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+        </button>
+      </div>
     </div>
 
   <!-- Desktop Sidebar -->
@@ -1961,23 +2001,27 @@
     <div class="sidebar-header">
       <h2><i class="fas fa-gamepad"></i> Temporizador</h2>
     </div>
-    <nav class="desktop-nav">
-      <button onclick="showSection('dashboard')" class="desktop-nav-btn" id="nav-dashboard">
-        <i class="fas fa-chart-bar"></i> Dashboard
-      </button>
-      <button onclick="showSection('sessions')" class="desktop-nav-btn" id="nav-sessions">
-        <i class="fas fa-play-circle"></i> Sesiones
-      </button>
-      <button onclick="showSection('children')" class="desktop-nav-btn" id="nav-children">
-        <i class="fas fa-child"></i> Niños
-      </button>
-      <button onclick="showSection('games')" class="desktop-nav-btn" id="nav-games">
-        <i class="fas fa-gamepad"></i> Juegos
-      </button>
-      <button onclick="logout()" class="desktop-nav-btn logout-btn-desktop" title="Cerrar sesión">
-        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-      </button>
-    </nav>
+    <div class="desktop-nav-container">
+      <nav class="desktop-nav">
+        <button onclick="showSection('dashboard')" class="desktop-nav-btn" id="nav-dashboard">
+          <i class="fas fa-chart-bar"></i> Dashboard
+        </button>
+        <button onclick="showSection('sessions')" class="desktop-nav-btn" id="nav-sessions">
+          <i class="fas fa-play-circle"></i> Sesiones
+        </button>
+        <button onclick="showSection('children')" class="desktop-nav-btn" id="nav-children">
+          <i class="fas fa-child"></i> Niños
+        </button>
+        <button onclick="showSection('games')" class="desktop-nav-btn" id="nav-games">
+          <i class="fas fa-gamepad"></i> Juegos
+        </button>
+      </nav>
+      <div class="desktop-sidebar-footer">
+        <button onclick="logout()" class="desktop-nav-btn logout-btn-desktop" title="Cerrar sesión">
+          <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+        </button>
+      </div>
+    </div>
   </div>
 
   <div class="main-content">
