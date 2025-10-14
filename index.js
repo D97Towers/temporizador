@@ -69,10 +69,13 @@ function authGate(req, res, next) {
     hasPassword: !!APP_PASSWORD
   });
   
+  // SIEMPRE forzar autenticación si hay password configurado
   if (!APP_PASSWORD) {
     console.log('❌ No password configured, skipping auth');
     return next(); // Desactivado si no hay password configurada
   }
+  
+  console.log('🔒 Auth gate active, checking token...');
 
   // Permitir rutas de login y recursos públicos del login
   if (isWhitelisted(req)) return next();
@@ -126,7 +129,20 @@ app.use('/public', express.static('public'));
 
 // Ruta específica para servir index.html (después de autenticación)
 app.get('/', (req, res) => {
+  console.log('🔒 Serving index.html after auth check');
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Interceptar TODAS las rutas para forzar autenticación
+app.get('*', (req, res) => {
+  console.log('🔒 Catch-all route intercepted:', req.path);
+  if (req.path === '/login.html' || req.path === '/public/login.html') {
+    return res.sendFile(path.join(__dirname, 'public', 'login.html'));
+  }
+  // Para cualquier otra ruta, redirigir al login
+  console.log('🔒 Redirecting to login for:', req.path);
+  res.setHeader('Cache-Control', 'no-store');
+  return res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
 // Control de concurrencia simple
