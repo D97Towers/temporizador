@@ -72,11 +72,14 @@ function authGate(req, res, next) {
   if (token && token === generateToken()) return next();
 
   // Si es API, responder 401; si es HTML, redirigir a login
-  const acceptsJSON = (req.headers.accept || '').includes('application/json') || req.url.startsWith('/api');
-  if (req.path && (req.path.startsWith('/children') || req.path.startsWith('/games') || req.path.startsWith('/sessions'))) {
+  const isAPIRequest = req.path && (req.path.startsWith('/children') || req.path.startsWith('/games') || req.path.startsWith('/sessions') || req.path.startsWith('/login') || req.path.startsWith('/logout'));
+  
+  if (isAPIRequest) {
+    console.log('🔒 API request blocked:', req.path);
     return res.status(401).json({ error: 'No autorizado' });
   }
 
+  console.log('🔒 Redirecting to login for:', req.path);
   res.setHeader('Cache-Control', 'no-store');
   return res.sendFile(path.join(__dirname, 'public', 'login.html'));
 }
