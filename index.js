@@ -53,7 +53,17 @@ function isWhitelisted(req) {
 }
 
 function authGate(req, res, next) {
-  if (!APP_PASSWORD) return next(); // Desactivado si no hay password configurada
+  console.log('🔍 AUTH DEBUG:', { 
+    APP_PASSWORD: APP_PASSWORD ? 'SET' : 'NOT SET',
+    APP_SECRET: APP_SECRET ? 'SET' : 'NOT SET',
+    url: req.url,
+    hasPassword: !!APP_PASSWORD
+  });
+  
+  if (!APP_PASSWORD) {
+    console.log('❌ No password configured, skipping auth');
+    return next(); // Desactivado si no hay password configurada
+  }
 
   // Permitir rutas de login y recursos públicos del login
   if (isWhitelisted(req)) return next();
