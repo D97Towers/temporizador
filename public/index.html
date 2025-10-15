@@ -3645,7 +3645,8 @@
 
     // Funciones de fetch ROBUSTAS con reintentos
     async function fetchWithRetry(url, options = {}, retries = 3) {
-      const timeoutMs = 10000; // 10 segundos timeout
+      // 🚀 OPTIMIZACIÓN: Reduce timeout para carga inicial más rápida
+      const timeoutMs = options.initialLoad ? 5000 : 8000; // 5s para carga inicial, 8s para el resto
       
       for (let i = 0; i < retries; i++) {
         try {
@@ -5127,6 +5128,53 @@
       }
     }
 
+    // 🚀 Funciones optimizadas para carga inicial más rápida
+    async function fetchChildrenOptimized() {
+      try {
+        childrenCache = []; // Limpiar cache
+        const timestamp = Date.now();
+        const res = await fetchWithRetry(api + '/children?t=' + timestamp, { initialLoad: true }, 2);
+        
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        
+        const children = await res.json();
+        childrenCache = children || [];
+        renderChildrenList(childrenCache);
+        console.log(`✅ Children loaded: ${childrenCache.length} items`);
+        return childrenCache;
+      } catch (error) {
+        console.error('Failed to load children:', error);
+        childrenCache = [];
+        renderChildrenList([]);
+        throw error;
+      }
+    }
+
+    async function fetchGamesOptimized() {
+      try {
+        gamesCache = []; // Limpiar cache
+        renderGamesList([]);
+        updateGameSelect([]);
+        
+        const res = await fetchWithRetry(api + '/games', { initialLoad: true }, 2);
+        
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        
+        const games = await res.json();
+        gamesCache = games || [];
+        renderGamesList(gamesCache);
+        updateGameSelect(gamesCache);
+        console.log(`✅ Games loaded: ${gamesCache.length} items`);
+        return gamesCache;
+      } catch (error) {
+        console.error('Failed to load games:', error);
+        gamesCache = [];
+        renderGamesList([]);
+        updateGameSelect([]);
+        throw error;
+      }
+    }
+
     async function initializeApp() {
       if (isInitialized) return;
       
@@ -5134,19 +5182,22 @@
         console.log('Initializing app...');
         console.log('API endpoint:', api);
         
-        // Test de conectividad primero
-        try {
-          const testResponse = await fetch(api + '/admin/status');
-          if (testResponse.ok) {
-            const status = await testResponse.json();
-            console.log('Server status:', status);
-            console.log('Server has', status.children, 'children,', status.games, 'games,', status.activeSessions, 'active sessions');
-          } else {
-            console.error('Server not responding:', testResponse.status);
-          }
-        } catch (error) {
-          console.error('Cannot connect to server:', error);
-        }
+        // 🚀 OPTIMIZACIÓN: Test de conectividad en paralelo con carga de datos
+        // No esperar por el test de conectividad, hacerlo en background
+        const connectivityPromise = fetch(api + '/admin/status')
+          .then(response => {
+            if (response.ok) {
+              return response.json().then(status => {
+                console.log('Server status:', status);
+                console.log('Server has', status.children, 'children,', status.games, 'games,', status.activeSessions, 'active sessions');
+              });
+            } else {
+              console.error('Server not responding:', response.status);
+            }
+          })
+          .catch(error => {
+            console.error('Cannot connect to server:', error);
+          });
         
         // SINCRONIZACIÓN COMPLETA - Limpiar todo y recargar
         console.log('Starting complete data synchronization...');
@@ -5156,61 +5207,50 @@
         gamesCache = [];
         activeSessionsData = [];
         
-        // Cargar datos secuencialmente para mejor debugging
-        try {
-          console.log('Loading children with force refresh...');
-          await fetchChildren(true); // Force refresh
-          
-          // Verificar si se cargaron todos los niños
-          console.log('Children loaded, checking cache...');
-          console.log('Current childrenCache length:', childrenCache.length);
-        } catch (error) {
-          console.error('Failed to load children, continuing...', error);
-        }
+        // 🚀 OPTIMIZACIÓN: Cargar datos en paralelo para mayor velocidad
+        console.log('Loading data in parallel for faster initialization...');
         
-        try {
-          console.log('Loading games with fresh data...');
-          await fetchGames(); // Ya limpia el cache internamente
-          
-          // Verificar consistencia de juegos
-          console.log('Games loaded, checking cache...');
-          console.log('Current gamesCache length:', gamesCache.length);
-        } catch (error) {
-          console.error('Failed to load games, continuing...', error);
-        }
+        // 🚀 Cargar datos esenciales en paralelo con timeouts optimizados
+        const essentialDataPromise = Promise.allSettled([
+          fetchChildrenOptimized(), // Versión optimizada para carga inicial
+          fetchGamesOptimized()    // Versión optimizada para carga inicial
+        ]);
         
-        // Migrar niños existentes si es necesario (DESHABILITADO)
-        try {
-          console.log('Migration disabled - endpoint does not exist');
-          // await migrateExistingChildren();
-        } catch (error) {
-          console.error('Failed to migrate children, continuing...', error);
-        }
+        // Cargar datos secundarios en paralelo mientras se cargan los esenciales
+        const secondaryDataPromise = Promise.allSettled([
+          fetchActiveSessions(),
+          fetchSessionHistory(),
+          fetchDashboardStats()
+        ]);
         
-        // Cargar sesiones activas
-        try {
-          console.log('Loading active sessions...');
-          await fetchActiveSessions();
-        } catch (error) {
-          console.error('Failed to load active sessions, continuing...', error);
-        }
+        // Esperar a que terminen los datos esenciales primero
+        const essentialResults = await essentialDataPromise;
+        essentialResults.forEach((result, index) => {
+          const dataType = index === 0 ? 'children' : 'games';
+          if (result.status === 'rejected') {
+            console.error(`Failed to load ${dataType}:`, result.reason);
+          } else {
+            console.log(`✅ ${dataType} loaded successfully`);
+          }
+        });
         
-        // Cargar historial de sesiones
-        try {
-          console.log('Loading session history...');
-          await fetchSessionHistory();
-        } catch (error) {
-          console.error('Failed to load session history, continuing...', error);
-        }
+        // Actualizar UI inmediatamente con datos esenciales
+        updateChildSelect(childrenCache);
+        updateGameSelect(gamesCache);
         
-        // Cargar estadísticas del dashboard
-        try {
-          console.log('Loading dashboard stats...');
-          await fetchDashboardStats();
-          updateDashboard();
-        } catch (error) {
-          console.error('Failed to load dashboard stats, continuing...', error);
-        }
+        // Esperar a que terminen los datos secundarios
+        const secondaryResults = await secondaryDataPromise;
+        secondaryResults.forEach((result, index) => {
+          const dataType = ['active sessions', 'session history', 'dashboard stats'][index];
+          if (result.status === 'rejected') {
+            console.error(`Failed to load ${dataType}:`, result.reason);
+          } else {
+            console.log(`✅ ${dataType} loaded successfully`);
+          }
+        });
+        
+        // Actualizar dashboard con todos los datos cargados
+        updateDashboard();
         
              // Solicitar permisos de notificación
              try {
@@ -5704,8 +5744,17 @@
     // Inicialización de la aplicación
     document.addEventListener('DOMContentLoaded', async () => {
       try {
+        // 🚀 Mostrar indicador de carga durante inicialización
+        showStatusMessage('⏳ Cargando aplicación...', 'info');
+        
+        const startTime = Date.now();
         await initializeApp();
+        const loadTime = Date.now() - startTime;
+        
         AppState.isInitialized = true;
+        
+        // Mostrar tiempo de carga para debugging (opcional)
+        console.log(`🚀 App loaded in ${loadTime}ms`);
         
         // Configurar event listener del botón
         const startBtn = document.getElementById('startBtn');
@@ -5716,6 +5765,14 @@
             handleStartSession();
           });
         }
+        
+        // Ocultar mensaje de carga después de un breve delay
+        setTimeout(() => {
+          const loadingMsg = document.getElementById('statusMessage');
+          if (loadingMsg && loadingMsg.textContent.includes('Cargando aplicación')) {
+            hideStatusMessage();
+          }
+        }, 1000);
         
       } catch (error) {
         console.error('Failed to initialize app:', error);
