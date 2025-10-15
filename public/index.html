@@ -3052,49 +3052,8 @@
         
         // Reproducir mensaje de voz (solo si está habilitado)
         if (voiceNotificationsEnabled) {
-          if (alertCount === 1) {
-            // Para una sola alerta, usar el nombre específico
-            const { name, parents } = pendingTimeAlerts.values().next().value;
-            speakChildName(name, parents);
-          } else if (alertCount === 2) {
-            // Para dos alertas, mencionar ambos nombres
-            const children = Array.from(pendingTimeAlerts.values());
-            const message = `${children[0].name} y ${children[1].name}, su tiempo de juego ha terminado`;
-            const utterance = new SpeechSynthesisUtterance(message);
-            utterance.lang = 'es-ES';
-            utterance.rate = 0.9;
-            utterance.volume = 0.8;
-            window.speechSynthesis.speak(utterance);
-          } else if (alertCount <= 5) {
-            // Para 3-5 alertas, mencionar todos los nombres
-            const children = Array.from(pendingTimeAlerts.values());
-            const names = children.map(child => {
-              if (child.parents) {
-                // Si hay información de padres, usarla para diferenciar
-                const parentName = child.parents.split(' & ')[0]; // Tomar el primer padre
-                return `${child.name} (${parentName})`;
-              }
-              return child.name;
-            });
-            
-            let message;
-            if (names.length === 3) {
-              message = `${names[0]}, ${names[1]} y ${names[2]}, su tiempo de juego ha terminado`;
-            } else if (names.length === 4) {
-              message = `${names[0]}, ${names[1]}, ${names[2]} y ${names[3]}, su tiempo de juego ha terminado`;
-            } else {
-              message = `${names[0]}, ${names[1]}, ${names[2]}, ${names[3]} y ${names[4]}, su tiempo de juego ha terminado`;
-            }
-            
-            const utterance = new SpeechSynthesisUtterance(message);
-            utterance.lang = 'es-ES';
-            utterance.rate = 0.8; // Más lento para claridad
-            utterance.volume = 0.9; // Más alto para múltiples nombres
-            window.speechSynthesis.speak(utterance);
-          } else {
-            // Para más de 5 niños: mensaje detallado y repetitivo
-            speakMultipleChildrenAlert(pendingTimeAlerts);
-          }
+          // TODOS los casos son repetitivos ahora
+          speakAlertWithRepetition(pendingTimeAlerts, alertCount);
         }
         
         // Limpiar lista de alertas pendientes
@@ -3209,9 +3168,9 @@
         showConsolidatedTimeAlert('Isabella', 'Eduardo & Mónica');
       }, 8800);
       
-      // Prueba 4: Más de 5 niños (repetitivo y detallado)
+      // Prueba 4: Más de 5 niños (repetitivo con formato padre-hijo)
       setTimeout(() => {
-        showStatusMessage('🧪 Prueba 4: 8 niños (repetitivo)', 'info');
+        showStatusMessage('🧪 Prueba 4: 8 niños (formato padre-hijo repetitivo)', 'info');
         showConsolidatedTimeAlert('David', 'Carlos & María'); // Mismo nombre que el siguiente
       }, 20000);
       
@@ -3244,7 +3203,92 @@
       }, 21400);
     }
 
-    // Función para alertas de múltiples niños (más de 5)
+    // Función principal para alertas con repetición (todos los casos)
+    function speakAlertWithRepetition(pendingAlerts, alertCount) {
+      const children = Array.from(pendingAlerts.values());
+      
+      // Crear mensajes diferenciando por padres
+      const parentChildMessages = children.map(child => {
+        if (child.parents) {
+          // Formato: "Papá Carlos, su hijo Juan terminó su tiempo de juego"
+          const parents = child.parents.split(' & ');
+          const fatherName = parents[0];
+          const motherName = parents[1];
+          
+          if (fatherName && motherName) {
+            return `Papá ${fatherName}, Mamá ${motherName}, su hijo ${child.name} terminó su tiempo de juego`;
+          } else if (fatherName) {
+            return `Papá ${fatherName}, su hijo ${child.name} terminó su tiempo de juego`;
+          } else if (motherName) {
+            return `Mamá ${motherName}, su hijo ${child.name} terminó su tiempo de juego`;
+          }
+        }
+        // Si no hay padres, usar formato simple
+        return `${child.name} terminó su tiempo de juego`;
+      });
+      
+      let fullMessage;
+      
+      if (alertCount === 1) {
+        fullMessage = `ATENCIÓN: ${parentChildMessages[0]}`;
+      } else if (alertCount === 2) {
+        fullMessage = `ATENCIÓN: ${parentChildMessages[0]} y ${parentChildMessages[1]}`;
+      } else if (alertCount <= 5) {
+        // Para 3-5 niños, usar formato de lista
+        if (alertCount === 3) {
+          fullMessage = `ATENCIÓN: ${parentChildMessages[0]}, ${parentChildMessages[1]} y ${parentChildMessages[2]}`;
+        } else if (alertCount === 4) {
+          fullMessage = `ATENCIÓN: ${parentChildMessages[0]}, ${parentChildMessages[1]}, ${parentChildMessages[2]} y ${parentChildMessages[3]}`;
+        } else {
+          fullMessage = `ATENCIÓN: ${parentChildMessages[0]}, ${parentChildMessages[1]}, ${parentChildMessages[2]}, ${parentChildMessages[3]} y ${parentChildMessages[4]}`;
+        }
+      } else {
+        // Para más de 5 niños, mensaje más estructurado
+        const allMessages = parentChildMessages.join('. ');
+        fullMessage = `ATENCIÓN: ${alertCount} niños han terminado su tiempo de juego. ${allMessages}. Por favor, padres, recojan a sus hijos inmediatamente`;
+      }
+      
+      // Repetir 3 veces para TODOS los casos
+      speakWithRepetition(fullMessage, alertCount);
+    }
+
+    // Función para repetir mensajes 3 veces
+    function speakWithRepetition(message, alertCount) {
+      // Ajustar velocidad según cantidad de niños
+      const rate = alertCount > 3 ? 0.7 : 0.8;
+      const volume = alertCount > 3 ? 1.0 : 0.9;
+      
+      // Primera repetición (inmediata)
+      setTimeout(() => {
+        const utterance1 = new SpeechSynthesisUtterance(message);
+        utterance1.lang = 'es-ES';
+        utterance1.rate = rate;
+        utterance1.volume = volume;
+        window.speechSynthesis.speak(utterance1);
+      }, 100);
+      
+      // Segunda repetición (después de 8 segundos)
+      setTimeout(() => {
+        const utterance2 = new SpeechSynthesisUtterance(message);
+        utterance2.lang = 'es-ES';
+        utterance2.rate = rate;
+        utterance2.volume = volume;
+        window.speechSynthesis.speak(utterance2);
+      }, 8000);
+      
+      // Tercera repetición (después de 16 segundos)
+      setTimeout(() => {
+        const utterance3 = new SpeechSynthesisUtterance(message);
+        utterance3.lang = 'es-ES';
+        utterance3.rate = rate;
+        utterance3.volume = volume;
+        window.speechSynthesis.speak(utterance3);
+      }, 16000);
+      
+      console.log(`🔊 Alerta repetitiva: ${alertCount} niño(s) - 3 repeticiones`);
+    }
+
+    // Función para alertas de múltiples niños (más de 5) - DEPRECATED
     function speakMultipleChildrenAlert(pendingAlerts) {
       const children = Array.from(pendingAlerts.values());
       
