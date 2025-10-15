@@ -454,6 +454,35 @@ app.delete('/games/:id', async (req, res) => {
 // ENDPOINTS DE PRUEBA
 // ============================================================================
 
+// 🚨 DIAGNÓSTICO URGENTE
+app.get('/api/urgent-debug', async (req, res) => {
+  try {
+    const children = await db.getAllChildren();
+    const games = await db.getAllGames();
+    const sessions = await db.getAllSessions();
+    
+    res.json({
+      status: 'OK',
+      auth_disabled: true,
+      database_working: true,
+      data: {
+        children_count: children.length,
+        games_count: games.length,
+        sessions_count: sessions.length,
+        sample_child: children[0] || null,
+        sample_game: games[0] || null
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'ERROR',
+      error: error.message,
+      stack: error.stack
+    });
+  }
+});
+
 // Endpoint de prueba simple
 app.get('/test', (req, res) => {
   res.json({
