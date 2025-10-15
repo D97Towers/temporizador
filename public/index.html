@@ -2648,6 +2648,34 @@
     let browserNotificationsEnabled = false; // Control de notificaciones del navegador
     let voicePermissionsGranted = false; // Estado de permisos de voz
 
+    // Función para detectar género por nombre (mejores prácticas)
+    function detectGenderByName(name) {
+      const maleNames = [
+        'david', 'carlos', 'luis', 'pedro', 'miguel', 'jorge', 'andrés', 'roberto', 'fernando', 'eduardo',
+        'juan', 'antonio', 'francisco', 'manuel', 'josé', 'rafael', 'daniel', 'alejandro', 'sergio', 'pablo',
+        'mario', 'ricardo', 'alberto', 'enrique', 'ramón', 'javier', 'diego', 'mateo', 'sebastián', 'adrián',
+        'nicolás', 'leonardo', 'emilio', 'arturo', 'gustavo', 'rodrigo', 'gerardo', 'hugo', 'oscar', 'rubén'
+      ];
+      
+      const femaleNames = [
+        'sofia', 'ana', 'maría', 'carmen', 'elena', 'rosa', 'patricia', 'cristina', 'mónica', 'laura',
+        'isabella', 'valentina', 'camila', 'valeria', 'natalia', 'andrea', 'paula', 'alejandra', 'carolina', 'daniela',
+        'fernanda', 'gabriela', 'samanta', 'vanessa', 'claudia', 'jessica', 'paola', 'monica', 'lucia', 'estefanía',
+        'jimena', 'regina', 'ximena', 'antonella', 'abigail', 'emilia', 'martina', 'emma', 'victoria', 'maya'
+      ];
+      
+      const normalizedName = name.toLowerCase().trim();
+      
+      if (maleNames.includes(normalizedName)) {
+        return 'male';
+      } else if (femaleNames.includes(normalizedName)) {
+        return 'female';
+      } else {
+        // Si no se puede determinar, usar genérico
+        return 'unknown';
+      }
+    }
+
     // ============================================================================
     // FUNCIONES DE SEGURIDAD CRÍTICAS PARA PRODUCCIÓN
     // ============================================================================
@@ -3282,20 +3310,24 @@
     function speakAlertWithRepetition(pendingAlerts, alertCount) {
       const children = Array.from(pendingAlerts.values());
       
-      // Crear mensajes diferenciando por padres
+      // Crear mensajes diferenciando por padres y género
       const parentChildMessages = children.map(child => {
+        // Detectar género del niño/niña
+        const gender = detectGenderByName(child.name);
+        const childRelationship = gender === 'female' ? 'hija' : (gender === 'male' ? 'hijo' : 'hijo/a');
+        
         if (child.parents) {
-          // Formato: "Papá Carlos, su hijo Juan terminó su tiempo de juego"
+          // Formato: "Papá Carlos, su hijo/hija Juan/Sofía terminó su tiempo de juego"
           const parents = child.parents.split(' & ');
           const fatherName = parents[0];
           const motherName = parents[1];
           
           if (fatherName && motherName) {
-            return `Papá ${fatherName}, Mamá ${motherName}, su hijo ${child.name} terminó su tiempo de juego`;
+            return `Papá ${fatherName}, Mamá ${motherName}, su ${childRelationship} ${child.name} terminó su tiempo de juego`;
           } else if (fatherName) {
-            return `Papá ${fatherName}, su hijo ${child.name} terminó su tiempo de juego`;
+            return `Papá ${fatherName}, su ${childRelationship} ${child.name} terminó su tiempo de juego`;
           } else if (motherName) {
-            return `Mamá ${motherName}, su hijo ${child.name} terminó su tiempo de juego`;
+            return `Mamá ${motherName}, su ${childRelationship} ${child.name} terminó su tiempo de juego`;
           }
         }
         // Si no hay padres, usar formato simple
@@ -3376,23 +3408,23 @@
         window.speechSynthesis.speak(utterance1);
       }, 100);
       
-      // Segunda repetición (después de 8 segundos)
+      // Segunda repetición (después de 15 segundos - más razonable)
       setTimeout(() => {
         const utterance2 = new SpeechSynthesisUtterance(message);
         utterance2.lang = 'es-ES';
         utterance2.rate = rate;
         utterance2.volume = volume;
         window.speechSynthesis.speak(utterance2);
-      }, 8000);
+      }, 15000);
       
-      // Tercera repetición (después de 16 segundos)
+      // Tercera repetición (después de 30 segundos - más razonable)
       setTimeout(() => {
         const utterance3 = new SpeechSynthesisUtterance(message);
         utterance3.lang = 'es-ES';
         utterance3.rate = rate;
         utterance3.volume = volume;
         window.speechSynthesis.speak(utterance3);
-      }, 16000);
+      }, 30000);
       
       console.log(`🔊 Alerta repetitiva: ${alertCount} niño(s) - 3 repeticiones`);
     }
