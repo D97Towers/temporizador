@@ -2815,30 +2815,40 @@
       const msg = document.getElementById('statusMessage');
       
       // Limpiar timeout si existe
-      if (msg.timeoutId) {
+      if (msg && msg.timeoutId) {
         clearTimeout(msg.timeoutId);
         msg.timeoutId = null;
       }
       
-      // SOLUCIÓN DEFINITIVA: Remover completamente del DOM
-      if (msg && msg.parentNode) {
-        msg.parentNode.removeChild(msg);
-        
-        // Recrear el elemento limpio
-        const newMsg = document.createElement('div');
-        newMsg.id = 'statusMessage';
-        newMsg.className = 'status-message';
-        newMsg.innerHTML = `
-          <span class="status-text"></span>
-          <button class="status-close" onclick="hideStatusMessage()" title="Cerrar">
-            <i class="fas fa-times"></i>
-          </button>
-        `;
-        newMsg.style.display = 'none';
-        
-        // Insertar el nuevo elemento en el mismo lugar
-        document.body.appendChild(newMsg);
+      // Si no existe el elemento, no hacer nada
+      if (!msg || !msg.parentNode) {
+        return;
       }
+      
+      // ANIMACIÓN: Primero ocultar con transición suave
+      msg.classList.remove('show');
+      
+      // Después de la animación, remover completamente del DOM
+      setTimeout(() => {
+        if (msg && msg.parentNode) {
+          msg.parentNode.removeChild(msg);
+          
+          // Recrear el elemento limpio
+          const newMsg = document.createElement('div');
+          newMsg.id = 'statusMessage';
+          newMsg.className = 'status-message';
+          newMsg.innerHTML = `
+            <span class="status-text"></span>
+            <button class="status-close" onclick="hideStatusMessage()" title="Cerrar">
+              <i class="fas fa-times"></i>
+            </button>
+          `;
+          newMsg.style.display = 'none';
+          
+          // Insertar el nuevo elemento en el mismo lugar
+          document.body.appendChild(newMsg);
+        }
+      }, 300); // Esperar a que termine la animación CSS
     }
 
     function showLoading(buttonId, show = true) {
