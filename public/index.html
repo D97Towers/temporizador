@@ -2759,6 +2759,7 @@
         msg.textContent = text; // Fallback para compatibilidad
       }
       msg.className = `status-message ${type} show`;
+      msg.style.display = 'flex'; // Asegurar que se muestre
       
       // Marcar sesión como alertada si es una alerta de sesión
       if (sessionId) {
@@ -2828,6 +2829,7 @@
           msg.textContent = '';
         }
         msg.className = 'status-message';
+        msg.style.display = 'none'; // Ocultar completamente el elemento
       }, 300); // Esperar a que termine la transición CSS
     }
 
