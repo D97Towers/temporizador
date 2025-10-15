@@ -604,6 +604,16 @@
       border-color: rgba(34, 197, 94, 0.6) !important;
     }
 
+    .init-permissions-btn {
+      background: rgba(59, 130, 246, 0.2) !important;
+      border-color: rgba(59, 130, 246, 0.4) !important;
+    }
+
+    .init-permissions-btn:hover {
+      background: rgba(59, 130, 246, 0.3) !important;
+      border-color: rgba(59, 130, 246, 0.6) !important;
+    }
+
 
 
     .grid {
@@ -2058,6 +2068,10 @@
           <i class="fas fa-volume-up"></i>
           <span id="voiceStatus">Voz Activada</span>
         </button>
+        <button onclick="initializeNotificationPermissions()" class="voice-toggle-btn init-permissions-btn" title="Inicializar permisos de notificaciones">
+          <i class="fas fa-cog"></i>
+          <span>Configurar</span>
+        </button>
         <button onclick="testVoiceNotifications()" class="voice-toggle-btn test-voice-btn" title="Probar notificaciones de voz">
           <i class="fas fa-play"></i>
           <span>Probar Voz</span>
@@ -2631,6 +2645,8 @@
     let currentExtendSession = null;
     let currentEditChild = null; // Para almacenar el ID del niño que se está editando
     let voiceNotificationsEnabled = true; // Control de notificaciones de voz
+    let browserNotificationsEnabled = false; // Control de notificaciones del navegador
+    let voicePermissionsGranted = false; // Estado de permisos de voz
 
     // ============================================================================
     // FUNCIONES DE SEGURIDAD CRÍTICAS PARA PRODUCCIÓN
@@ -3050,10 +3066,15 @@
         // Mostrar alerta consolidada
         showStatusMessage(alertText, 'warning');
         
-        // Reproducir mensaje de voz (solo si está habilitado)
+        // Sistema de notificaciones mejorado (mejores prácticas)
         if (voiceNotificationsEnabled) {
           // TODOS los casos son repetitivos ahora
           speakAlertWithRepetition(pendingTimeAlerts, alertCount);
+        }
+        
+        // Notificaciones del navegador (si están habilitadas)
+        if (browserNotificationsEnabled) {
+          showBrowserNotification('⏰ Tiempo de Juego Terminado', alertText);
         }
         
         // Limpiar lista de alertas pendientes
@@ -3105,8 +3126,62 @@
       }
     }
 
-    // Control de notificaciones de voz
+    // Sistema de inicialización de permisos (mejores prácticas)
+    async function initializeNotificationPermissions() {
+      try {
+        // Verificar soporte de APIs
+        const hasSpeechSynthesis = 'speechSynthesis' in window;
+        const hasNotifications = 'Notification' in window;
+        
+        if (!hasSpeechSynthesis) {
+          console.warn('⚠️ Speech Synthesis no soportado en este navegador');
+          voiceNotificationsEnabled = false;
+          return;
+        }
+        
+        if (!hasNotifications) {
+          console.warn('⚠️ Notifications API no soportado en este navegador');
+          return;
+        }
+        
+        // Solicitar permisos de notificaciones del navegador
+        if (Notification.permission === 'default') {
+          const permission = await Notification.requestPermission();
+          browserNotificationsEnabled = permission === 'granted';
+          
+          if (browserNotificationsEnabled) {
+            showStatusMessage('🔔 Notificaciones del navegador activadas', 'success');
+          } else {
+            showStatusMessage('🔕 Notificaciones del navegador denegadas', 'warning');
+          }
+        } else {
+          browserNotificationsEnabled = Notification.permission === 'granted';
+        }
+        
+        // Verificar voces disponibles
+        const voices = window.speechSynthesis.getVoices();
+        const spanishVoices = voices.filter(voice => voice.lang.startsWith('es'));
+        
+        if (spanishVoices.length === 0) {
+          console.warn('⚠️ No se encontraron voces en español');
+          showStatusMessage('⚠️ No hay voces en español disponibles', 'warning');
+        }
+        
+        voicePermissionsGranted = true;
+        
+      } catch (error) {
+        console.error('Error inicializando permisos:', error);
+        showStatusMessage('❌ Error configurando notificaciones', 'error');
+      }
+    }
+
+    // Control de notificaciones de voz (mejorado)
     function toggleVoiceNotifications() {
+      if (!voicePermissionsGranted) {
+        showStatusMessage('⚠️ Primero inicialice los permisos de notificaciones', 'warning');
+        return;
+      }
+      
       voiceNotificationsEnabled = !voiceNotificationsEnabled;
       
       const voiceToggle = document.getElementById('voiceToggle');
@@ -3250,6 +3325,40 @@
       
       // Repetir 3 veces para TODOS los casos
       speakWithRepetition(fullMessage, alertCount);
+    }
+
+    // Función para notificaciones del navegador (mejores prácticas)
+    function showBrowserNotification(title, body) {
+      if (!browserNotificationsEnabled || !('Notification' in window)) {
+        return;
+      }
+      
+      try {
+        const notification = new Notification(title, {
+          body: body,
+          icon: '/favicon.ico', // Icono de la aplicación
+          badge: '/favicon.ico',
+          tag: 'time-alert', // Para evitar duplicados
+          requireInteraction: false, // Se cierra automáticamente
+          silent: false // Permitir sonido del sistema
+        });
+        
+        // Auto-cerrar después de 10 segundos
+        setTimeout(() => {
+          notification.close();
+        }, 10000);
+        
+        // Manejar clic en la notificación
+        notification.onclick = () => {
+          window.focus();
+          notification.close();
+        };
+        
+        console.log('🔔 Notificación del navegador enviada');
+        
+      } catch (error) {
+        console.error('Error mostrando notificación del navegador:', error);
+      }
     }
 
     // Función para repetir mensajes 3 veces
