@@ -3321,6 +3321,11 @@
 
     // Función principal para alertas con repetición (todos los casos)
     function speakAlertWithRepetition(pendingAlerts, alertCount) {
+      // 🎤 CRÍTICO: Activar sistema de voz para asegurar funcionamiento en producción
+      activateVoiceSystemOnUserInteraction();
+      
+      console.log('🔊 speakAlertWithRepetition llamado con:', alertCount, 'niños');
+      
       const children = Array.from(pendingAlerts.values());
       
       // Crear mensajes diferenciando por padres y género
@@ -3408,9 +3413,16 @@
 
     // Función para repetir mensajes 3 veces (mejorada para producción)
     function speakWithRepetition(message, alertCount) {
+      console.log(`🔊 speakWithRepetition llamado con mensaje:`, message);
+      console.log(`🔊 Estado del sistema:`, { 
+        voiceNotificationsEnabled, 
+        voiceSystemActivated, 
+        speechSynthesisAvailable: 'speechSynthesis' in window 
+      });
+      
       // Verificar que el sistema de voz esté disponible y habilitado
       if (!voiceNotificationsEnabled || !('speechSynthesis' in window)) {
-        console.warn('⚠️ Sistema de voz no disponible');
+        console.warn('⚠️ Sistema de voz no disponible:', { voiceNotificationsEnabled, speechSynthesis: 'speechSynthesis' in window });
         return;
       }
       
@@ -4451,6 +4463,28 @@
           timerSpan.classList.add('alerted');
           const session = activeSessionsData.find(s => s.id === sessionId);
           const child = childrenCache.find(c => c.id === session.childId);
+          
+          // 🔊 CRÍTICO: Activar notificaciones de voz cuando se acaba el tiempo
+          if (child) {
+            let childName = child.displayName || child.name;
+            let parentsInfo = '';
+            
+            // Construir información de padres de manera compatible con la función
+            const fatherName = child.father_name || child.fatherName;
+            const motherName = child.mother_name || child.motherName;
+            
+            if (fatherName && motherName) {
+              parentsInfo = `${fatherName} & ${motherName}`;
+            } else if (fatherName) {
+              parentsInfo = `Papá: ${fatherName}`;
+            } else if (motherName) {
+              parentsInfo = `Mamá: ${motherName}`;
+            }
+            
+            console.log('🔊 Disparando alerta de voz para:', childName, parentsInfo);
+            showConsolidatedTimeAlert(childName, parentsInfo);
+          }
+          
           showCustomModal(`¡Se acabó el tiempo para ${child ? child.name : 'este niño'}!`);
           endSession(sessionId);
         }
@@ -5518,18 +5552,23 @@
     let voiceSystemActivated = false;
     
     function activateVoiceSystemOnUserInteraction() {
-      if (voiceSystemActivated || !voiceNotificationsEnabled) return;
+      if (voiceSystemActivated) return;
       
       console.log('🎤 Activando sistema de voz por interacción del usuario...');
+      console.log('🔊 Estado actual:', { voiceSystemActivated, voiceNotificationsEnabled });
       
-      // Hacer un test rápido para activar el sistema
-      const testUtterance = new SpeechSynthesisUtterance('');
-      testUtterance.volume = 0.01;
-      window.speechSynthesis.speak(testUtterance);
-      window.speechSynthesis.cancel();
-      
-      voiceSystemActivated = true;
-      console.log('✅ Sistema de voz activado para producción');
+      // Hacer un test rápido para activar el sistema - SIEMPRE en producción
+      try {
+        const testUtterance = new SpeechSynthesisUtterance('');
+        testUtterance.volume = 0.01;
+        window.speechSynthesis.speak(testUtterance);
+        window.speechSynthesis.cancel();
+        
+        voiceSystemActivated = true;
+        console.log('✅ Sistema de voz activado para producción');
+      } catch (error) {
+        console.error('❌ Error activando sistema de voz:', error);
+      }
     }
     
     // Activar en cualquier interacción del usuario (crítico para políticas de autoplay)
