@@ -2,16 +2,148 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const crypto = require('crypto');
 
 // Importar base de datos Supabase
 const db = require('./supabase-database');
 
 const app = express();
 
-// Middleware
+// Middleware base
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+
+// ============================================================================
+// Acceso protegido opcional por contraseña (sin costo)
+// - Activado solo si APP_ACCESS_PASSWORD está definido
+// - Usa cookie HttpOnly firmada para autorizar
+// ============================================================================
+const ACCESS_COOKIE = 'ACCESS_TOKEN';
+const APP_PASSWORD = process.env.APP_ACCESS_PASSWORD || '';
+const APP_SECRET = process.env.APP_ACCESS_SECRET || 'temporary-secret-change-me';
+
+// Debug: Log environment variables at startup
+console.log('🚀 STARTUP DEBUG:', {
+  NODE_ENV: process.env.NODE_ENV,
+  APP_ACCESS_PASSWORD: process.env.APP_ACCESS_PASSWORD ? 'SET' : 'NOT SET',
+  APP_ACCESS_SECRET: process.env.APP_ACCESS_SECRET ? 'SET' : 'NOT SET',
+  APP_PASSWORD: APP_PASSWORD ? 'SET' : 'NOT SET',
+  APP_SECRET: APP_SECRET ? 'SET' : 'NOT SET'
+});
+
+function generateToken() {
+  // Token estable por despliegue: HMAC(password)
+  return crypto.createHmac('sha256', APP_SECRET).update(APP_PASSWORD).digest('hex');
+}
+
+function parseCookies(req) {
+  const header = req.headers.cookie || '';
+  return header.split(';').reduce((acc, part) => {
+    const [k, v] = part.split('=').map(s => (s || '').trim());
+    if (k) acc[k] = decodeURIComponent(v || '');
+    return acc;
+  }, {});
+}
+
+function isWhitelisted(req) {
+  const url = req.url || '';
+  // Endpoints públicos mínimos para poder mostrar login y recursos estáticos del login
+  return (
+    url.startsWith('/login') ||
+    url.startsWith('/favicon') ||
+    url.startsWith('/assets/') ||
+    url.startsWith('/public/login') ||
+    url.endsWith('.css') ||
+    url.endsWith('.js') ||
+    url.endsWith('.png') ||
+    url.endsWith('.jpg') ||
+    url.endsWith('.svg')
+  );
+}
+
+function authGate(req, res, next) {
+  console.log('🔍 AUTH DEBUG:', { 
+    APP_PASSWORD: APP_PASSWORD ? 'SET' : 'NOT SET',
+    APP_SECRET: APP_SECRET ? 'SET' : 'NOT SET',
+    url: req.url,
+    hasPassword: !!APP_PASSWORD
+  });
+  
+  // SIEMPRE forzar autenticación si hay password configurado
+  if (!APP_PASSWORD) {
+    console.log('❌ No password configured, skipping auth');
+    return next(); // Desactivado si no hay password configurada
+  }
+  
+  console.log('🔒 Auth gate active, checking token...');
+
+  // Permitir rutas de login y recursos públicos del login
+  if (isWhitelisted(req)) return next();
+
+  const token = parseCookies(req)[ACCESS_COOKIE];
+  if (token && token === generateToken()) return next();
+
+  // Si es API, responder 401; si es HTML, redirigir a login
+  const isAPIRequest = req.path && (req.path.startsWith('/children') || req.path.startsWith('/games') || req.path.startsWith('/sessions') || req.path.startsWith('/login') || req.path.startsWith('/logout'));
+  
+  if (isAPIRequest) {
+    console.log('🔒 API request blocked:', req.path);
+    return res.status(401).json({ error: 'No autorizado' });
+  }
+
+  console.log('🔒 Redirecting to login for:', req.path);
+  res.setHeader('Cache-Control', 'no-store');
+  return res.sendFile(path.join(__dirname, 'public', 'login.html'));
+}
+
+app.use(authGate);
+
+// Rutas de login/logout
+app.post('/login', (req, res) => {
+  if (!APP_PASSWORD) return res.status(404).json({ error: 'Login deshabilitado' });
+  const { password } = req.body || {};
+  if (!password || password !== APP_PASSWORD) {
+    return res.status(401).json({ error: 'Contraseña inválida' });
+  }
+  res.cookie?.(ACCESS_COOKIE, generateToken(), {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: true,
+    maxAge: 1000 * 60 * 60 * 12 // 12h
+  });
+  // fallback si no existe res.cookie (sin cookie-parser): set-cookie manual
+  if (!res.getHeader('Set-Cookie')) {
+    res.setHeader('Set-Cookie', `${ACCESS_COOKIE}=${generateToken()}; HttpOnly; SameSite=Lax; Max-Age=${60 * 60 * 12}; Path=/; Secure`);
+  }
+  return res.json({ ok: true });
+});
+
+app.post('/logout', (_req, res) => {
+  res.setHeader('Set-Cookie', `${ACCESS_COOKIE}=; HttpOnly; SameSite=Lax; Max-Age=0; Path=/; Secure`);
+  res.status(200).json({ ok: true });
+});
+
+// Servir estáticos después del gate
+// IMPORTANTE: Solo servir archivos estáticos DESPUÉS de la autenticación
+app.use('/public', express.static('public'));
+
+// Ruta específica para servir index.html (después de autenticación)
+app.get('/', (req, res) => {
+  console.log('🔒 Serving index.html after auth check');
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Interceptar TODAS las rutas para forzar autenticación
+app.get('*', (req, res) => {
+  console.log('🔒 Catch-all route intercepted:', req.path);
+  if (req.path === '/login.html' || req.path === '/public/login.html') {
+    return res.sendFile(path.join(__dirname, 'public', 'login.html'));
+  }
+  // Para cualquier otra ruta, redirigir al login
+  console.log('🔒 Redirecting to login for:', req.path);
+  res.setHeader('Cache-Control', 'no-store');
+  return res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
 
 // Control de concurrencia simple
 const writeLock = new Map();

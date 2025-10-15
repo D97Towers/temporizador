@@ -43,6 +43,68 @@
       padding-right: 20px;
     }
 
+
+    /* Estilos para sidebar con footer separado */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .nav-buttons {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 20px;
+    }
+
+    /* Desktop sidebar layout */
+    .desktop-nav-container {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 80px);
+    }
+
+    .desktop-nav {
+      flex: 1;
+    }
+
+    .desktop-sidebar-footer {
+      margin-top: auto;
+      padding-top: 20px;
+    }
+
+    /* Estilos para botones de logout en sidebar */
+    .logout-btn-sidebar {
+      background: transparent !important;
+      border: none !important;
+      color: white !important;
+      margin-top: 0 !important;
+      border-radius: 8px !important;
+    }
+
+    .logout-btn-sidebar:hover {
+      background: rgba(255, 255, 255, 0.1) !important;
+      border: none !important;
+    }
+
+    .logout-btn-desktop {
+      background: transparent !important;
+      border: none !important;
+      color: white !important;
+      margin-top: 0 !important;
+      border-radius: 8px !important;
+    }
+
+    .logout-btn-desktop:hover {
+      background: rgba(255, 255, 255, 0.1) !important;
+      border: none !important;
+    }
+
     .header h1 {
       font-size: 2.5rem;
       margin-bottom: 10px;
@@ -147,8 +209,8 @@
            
         /* Ocultar botón X en móvil */
         .close-button {
-          display: none !important;
-        }
+             display: none !important;
+           }
            
            .header {
              padding-left: 20px !important;
@@ -217,7 +279,7 @@
            height: 100vh;
            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
            padding: 80px 20px 20px;
-           z-index: 1002;
+           z-index: 1000;
            transition: left 0.3s ease;
            box-shadow: 2px 0 10px rgba(0,0,0,0.3);
          }
@@ -240,7 +302,7 @@
            width: 100%;
            height: 100%;
            background: rgba(0, 0, 0, 0.5);
-           z-index: 1000;
+           z-index: 999;
            opacity: 0;
            visibility: hidden;
            transition: all 0.3s ease;
@@ -492,6 +554,55 @@
     .header p {
       font-size: 1.1rem;
       opacity: 0.9;
+    }
+
+    /* Control de notificaciones de voz */
+    .voice-control {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .voice-toggle-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      backdrop-filter: blur(10px);
+    }
+
+    .voice-toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .voice-toggle-btn.muted {
+      background: rgba(255, 0, 0, 0.2);
+      border-color: rgba(255, 0, 0, 0.4);
+    }
+
+    .voice-toggle-btn.muted i {
+      color: #ff6b6b;
+    }
+
+
+    .init-permissions-btn {
+      background: rgba(59, 130, 246, 0.2) !important;
+      border-color: rgba(59, 130, 246, 0.4) !important;
+    }
+
+    .init-permissions-btn:hover {
+      background: rgba(59, 130, 246, 0.3) !important;
+      border-color: rgba(59, 130, 246, 0.6) !important;
     }
 
 
@@ -1159,34 +1270,11 @@
       color: #999;
     }
 
-    /* Botón para expandir/colapsar historial */
+    /* Botón para expandir/colapsar historial - OCULTO */
     .history-toggle {
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-size: 12px;
-      cursor: pointer;
-      margin: 10px 0;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      display: none !important;
     }
 
-    .history-toggle:hover {
-      background: linear-gradient(135deg, #5a6fd8, #6a4190);
-      transform: translateY(-1px);
-    }
-
-    .history-toggle i {
-      transition: transform 0.3s ease;
-    }
-
-    .history-toggle.expanded i {
-      transform: rotate(180deg);
-    }
 
     .history-hidden {
       display: none;
@@ -1245,10 +1333,6 @@
         font-size: 11px;
       }
 
-      .history-toggle {
-        padding: 6px 12px;
-        font-size: 11px;
-      }
     }
 
     .timer {
@@ -1289,7 +1373,7 @@
 
     .status-message {
       position: fixed;
-      top: 80px;
+      top: 120px;
       right: 20px;
       padding: 12px 16px;
       border-radius: 8px;
@@ -1297,7 +1381,9 @@
       font-weight: 500;
       font-size: 14px;
       line-height: 1.4;
-      z-index: 1000;
+      z-index: 1010;
+      max-width: 350px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       transform: translateX(400px);
       transition: transform 0.3s ease;
       display: flex;
@@ -1679,7 +1765,7 @@
         position: fixed !important;
         top: 20px !important;
         left: 20px !important;
-        z-index: 9999 !important;
+        z-index: 1001 !important;
         transform: none !important;
         transition: none !important;
       }
@@ -1708,6 +1794,7 @@
         padding-right: 20px !important;
         text-align: center !important;
       }
+
 
       .header h1 {
         font-size: 1.5rem;
@@ -1808,9 +1895,11 @@
       }
 
       .status-message {
+        top: 100px;
         right: 10px;
         left: 10px;
         transform: translateY(-100px);
+        max-width: none;
       }
 
       .status-message.show {
@@ -1897,7 +1986,7 @@
 </head>
 <body>
     <!-- Menú móvil - Posicionado fuera del flujo normal -->
-    <div style="position: fixed; top: 20px; left: 20px; z-index: 9999;">
+    <div style="position: fixed; top: 20px; left: 20px; z-index: 1001;">
       <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
         <div class="hamburger-lines">
           <span></span>
@@ -1910,6 +1999,7 @@
     <div class="sidebar-overlay" onclick="closeMobileMenu()"></div>
     
     <div class="sidebar" id="sidebar">
+      <div class="nav-buttons">
       <button onclick="showSection('dashboard')" class="nav-btn" id="nav-dashboard">
         <i class="fas fa-chart-bar"></i> Dashboard <span class="shortcut-key">1</span>
       </button>
@@ -1922,6 +2012,12 @@
       <button onclick="showSection('games')" class="nav-btn" id="nav-games">
         <i class="fas fa-gamepad"></i> Juegos <span class="shortcut-key">4</span>
       </button>
+      </div>
+      <div class="sidebar-footer">
+        <button onclick="logout()" class="nav-btn logout-btn-sidebar" title="Cerrar sesión">
+          <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+        </button>
+      </div>
     </div>
 
   <!-- Desktop Sidebar -->
@@ -1929,6 +2025,7 @@
     <div class="sidebar-header">
       <h2><i class="fas fa-gamepad"></i> Temporizador</h2>
     </div>
+    <div class="desktop-nav-container">
     <nav class="desktop-nav">
       <button onclick="showSection('dashboard')" class="desktop-nav-btn" id="nav-dashboard">
         <i class="fas fa-chart-bar"></i> Dashboard
@@ -1943,12 +2040,30 @@
         <i class="fas fa-gamepad"></i> Juegos
       </button>
     </nav>
+      <div class="desktop-sidebar-footer">
+        <button onclick="logout()" class="desktop-nav-btn logout-btn-desktop" title="Cerrar sesión">
+          <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+        </button>
+      </div>
+    </div>
   </div>
 
   <div class="main-content">
     <div class="header">
       <h1><i class="fas fa-gamepad"></i> Temporizador de Juegos</h1>
       <p>Controla el tiempo de juego de los niños de forma divertida</p>
+      
+      <!-- Control de notificaciones de voz -->
+      <div class="voice-control">
+        <button id="voiceToggle" onclick="toggleVoiceNotifications()" class="voice-toggle-btn" title="Activar/Desactivar notificaciones de voz">
+          <i class="fas fa-volume-up"></i>
+          <span id="voiceStatus">Voz Activada</span>
+        </button>
+        <button onclick="initializeNotificationPermissions()" class="voice-toggle-btn init-permissions-btn" title="Inicializar permisos de notificaciones">
+          <i class="fas fa-cog"></i>
+          <span>Configurar</span>
+        </button>
+      </div>
     </div>
 
     <!-- Dashboard Section -->
@@ -2516,6 +2631,37 @@
     let timerIntervals = new Map();
     let currentExtendSession = null;
     let currentEditChild = null; // Para almacenar el ID del niño que se está editando
+    let voiceNotificationsEnabled = true; // Control de notificaciones de voz
+    let browserNotificationsEnabled = false; // Control de notificaciones del navegador
+    let voicePermissionsGranted = false; // Estado de permisos de voz
+
+    // Función para detectar género por nombre (mejores prácticas)
+    function detectGenderByName(name) {
+      const maleNames = [
+        'david', 'carlos', 'luis', 'pedro', 'miguel', 'jorge', 'andrés', 'roberto', 'fernando', 'eduardo',
+        'juan', 'antonio', 'francisco', 'manuel', 'josé', 'rafael', 'daniel', 'alejandro', 'sergio', 'pablo',
+        'mario', 'ricardo', 'alberto', 'enrique', 'ramón', 'javier', 'diego', 'mateo', 'sebastián', 'adrián',
+        'nicolás', 'leonardo', 'emilio', 'arturo', 'gustavo', 'rodrigo', 'gerardo', 'hugo', 'oscar', 'rubén'
+      ];
+      
+      const femaleNames = [
+        'sofia', 'ana', 'maría', 'carmen', 'elena', 'rosa', 'patricia', 'cristina', 'mónica', 'laura',
+        'isabella', 'valentina', 'camila', 'valeria', 'natalia', 'andrea', 'paula', 'alejandra', 'carolina', 'daniela',
+        'fernanda', 'gabriela', 'samanta', 'vanessa', 'claudia', 'jessica', 'paola', 'monica', 'lucia', 'estefanía',
+        'jimena', 'regina', 'ximena', 'antonella', 'abigail', 'emilia', 'martina', 'emma', 'victoria', 'maya'
+      ];
+      
+      const normalizedName = name.toLowerCase().trim();
+      
+      if (maleNames.includes(normalizedName)) {
+        return 'male';
+      } else if (femaleNames.includes(normalizedName)) {
+        return 'female';
+      } else {
+        // Si no se puede determinar, usar genérico
+        return 'unknown';
+      }
+    }
 
     // ============================================================================
     // FUNCIONES DE SEGURIDAD CRÍTICAS PARA PRODUCCIÓN
@@ -2680,11 +2826,25 @@
 
     // Utilidades mejoradas
     function showStatusMessage(text, type = 'success', sessionId = null) {
-      const msg = document.getElementById('statusMessage');
+      let msg = document.getElementById('statusMessage');
       
       // Si es una alerta de sesión, verificar si ya se mostró
       if (sessionId && alertedSessions.has(sessionId)) {
         return; // No mostrar alerta duplicada
+      }
+      
+      // Si no existe el elemento, crearlo
+      if (!msg) {
+        msg = document.createElement('div');
+        msg.id = 'statusMessage';
+        msg.className = 'status-message';
+        msg.innerHTML = `
+          <span class="status-text"></span>
+          <button class="status-close" onclick="hideStatusMessage()" title="Cerrar">
+            <i class="fas fa-times"></i>
+          </button>
+        `;
+        document.body.appendChild(msg);
       }
       
       // Reproducir sonido según el tipo
@@ -2705,6 +2865,8 @@
         msg.textContent = text; // Fallback para compatibilidad
       }
       msg.className = `status-message ${type} show`;
+      msg.style.display = 'flex'; // Asegurar que se muestre
+      msg.style.transform = 'translateX(0)'; // Asegurar que esté en posición visible
       
       // Marcar sesión como alertada si es una alerta de sesión
       if (sessionId) {
@@ -2714,7 +2876,12 @@
       // Auto-ocultar después de tiempo apropiado según el tipo
       let timeoutDuration;
       if (type === 'error') {
-        timeoutDuration = 6000; // Errores más tiempo para leer
+        // Para errores de validación, mostrar menos tiempo para mejor UX
+        if (text.includes('Validation failed') || text.includes('Por favor seleccione')) {
+          timeoutDuration = 4000; // 4 segundos para errores de validación
+        } else {
+          timeoutDuration = 6000; // Errores más tiempo para leer
+        }
       } else if (type === 'warning') {
         // Alertas de warning con texto largo (nombres + padres) necesitan más tiempo
         timeoutDuration = text.length > 50 ? 8000 : 6000; // Más tiempo para texto largo
@@ -2723,20 +2890,8 @@
       }
       
       msg.timeoutId = setTimeout(() => {
-        // Ocultar mensaje con transición suave
-        msg.classList.remove('show');
-        msg.timeoutId = null;
-        
-        // Limpiar contenido después de la transición
-        setTimeout(() => {
-          const textSpan = msg.querySelector('.status-text');
-          if (textSpan) {
-            textSpan.textContent = '';
-          } else {
-            msg.textContent = '';
-          }
-          msg.className = 'status-message';
-        }, 300); // Esperar a que termine la transición CSS
+        // Usar la función de ocultar que remueve completamente del DOM
+        hideStatusMessage();
         
         // Limpiar alerta de sesión después de mostrar
         if (sessionId) {
@@ -2752,24 +2907,40 @@
       const msg = document.getElementById('statusMessage');
       
       // Limpiar timeout si existe
-      if (msg.timeoutId) {
+      if (msg && msg.timeoutId) {
         clearTimeout(msg.timeoutId);
         msg.timeoutId = null;
       }
       
-      // Ocultar con transición suave
+      // Si no existe el elemento, no hacer nada
+      if (!msg || !msg.parentNode) {
+        return;
+      }
+      
+      // ANIMACIÓN: Primero ocultar con transición suave
       msg.classList.remove('show');
       
-      // Limpiar contenido después de la transición
+      // Después de la animación, remover completamente del DOM
       setTimeout(() => {
-        const textSpan = msg.querySelector('.status-text');
-        if (textSpan) {
-          textSpan.textContent = '';
-        } else {
-          msg.textContent = '';
+        if (msg && msg.parentNode) {
+          msg.parentNode.removeChild(msg);
+          
+          // Recrear el elemento limpio
+          const newMsg = document.createElement('div');
+          newMsg.id = 'statusMessage';
+          newMsg.className = 'status-message';
+          newMsg.innerHTML = `
+            <span class="status-text"></span>
+            <button class="status-close" onclick="hideStatusMessage()" title="Cerrar">
+              <i class="fas fa-times"></i>
+            </button>
+          `;
+          newMsg.style.display = 'none';
+          
+          // Insertar el nuevo elemento en el mismo lugar
+          document.body.appendChild(newMsg);
         }
-        msg.className = 'status-message';
-      }, 300); // Esperar a que termine la transición CSS
+      }, 300); // Esperar a que termine la animación CSS
     }
 
     function showLoading(buttonId, show = true) {
@@ -2910,6 +3081,17 @@
         // Mostrar alerta consolidada
         showStatusMessage(alertText, 'warning');
         
+        // Sistema de notificaciones mejorado (mejores prácticas)
+        if (voiceNotificationsEnabled) {
+          // TODOS los casos son repetitivos ahora
+          speakAlertWithRepetition(pendingTimeAlerts, alertCount);
+        }
+        
+        // Notificaciones del navegador (si están habilitadas)
+        if (browserNotificationsEnabled) {
+          showBrowserNotification('⏰ Tiempo de Juego Terminado', alertText);
+        }
+        
         // Limpiar lista de alertas pendientes
         pendingTimeAlerts.clear();
         timeAlertTimeout = null;
@@ -2956,6 +3138,320 @@
         oscillator.stop(audioContext.currentTime + duration);
       } catch (error) {
         console.log('Could not play notification sound:', error);
+      }
+    }
+
+    // Sistema de inicialización de permisos (mejores prácticas)
+    async function initializeNotificationPermissions() {
+      try {
+        // Verificar soporte de APIs
+        const hasSpeechSynthesis = 'speechSynthesis' in window;
+        const hasNotifications = 'Notification' in window;
+        
+        if (!hasSpeechSynthesis) {
+          console.warn('⚠️ Speech Synthesis no soportado en este navegador');
+          voiceNotificationsEnabled = false;
+          return;
+        }
+        
+        if (!hasNotifications) {
+          console.warn('⚠️ Notifications API no soportado en este navegador');
+          return;
+        }
+        
+        // Solicitar permisos de notificaciones del navegador
+        if (Notification.permission === 'default') {
+          const permission = await Notification.requestPermission();
+          browserNotificationsEnabled = permission === 'granted';
+          
+          if (browserNotificationsEnabled) {
+            showStatusMessage('🔔 Notificaciones del navegador activadas', 'success');
+          } else {
+            showStatusMessage('🔕 Notificaciones del navegador denegadas', 'warning');
+          }
+        } else {
+          browserNotificationsEnabled = Notification.permission === 'granted';
+        }
+        
+        // Verificar voces disponibles
+        const voices = window.speechSynthesis.getVoices();
+        const spanishVoices = voices.filter(voice => voice.lang.startsWith('es'));
+        
+        if (spanishVoices.length === 0) {
+          console.warn('⚠️ No se encontraron voces en español');
+          showStatusMessage('⚠️ No hay voces en español disponibles', 'warning');
+        }
+        
+        voicePermissionsGranted = true;
+        
+      } catch (error) {
+        console.error('Error inicializando permisos:', error);
+        showStatusMessage('❌ Error configurando notificaciones', 'error');
+      }
+    }
+
+    // Control de notificaciones de voz (mejorado)
+    function toggleVoiceNotifications() {
+      if (!voicePermissionsGranted) {
+        showStatusMessage('⚠️ Primero inicialice los permisos de notificaciones', 'warning');
+        return;
+      }
+      
+      voiceNotificationsEnabled = !voiceNotificationsEnabled;
+      
+      const voiceToggle = document.getElementById('voiceToggle');
+      const voiceStatus = document.getElementById('voiceStatus');
+      const icon = voiceToggle.querySelector('i');
+      
+      if (voiceNotificationsEnabled) {
+        voiceToggle.classList.remove('muted');
+        icon.className = 'fas fa-volume-up';
+        voiceStatus.textContent = 'Voz Activada';
+        showStatusMessage('🔊 Notificaciones de voz activadas', 'success');
+      } else {
+        voiceToggle.classList.add('muted');
+        icon.className = 'fas fa-volume-mute';
+        voiceStatus.textContent = 'Voz Desactivada';
+        showStatusMessage('🔇 Notificaciones de voz desactivadas', 'info');
+      }
+    }
+
+    // Función principal para alertas con repetición (todos los casos)
+    function speakAlertWithRepetition(pendingAlerts, alertCount) {
+      const children = Array.from(pendingAlerts.values());
+      
+      // Crear mensajes diferenciando por padres y género
+      const parentChildMessages = children.map(child => {
+        // Detectar género del niño/niña
+        const gender = detectGenderByName(child.name);
+        const childRelationship = gender === 'female' ? 'hija' : (gender === 'male' ? 'hijo' : 'hijo/a');
+        
+        if (child.parents) {
+          // Formato: "Papá Carlos, su hijo/hija Juan/Sofía terminó su tiempo de juego"
+          const parents = child.parents.split(' & ');
+          const fatherName = parents[0];
+          const motherName = parents[1];
+          
+          if (fatherName && motherName) {
+            return `Papá ${fatherName}, Mamá ${motherName}, su ${childRelationship} ${child.name} terminó su tiempo de juego`;
+          } else if (fatherName) {
+            return `Papá ${fatherName}, su ${childRelationship} ${child.name} terminó su tiempo de juego`;
+          } else if (motherName) {
+            return `Mamá ${motherName}, su ${childRelationship} ${child.name} terminó su tiempo de juego`;
+          }
+        }
+        // Si no hay padres, usar formato simple
+        return `${child.name} terminó su tiempo de juego`;
+      });
+      
+      let fullMessage;
+      
+      if (alertCount === 1) {
+        fullMessage = `ATENCIÓN: ${parentChildMessages[0]}`;
+      } else if (alertCount === 2) {
+        fullMessage = `ATENCIÓN: ${parentChildMessages[0]} y ${parentChildMessages[1]}`;
+      } else if (alertCount <= 5) {
+        // Para 3-5 niños, usar formato de lista
+        if (alertCount === 3) {
+          fullMessage = `ATENCIÓN: ${parentChildMessages[0]}, ${parentChildMessages[1]} y ${parentChildMessages[2]}`;
+        } else if (alertCount === 4) {
+          fullMessage = `ATENCIÓN: ${parentChildMessages[0]}, ${parentChildMessages[1]}, ${parentChildMessages[2]} y ${parentChildMessages[3]}`;
+        } else {
+          fullMessage = `ATENCIÓN: ${parentChildMessages[0]}, ${parentChildMessages[1]}, ${parentChildMessages[2]}, ${parentChildMessages[3]} y ${parentChildMessages[4]}`;
+        }
+      } else {
+        // Para más de 5 niños, mensaje más estructurado
+        const allMessages = parentChildMessages.join('. ');
+        fullMessage = `ATENCIÓN: ${alertCount} niños han terminado su tiempo de juego. ${allMessages}. Por favor, padres, recojan a sus hijos inmediatamente`;
+      }
+      
+      // Repetir 3 veces para TODOS los casos
+      speakWithRepetition(fullMessage, alertCount);
+    }
+
+    // Función para notificaciones del navegador (mejores prácticas)
+    function showBrowserNotification(title, body) {
+      if (!browserNotificationsEnabled || !('Notification' in window)) {
+        return;
+      }
+      
+      try {
+        const notification = new Notification(title, {
+          body: body,
+          icon: '/favicon.ico', // Icono de la aplicación
+          badge: '/favicon.ico',
+          tag: 'time-alert', // Para evitar duplicados
+          requireInteraction: false, // Se cierra automáticamente
+          silent: false // Permitir sonido del sistema
+        });
+        
+        // Auto-cerrar después de 10 segundos
+        setTimeout(() => {
+          notification.close();
+        }, 10000);
+        
+        // Manejar clic en la notificación
+        notification.onclick = () => {
+          window.focus();
+          notification.close();
+        };
+        
+        console.log('🔔 Notificación del navegador enviada');
+        
+      } catch (error) {
+        console.error('Error mostrando notificación del navegador:', error);
+      }
+    }
+
+    // Función para repetir mensajes 3 veces
+    function speakWithRepetition(message, alertCount) {
+      // Ajustar velocidad según cantidad de niños
+      const rate = alertCount > 3 ? 0.7 : 0.8;
+      const volume = alertCount > 3 ? 1.0 : 0.9;
+      
+      // Primera repetición (inmediata)
+      setTimeout(() => {
+        const utterance1 = new SpeechSynthesisUtterance(message);
+        utterance1.lang = 'es-ES';
+        utterance1.rate = rate;
+        utterance1.volume = volume;
+        window.speechSynthesis.speak(utterance1);
+      }, 100);
+      
+      // Segunda repetición (después de 15 segundos - más razonable)
+      setTimeout(() => {
+        const utterance2 = new SpeechSynthesisUtterance(message);
+        utterance2.lang = 'es-ES';
+        utterance2.rate = rate;
+        utterance2.volume = volume;
+        window.speechSynthesis.speak(utterance2);
+      }, 15000);
+      
+      // Tercera repetición (después de 30 segundos - más razonable)
+      setTimeout(() => {
+        const utterance3 = new SpeechSynthesisUtterance(message);
+        utterance3.lang = 'es-ES';
+        utterance3.rate = rate;
+        utterance3.volume = volume;
+        window.speechSynthesis.speak(utterance3);
+      }, 30000);
+      
+      console.log(`🔊 Alerta repetitiva: ${alertCount} niño(s) - 3 repeticiones`);
+    }
+
+    // Función para alertas de múltiples niños (más de 5) - DEPRECATED
+    function speakMultipleChildrenAlert(pendingAlerts) {
+      const children = Array.from(pendingAlerts.values());
+      
+      // Crear lista de nombres únicos (diferenciando por padres si es necesario)
+      const uniqueNames = new Map();
+      children.forEach(child => {
+        let key = child.name;
+        if (child.parents) {
+          const parentName = child.parents.split(' & ')[0];
+          key = `${child.name} (${parentName})`;
+        }
+        uniqueNames.set(key, child);
+      });
+      
+      const names = Array.from(uniqueNames.keys());
+      
+      // Mensaje principal
+      const mainMessage = `ATENCIÓN: ${children.length} niños han terminado su tiempo de juego`;
+      
+      // Lista de nombres (uno por uno)
+      const nameList = names.join(', ');
+      const detailedMessage = `Los niños son: ${nameList}`;
+      
+      // Mensaje de llamada a padres
+      const callMessage = `Por favor, padres, recojan a sus hijos inmediatamente`;
+      
+      // Repetir 3 veces con pausas
+      const fullMessage = `${mainMessage}. ${detailedMessage}. ${callMessage}`;
+      
+      // Primera repetición
+      setTimeout(() => {
+        const utterance1 = new SpeechSynthesisUtterance(fullMessage);
+        utterance1.lang = 'es-ES';
+        utterance1.rate = 0.7; // Más lento para claridad
+        utterance1.volume = 1.0; // Volumen máximo
+        window.speechSynthesis.speak(utterance1);
+      }, 100);
+      
+      // Segunda repetición (después de 8 segundos)
+      setTimeout(() => {
+        const utterance2 = new SpeechSynthesisUtterance(fullMessage);
+        utterance2.lang = 'es-ES';
+        utterance2.rate = 0.7;
+        utterance2.volume = 1.0;
+        window.speechSynthesis.speak(utterance2);
+      }, 8000);
+      
+      // Tercera repetición (después de 16 segundos)
+      setTimeout(() => {
+        const utterance3 = new SpeechSynthesisUtterance(fullMessage);
+        utterance3.lang = 'es-ES';
+        utterance3.rate = 0.7;
+        utterance3.volume = 1.0;
+        window.speechSynthesis.speak(utterance3);
+      }, 16000);
+      
+      console.log(`🔊 Alerta múltiple: ${children.length} niños - ${names.length} nombres únicos`);
+    }
+
+    // Sistema de notificaciones de voz
+    function speakChildName(childName, parentsInfo = '') {
+      try {
+        // Verificar si las notificaciones de voz están habilitadas
+        if (!voiceNotificationsEnabled) {
+          console.log('Notificaciones de voz desactivadas');
+          return;
+        }
+
+        // Verificar si el navegador soporta Speech Synthesis
+        if (!('speechSynthesis' in window)) {
+          console.warn('Speech synthesis no soportado en este navegador');
+          return;
+        }
+
+        // Cancelar cualquier síntesis anterior
+        window.speechSynthesis.cancel();
+
+        // Crear el mensaje personalizado
+        let message = `${childName}, tu tiempo de juego ha terminado`;
+        if (parentsInfo) {
+          message += `. ${parentsInfo}, por favor recojan a ${childName}`;
+        }
+
+        // Crear la síntesis de voz
+        const utterance = new SpeechSynthesisUtterance(message);
+        
+        // Configurar la voz (preferir español)
+        const voices = window.speechSynthesis.getVoices();
+        const spanishVoice = voices.find(voice => 
+          voice.lang.startsWith('es') && voice.localService
+        );
+        
+        if (spanishVoice) {
+          utterance.voice = spanishVoice;
+        } else {
+          utterance.lang = 'es-ES'; // Fallback al español
+        }
+
+        // Configurar parámetros de voz
+        utterance.rate = 0.9; // Velocidad ligeramente más lenta para claridad
+        utterance.pitch = 1.0; // Tono normal
+        utterance.volume = 0.8; // Volumen alto pero no molesto
+
+        // Reproducir el mensaje
+        window.speechSynthesis.speak(utterance);
+        
+        console.log(`🔊 Mensaje de voz: "${message}"`);
+        
+      } catch (error) {
+        console.error('Error en síntesis de voz:', error);
+        // Fallback al sonido normal si falla la voz
+        playNotificationSound('warning');
       }
     }
 
@@ -3887,14 +4383,14 @@
       
       let html = '';
       
-      // Botón para expandir/colapsar si hay más de 5 sesiones
-      if (sessions.length > 5) {
-        html += `
-        <button class="history-toggle" onclick="toggleHistoryView()" id="historyToggle">
-          <i class="fas fa-chevron-down"></i>
-          Ver ${hiddenSessions.length} sesiones anteriores
-        </button>`;
-      }
+      // Botón para expandir/colapsar si hay más de 5 sesiones - DESHABILITADO
+      // if (sessions.length > 5) {
+      //   html += `
+      //   <button class="history-toggle" onclick="toggleHistoryView()" id="historyToggle">
+      //     <i class="fas fa-chevron-down"></i>
+      //     Ver ${hiddenSessions.length} sesiones anteriores
+      //   </button>`;
+      // }
       
       html += recentSessions.map(s => {
         const child = childrenCache.find(c => c.id === s.childId);
@@ -5226,6 +5722,35 @@
         setTimeout(recoverFromErrors, 2000);
       }
     });
+
+    // Función para cerrar sesión
+    async function logout() {
+      try {
+        console.log('🔒 Cerrando sesión...');
+        
+        // Llamar al endpoint de logout
+        const response = await fetch('/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          console.log('✅ Sesión cerrada exitosamente');
+          // Recargar la página para forzar el login
+          window.location.reload();
+        } else {
+          console.error('❌ Error al cerrar sesión:', response.status);
+          // Aún así recargar la página
+          window.location.reload();
+        }
+      } catch (error) {
+        console.error('❌ Error al cerrar sesión:', error);
+        // Aún así recargar la página
+        window.location.reload();
+      }
+    }
 
 </script>
 </body>
