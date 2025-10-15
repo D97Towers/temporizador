@@ -2640,7 +2640,7 @@
       const maleNames = [
         'david', 'carlos', 'luis', 'pedro', 'miguel', 'jorge', 'andrés', 'roberto', 'fernando', 'eduardo',
         'juan', 'antonio', 'francisco', 'manuel', 'josé', 'rafael', 'daniel', 'alejandro', 'sergio', 'pablo',
-        'mario', 'ricardo', 'alberto', 'enrique', 'ramón', 'javier', 'diego', 'mateo', 'sebastián', 'adrián',
+        'mario', 'ricardo', 'alberto', 'enrique', 'ramon', 'ramón', 'javier', 'diego', 'mateo', 'sebastián', 'adrián',
         'nicolás', 'leonardo', 'emilio', 'arturo', 'gustavo', 'rodrigo', 'gerardo', 'hugo', 'oscar', 'rubén'
       ];
       
@@ -2665,22 +2665,58 @@
 
     // Función helper para seleccionar voz femenina en español (como en mejoras-ui)
     function getFemaleSpanishVoice() {
-      const voices = window.speechSynthesis.getVoices();
-      const spanishVoices = voices.filter(voice => voice.lang.startsWith('es'));
+      // Intentar cargar voces si no están disponibles
+      let voices = window.speechSynthesis.getVoices();
       
-      // Buscar voces femeninas específicas
-      const femaleVoiceNames = ['maria', 'lucia', 'carmen', 'sofia', 'ana', 'paula', 'laura', 'monica', 'isabel', 'teresa', 'espeaker', 'female', 'woman', 'girl'];
-      let selectedVoice = spanishVoices.find(voice => 
-        femaleVoiceNames.some(femaleName => 
-          voice.name.toLowerCase().includes(femaleName)
-        )
-      );
-      
-      // Si no encontramos voz femenina, usar la primera voz en español disponible
-      if (!selectedVoice && spanishVoices.length > 0) {
-        selectedVoice = spanishVoices[0];
+      // Si no hay voces cargadas, intentar forzar la carga
+      if (voices.length === 0) {
+        console.log('🔄 Forzando carga de voces...');
+        // En algunos navegadores necesitamos hacer esto
+        window.speechSynthesis.getVoices();
+        voices = window.speechSynthesis.getVoices();
       }
       
+      const spanishVoices = voices.filter(voice => voice.lang.startsWith('es'));
+      
+      console.log('🎙️ Todas las voces en español:', spanishVoices.map(v => ({ name: v.name, lang: v.lang, localService: v.localService })));
+      
+      // Buscar voces femeninas específicas - expandida para mejor detección
+      const femaleVoiceNames = [
+        'maria', 'lucia', 'carmen', 'sofia', 'ana', 'paula', 'laura', 'monica', 'isabel', 'teresa', 
+        'espeaker', 'female', 'woman', 'girl', 'es_', 'es-mx', 'es-es', 'espa', 'spanish',
+        'monica', 'isabella', 'patricia', 'cristina', 'rosa', 'elena'
+      ];
+      
+      // Buscar primero voces que contengan palabras femeninas específicas
+      let selectedVoice = spanishVoices.find(voice => {
+        const voiceName = voice.name.toLowerCase();
+        return femaleVoiceNames.some(femaleName => voiceName.includes(femaleName));
+      });
+      
+      // Buscar también por propiedades del navegador y sistema operativo
+      if (!selectedVoice && spanishVoices.length > 0) {
+        // En algunos sistemas, las voces femeninas están marcadas de manera diferente
+        selectedVoice = spanishVoices.find(voice => {
+          const voiceName = voice.name.toLowerCase();
+          // Evitar voces que claramente son masculinas
+          const maleIndicators = ['male', 'men', 'man', 'masculino', 'carlos', 'juan', 'diego'];
+          const isNotMale = !maleIndicators.some(indicator => voiceName.includes(indicator));
+          
+          // Preferir voces que son locales (mejor calidad)
+          return isNotMale && voice.localService;
+        });
+      }
+      
+      // Último recurso: usar primera voz disponible que no sea claramente masculina
+      if (!selectedVoice && spanishVoices.length > 0) {
+        const maleIndicators = ['male', 'men', 'man', 'masculino'];
+        selectedVoice = spanishVoices.find(voice => {
+          const voiceName = voice.name.toLowerCase();
+          return !maleIndicators.some(indicator => voiceName.includes(indicator));
+        }) || spanishVoices[0];
+      }
+      
+      console.log('👩 Voz femenina seleccionada:', selectedVoice ? `${selectedVoice.name} (${selectedVoice.lang})` : 'ninguna');
       return selectedVoice;
     }
 
@@ -3361,7 +3397,8 @@
       const parentChildMessages = children.map(child => {
         // Detectar género del niño/niña
         const gender = detectGenderByName(child.name);
-        const childRelationship = gender === 'female' ? 'hija' : (gender === 'male' ? 'hijo' : 'hijo/a');
+        // NUNCA mostrar "hijo/a" - siempre usar uno específico o "niño" como genérico
+        const childRelationship = gender === 'female' ? 'hija' : (gender === 'male' ? 'hijo' : 'niño');
         
         if (child.parents) {
           // Formato: "Papá Carlos, su hijo/hija Juan/Sofía terminó su tiempo de juego"
@@ -3461,6 +3498,8 @@
       const rate = alertCount > 3 ? 0.7 : 0.8;
       const volume = alertCount > 3 ? 1.0 : 0.9;
       
+      // Las voces se cargarán en getFemaleSpanishVoice si es necesario
+      
       // Función helper para crear y configurar utterance
       const createUtterance = (msg) => {
         const utterance = new SpeechSynthesisUtterance(msg);
@@ -3473,8 +3512,9 @@
         
         if (selectedVoice) {
           utterance.voice = selectedVoice;
-          console.log('🎤 Voz seleccionada:', selectedVoice.name, selectedVoice.lang);
+          console.log('🎤 Voz seleccionada:', selectedVoice.name, selectedVoice.lang, 'localService:', selectedVoice.localService);
         } else {
+          utterance.lang = 'es-ES';
           console.warn('⚠️ No se encontró voz en español, usando configuración por defecto');
         }
         
@@ -3611,6 +3651,8 @@
 
         // Cancelar cualquier síntesis anterior
         window.speechSynthesis.cancel();
+
+        // Las voces se cargarán en getFemaleSpanishVoice si es necesario
 
         // Crear el mensaje personalizado
         let message = `${childName}, tu tiempo de juego ha terminado`;
@@ -5100,6 +5142,21 @@
     async function endSession(sessionId) {
       try {
         console.log('🚨 Ending session:', sessionId);
+        
+        // Verificar que la sesión aún existe antes de intentar finalizarla
+        const sessionExists = activeSessionsData.find(s => s.id === sessionId);
+        if (!sessionExists) {
+          console.log('🚨 Session already ended or not found locally:', sessionId);
+          // Limpiar timer de todas formas por si acaso
+          if (timerIntervals.has(sessionId)) {
+            clearInterval(timerIntervals.get(sessionId));
+            timerIntervals.delete(sessionId);
+          }
+          // Actualizar datos para sincronizar
+          await fetchActiveSessions();
+          return; // No mostrar error si la sesión ya no existe
+        }
+        
         const res = await fetchWithRetry(api + '/sessions/' + sessionId + '/end', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }
@@ -5108,6 +5165,19 @@
         console.log('🚨 End session response status:', res.status);
         
         if (!res.ok) {
+          // Si es 404, probablemente la sesión ya fue finalizada
+          if (res.status === 404) {
+            console.log('🚨 Session not found on server (404) - likely already ended:', sessionId);
+            // Limpiar timer local
+            if (timerIntervals.has(sessionId)) {
+              clearInterval(timerIntervals.get(sessionId));
+              timerIntervals.delete(sessionId);
+            }
+            // Actualizar datos para sincronizar
+            await fetchActiveSessions();
+            return; // No mostrar error para 404
+          }
+          
           const errorData = await res.json().catch(() => ({ error: 'Error desconocido' }));
           throw new Error(errorData.error || 'Error al finalizar sesión');
         }
@@ -5135,7 +5205,18 @@
         clearSessionAlert(sessionId);
       } catch (error) {
         console.error('Error ending session:', error);
-        showStatusMessage('Error al finalizar sesión: ' + error.message, 'error');
+        // Solo mostrar error si no es un problema de sesión ya finalizada
+        if (!error.message.includes('404') && !error.message.includes('not found')) {
+          showStatusMessage('Error al finalizar sesión: ' + error.message, 'error');
+        } else {
+          // Silently handle 404 errors by just refreshing data
+          console.log('🚨 Handling 404 silently, refreshing data...');
+          if (timerIntervals.has(sessionId)) {
+            clearInterval(timerIntervals.get(sessionId));
+            timerIntervals.delete(sessionId);
+          }
+          await fetchActiveSessions();
+        }
       }
     }
 
