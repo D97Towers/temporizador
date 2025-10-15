@@ -556,6 +556,42 @@
       opacity: 0.9;
     }
 
+    /* Control de notificaciones de voz */
+    .voice-control {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+    }
+
+    .voice-toggle-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      backdrop-filter: blur(10px);
+    }
+
+    .voice-toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .voice-toggle-btn.muted {
+      background: rgba(255, 0, 0, 0.2);
+      border-color: rgba(255, 0, 0, 0.4);
+    }
+
+    .voice-toggle-btn.muted i {
+      color: #ff6b6b;
+    }
+
 
 
     .grid {
@@ -2003,6 +2039,14 @@
     <div class="header">
       <h1><i class="fas fa-gamepad"></i> Temporizador de Juegos</h1>
       <p>Controla el tiempo de juego de los niños de forma divertida</p>
+      
+      <!-- Control de notificaciones de voz -->
+      <div class="voice-control">
+        <button id="voiceToggle" onclick="toggleVoiceNotifications()" class="voice-toggle-btn" title="Activar/Desactivar notificaciones de voz">
+          <i class="fas fa-volume-up"></i>
+          <span id="voiceStatus">Voz Activada</span>
+        </button>
+      </div>
     </div>
 
     <!-- Dashboard Section -->
@@ -2570,6 +2614,7 @@
     let timerIntervals = new Map();
     let currentExtendSession = null;
     let currentEditChild = null; // Para almacenar el ID del niño que se está editando
+    let voiceNotificationsEnabled = true; // Control de notificaciones de voz
 
     // ============================================================================
     // FUNCIONES DE SEGURIDAD CRÍTICAS PARA PRODUCCIÓN
@@ -2989,6 +3034,31 @@
         // Mostrar alerta consolidada
         showStatusMessage(alertText, 'warning');
         
+        // Reproducir mensaje de voz (solo si está habilitado)
+        if (voiceNotificationsEnabled) {
+          if (alertCount === 1) {
+            // Para una sola alerta, usar el nombre específico
+            const { name, parents } = pendingTimeAlerts.values().next().value;
+            speakChildName(name, parents);
+          } else if (alertCount === 2) {
+            // Para dos alertas, mencionar ambos nombres
+            const children = Array.from(pendingTimeAlerts.values());
+            const message = `${children[0].name} y ${children[1].name}, su tiempo de juego ha terminado`;
+            const utterance = new SpeechSynthesisUtterance(message);
+            utterance.lang = 'es-ES';
+            utterance.rate = 0.9;
+            utterance.volume = 0.8;
+            window.speechSynthesis.speak(utterance);
+          } else {
+            // Para múltiples alertas, mensaje genérico
+            const utterance = new SpeechSynthesisUtterance(`Atención, ${alertCount} niños han terminado su tiempo de juego`);
+            utterance.lang = 'es-ES';
+            utterance.rate = 0.9;
+            utterance.volume = 0.8;
+            window.speechSynthesis.speak(utterance);
+          }
+        }
+        
         // Limpiar lista de alertas pendientes
         pendingTimeAlerts.clear();
         timeAlertTimeout = null;
@@ -3035,6 +3105,83 @@
         oscillator.stop(audioContext.currentTime + duration);
       } catch (error) {
         console.log('Could not play notification sound:', error);
+      }
+    }
+
+    // Control de notificaciones de voz
+    function toggleVoiceNotifications() {
+      voiceNotificationsEnabled = !voiceNotificationsEnabled;
+      
+      const voiceToggle = document.getElementById('voiceToggle');
+      const voiceStatus = document.getElementById('voiceStatus');
+      const icon = voiceToggle.querySelector('i');
+      
+      if (voiceNotificationsEnabled) {
+        voiceToggle.classList.remove('muted');
+        icon.className = 'fas fa-volume-up';
+        voiceStatus.textContent = 'Voz Activada';
+        showStatusMessage('🔊 Notificaciones de voz activadas', 'success');
+      } else {
+        voiceToggle.classList.add('muted');
+        icon.className = 'fas fa-volume-mute';
+        voiceStatus.textContent = 'Voz Desactivada';
+        showStatusMessage('🔇 Notificaciones de voz desactivadas', 'info');
+      }
+    }
+
+    // Sistema de notificaciones de voz
+    function speakChildName(childName, parentsInfo = '') {
+      try {
+        // Verificar si las notificaciones de voz están habilitadas
+        if (!voiceNotificationsEnabled) {
+          console.log('Notificaciones de voz desactivadas');
+          return;
+        }
+
+        // Verificar si el navegador soporta Speech Synthesis
+        if (!('speechSynthesis' in window)) {
+          console.warn('Speech synthesis no soportado en este navegador');
+          return;
+        }
+
+        // Cancelar cualquier síntesis anterior
+        window.speechSynthesis.cancel();
+
+        // Crear el mensaje personalizado
+        let message = `${childName}, tu tiempo de juego ha terminado`;
+        if (parentsInfo) {
+          message += `. ${parentsInfo}, por favor recojan a ${childName}`;
+        }
+
+        // Crear la síntesis de voz
+        const utterance = new SpeechSynthesisUtterance(message);
+        
+        // Configurar la voz (preferir español)
+        const voices = window.speechSynthesis.getVoices();
+        const spanishVoice = voices.find(voice => 
+          voice.lang.startsWith('es') && voice.localService
+        );
+        
+        if (spanishVoice) {
+          utterance.voice = spanishVoice;
+        } else {
+          utterance.lang = 'es-ES'; // Fallback al español
+        }
+
+        // Configurar parámetros de voz
+        utterance.rate = 0.9; // Velocidad ligeramente más lenta para claridad
+        utterance.pitch = 1.0; // Tono normal
+        utterance.volume = 0.8; // Volumen alto pero no molesto
+
+        // Reproducir el mensaje
+        window.speechSynthesis.speak(utterance);
+        
+        console.log(`🔊 Mensaje de voz: "${message}"`);
+        
+      } catch (error) {
+        console.error('Error en síntesis de voz:', error);
+        // Fallback al sonido normal si falla la voz
+        playNotificationSound('warning');
       }
     }
 
