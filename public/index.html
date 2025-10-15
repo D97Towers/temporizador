@@ -594,15 +594,6 @@
       color: #ff6b6b;
     }
 
-    .test-voice-btn {
-      background: rgba(34, 197, 94, 0.2) !important;
-      border-color: rgba(34, 197, 94, 0.4) !important;
-    }
-
-    .test-voice-btn:hover {
-      background: rgba(34, 197, 94, 0.3) !important;
-      border-color: rgba(34, 197, 94, 0.6) !important;
-    }
 
     .init-permissions-btn {
       background: rgba(59, 130, 246, 0.2) !important;
@@ -2072,10 +2063,6 @@
           <i class="fas fa-cog"></i>
           <span>Configurar</span>
         </button>
-        <button onclick="testVoiceNotifications()" class="voice-toggle-btn test-voice-btn" title="Probar notificaciones de voz">
-          <i class="fas fa-play"></i>
-          <span>Probar Voz</span>
-        </button>
       </div>
     </div>
 
@@ -3227,83 +3214,6 @@
         voiceStatus.textContent = 'Voz Desactivada';
         showStatusMessage('🔇 Notificaciones de voz desactivadas', 'info');
       }
-    }
-
-    // Función de prueba para notificaciones de voz
-    function testVoiceNotifications() {
-      console.log('🧪 Probando notificaciones de voz...');
-      
-      // Prueba 1: Un solo niño
-      showStatusMessage('🧪 Prueba 1: Un solo niño', 'info');
-      setTimeout(() => {
-        showConsolidatedTimeAlert('Juan', 'Carlos & María');
-      }, 1000);
-      
-      // Prueba 2: Dos niños
-      setTimeout(() => {
-        showStatusMessage('🧪 Prueba 2: Dos niños', 'info');
-        showConsolidatedTimeAlert('Ana', 'Pedro & Carmen');
-      }, 4000);
-      
-      setTimeout(() => {
-        showConsolidatedTimeAlert('Luis', 'Miguel & Rosa');
-      }, 4200);
-      
-      // Prueba 3: 5 niños (mencionar todos)
-      setTimeout(() => {
-        showStatusMessage('🧪 Prueba 3: 5 niños (lista completa)', 'info');
-        showConsolidatedTimeAlert('Sofia', 'Jorge & Laura');
-      }, 8000);
-      
-      setTimeout(() => {
-        showConsolidatedTimeAlert('Diego', 'Andrés & Patricia');
-      }, 8200);
-      
-      setTimeout(() => {
-        showConsolidatedTimeAlert('Valentina', 'Roberto & Ana');
-      }, 8400);
-      
-      setTimeout(() => {
-        showConsolidatedTimeAlert('Mateo', 'Fernando & Cristina');
-      }, 8600);
-      
-      setTimeout(() => {
-        showConsolidatedTimeAlert('Isabella', 'Eduardo & Mónica');
-      }, 8800);
-      
-      // Prueba 4: Más de 5 niños (repetitivo con formato padre-hijo)
-      setTimeout(() => {
-        showStatusMessage('🧪 Prueba 4: 8 niños (formato padre-hijo repetitivo)', 'info');
-        showConsolidatedTimeAlert('David', 'Carlos & María'); // Mismo nombre que el siguiente
-      }, 20000);
-      
-      setTimeout(() => {
-        showConsolidatedTimeAlert('David', 'Luis & Ana'); // Mismo nombre, diferentes padres
-      }, 20200);
-      
-      setTimeout(() => {
-        showConsolidatedTimeAlert('Sofia', 'Pedro & Carmen');
-      }, 20400);
-      
-      setTimeout(() => {
-        showConsolidatedTimeAlert('Ana', 'Miguel & Rosa');
-      }, 20600);
-      
-      setTimeout(() => {
-        showConsolidatedTimeAlert('Luis', 'Jorge & Laura');
-      }, 20800);
-      
-      setTimeout(() => {
-        showConsolidatedTimeAlert('María', 'Andrés & Patricia');
-      }, 21000);
-      
-      setTimeout(() => {
-        showConsolidatedTimeAlert('Carlos', 'Roberto & Ana');
-      }, 21200);
-      
-      setTimeout(() => {
-        showConsolidatedTimeAlert('Pedro', 'Fernando & Cristina');
-      }, 21400);
     }
 
     // Función principal para alertas con repetición (todos los casos)
