@@ -2663,6 +2663,27 @@
       }
     }
 
+    // Función helper para seleccionar voz femenina en español (como en mejoras-ui)
+    function getFemaleSpanishVoice() {
+      const voices = window.speechSynthesis.getVoices();
+      const spanishVoices = voices.filter(voice => voice.lang.startsWith('es'));
+      
+      // Buscar voces femeninas específicas
+      const femaleVoiceNames = ['maria', 'lucia', 'carmen', 'sofia', 'ana', 'paula', 'laura', 'monica', 'isabel', 'teresa', 'espeaker', 'female', 'woman', 'girl'];
+      let selectedVoice = spanishVoices.find(voice => 
+        femaleVoiceNames.some(femaleName => 
+          voice.name.toLowerCase().includes(femaleName)
+        )
+      );
+      
+      // Si no encontramos voz femenina, usar la primera voz en español disponible
+      if (!selectedVoice && spanishVoices.length > 0) {
+        selectedVoice = spanishVoices[0];
+      }
+      
+      return selectedVoice;
+    }
+
     // ============================================================================
     // FUNCIONES DE SEGURIDAD CRÍTICAS PARA PRODUCCIÓN
     // ============================================================================
@@ -3187,11 +3208,19 @@
         const spanishVoices = voices.filter(voice => voice.lang.startsWith('es'));
         console.log('🇪🇸 Voces en español:', spanishVoices.length);
         
+        // Verificar voz femenina disponible usando función helper
+        const selectedVoice = getFemaleSpanishVoice();
+        
         if (spanishVoices.length === 0) {
           console.warn('⚠️ No se encontraron voces en español disponibles');
           showStatusMessage('⚠️ No hay voces en español - usará inglés como fallback', 'warning');
         } else {
           console.log('✅ Voces en español encontradas:', spanishVoices.map(v => v.name).join(', '));
+          if (selectedVoice) {
+            console.log('👩 Voz femenina seleccionada:', selectedVoice.name);
+          } else {
+            console.log('👩 No se detectaron voces específicamente femeninas, usando la primera disponible');
+          }
         }
         
         // Solicitar permisos de notificaciones del navegador
@@ -3238,12 +3267,12 @@
         testUtterance.volume = 0.01; // Muy bajo para no molestar
         testUtterance.rate = 2;
         
-        // Configurar voz en español si está disponible
-        const voices = window.speechSynthesis.getVoices();
-        const spanishVoice = voices.find(voice => voice.lang.startsWith('es'));
-        if (spanishVoice) {
-          testUtterance.voice = spanishVoice;
-          console.log('✅ Voz en español configurada:', spanishVoice.name);
+        // Configurar voz femenina en español (usando función helper)
+        const selectedVoice = getFemaleSpanishVoice();
+        
+        if (selectedVoice) {
+          testUtterance.voice = selectedVoice;
+          console.log('✅ Voz femenina configurada para test:', selectedVoice.name);
         } else {
           testUtterance.lang = 'es-ES';
           console.log('⚠️ Usando fallback de idioma español');
@@ -3439,11 +3468,14 @@
         utterance.rate = rate;
         utterance.volume = volume;
         
-        // Buscar voz en español
-        const voices = window.speechSynthesis.getVoices();
-        const spanishVoice = voices.find(voice => voice.lang.startsWith('es') && voice.localService);
-        if (spanishVoice) {
-          utterance.voice = spanishVoice;
+        // Configurar voz femenina en español (usando función helper)
+        const selectedVoice = getFemaleSpanishVoice();
+        
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+          console.log('🎤 Voz seleccionada:', selectedVoice.name, selectedVoice.lang);
+        } else {
+          console.warn('⚠️ No se encontró voz en español, usando configuración por defecto');
         }
         
         // Eventos para debugging en producción
@@ -3589,16 +3621,15 @@
         // Crear la síntesis de voz
         const utterance = new SpeechSynthesisUtterance(message);
         
-        // Configurar la voz (preferir español)
-        const voices = window.speechSynthesis.getVoices();
-        const spanishVoice = voices.find(voice => 
-          voice.lang.startsWith('es') && voice.localService
-        );
+        // Configurar voz femenina en español (usando función helper)
+        const selectedVoice = getFemaleSpanishVoice();
         
-        if (spanishVoice) {
-          utterance.voice = spanishVoice;
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+          console.log('🎤 Voz seleccionada en speakChildName:', selectedVoice.name, selectedVoice.lang);
         } else {
           utterance.lang = 'es-ES'; // Fallback al español
+          console.warn('⚠️ No se encontró voz en español, usando configuración por defecto');
         }
 
         // Configurar parámetros de voz
