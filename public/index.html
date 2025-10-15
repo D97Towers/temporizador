@@ -1270,17 +1270,19 @@
       color: #999;
     }
 
-    /* Botón para expandir/colapsar historial - RESTAURADO */
+    /* Botón para expandir/colapsar historial - COLORIMETRÍA CORREGIDA */
     .history-toggle {
       width: 100%;
       padding: 12px 16px;
-      background: rgba(102, 126, 234, 0.1);
-      border: 1px solid rgba(102, 126, 234, 0.3);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
       border-radius: 8px;
-      color: #667eea;
+      color: white;
       cursor: pointer;
       font-size: 14px;
-      font-weight: 500;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
       transition: all 0.3s ease;
       margin: 15px 0;
       display: flex;
@@ -1290,13 +1292,12 @@
     }
 
     .history-toggle:hover {
-      background: rgba(102, 126, 234, 0.15);
-      border-color: rgba(102, 126, 234, 0.5);
-      transform: translateY(-1px);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
     }
 
     .history-toggle.expanded {
-      background: rgba(102, 126, 234, 0.2);
+      background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
     }
 
 
@@ -2704,11 +2705,16 @@
       
       console.log('🎙️ Todas las voces en español:', spanishVoices.map(v => ({ name: v.name, lang: v.lang, localService: v.localService })));
       
-      // Buscar voces femeninas específicas - expandida para mejor detección
+      // Nombres de voces femeninas con mejor acento español - prioridad por calidad
+      const premiumFemaleVoices = [
+        'maria', 'monica', 'lucia', 'sofia', 'carmen', 'ana', 'laura', 'isabel', 
+        'teresa', 'patricia', 'cristina', 'rosa', 'elena', 'esmeralda', 'isabella'
+      ];
+      
+      // Nombres de voces femeninas generales
       const femaleVoiceNames = [
-        'maria', 'lucia', 'carmen', 'sofia', 'ana', 'paula', 'laura', 'monica', 'isabel', 'teresa', 
-        'espeaker', 'female', 'woman', 'girl', 'es_', 'es-mx', 'es-es', 'espa', 'spanish',
-        'monica', 'isabella', 'patricia', 'cristina', 'rosa', 'elena', 'maria', 'esmeralda'
+        ...premiumFemaleVoices,
+        'espeaker', 'female', 'woman', 'girl'
       ];
       
       // Lista específica de nombres masculinos a excluir
@@ -2724,22 +2730,73 @@
         return maleVoiceNames.some(maleName => voiceName.toLowerCase().includes(maleName));
       };
       
-      // Buscar primero voces que contengan palabras femeninas específicas Y que NO sean masculinas
+      // Función para verificar calidad de acento español - MÁS FLEXIBLE
+      const isHighQualitySpanish = (voice) => {
+        const voiceName = voice.name.toLowerCase();
+        const lang = voice.lang.toLowerCase();
+        
+        // Preferir voces de España (es-ES) o México (es-MX) pero ser más flexible
+        const goodAccent = lang.includes('es-es') || lang.includes('es-mx') || lang.includes('es-419') || lang.startsWith('es');
+        
+        // Preferir voces locales
+        const isLocal = voice.localService;
+        
+        // Preferir nombres premium pero no ser restrictivo
+        const isPremium = premiumFemaleVoices.some(name => voiceName.includes(name));
+        
+        // NO evitar voces con ciertas palabras - ser más inclusivo
+        const isGoodName = isPremium || !(['robot', 'artificial'].some(flag => voiceName.includes(flag)));
+        
+        return goodAccent && isLocal && isGoodName;
+      };
+      
+      // PRIORIDAD 1: Voces premium femeninas con buen acento español
       let selectedVoice = spanishVoices.find(voice => {
         const voiceName = voice.name.toLowerCase();
-        const isFeminineName = femaleVoiceNames.some(femaleName => voiceName.includes(femaleName));
+        const isPremiumFeminine = premiumFemaleVoices.some(name => voiceName.includes(name));
         const isNotMale = !isMaleVoice(voiceName);
-        return isFeminineName && isNotMale;
+        const isGoodQuality = isHighQualitySpanish(voice);
+        return isPremiumFeminine && isNotMale && isGoodQuality;
       });
       
-      // Buscar también por propiedades del navegador y sistema operativo
+      // PRIORIDAD 2: Cualquier voz femenina con buen acento español local
+      if (!selectedVoice) {
+        selectedVoice = spanishVoices.find(voice => {
+          const voiceName = voice.name.toLowerCase();
+          const isFeminineName = femaleVoiceNames.some(femaleName => voiceName.includes(femaleName));
+          const isNotMale = !isMaleVoice(voiceName);
+          const isGoodQuality = isHighQualitySpanish(voice);
+          return isFeminineName && isNotMale && isGoodQuality;
+        });
+      }
+      
+      // PRIORIDAD 3: Voces femeninas locales sin filtro de acento estricto
       if (!selectedVoice && spanishVoices.length > 0) {
-        // En algunos sistemas, las voces femeninas están marcadas de manera diferente
+        selectedVoice = spanishVoices.find(voice => {
+          const voiceName = voice.name.toLowerCase();
+          const isFeminineName = femaleVoiceNames.some(femaleName => voiceName.includes(femaleName));
+          const isNotMale = !isMaleVoice(voiceName);
+          
+          // Preferir voces locales pero ser más flexible con acento
+          return isFeminineName && isNotMale && voice.localService;
+        });
+      }
+      
+      // PRIORIDAD 4: Cualquier voz femenina no masculina
+      if (!selectedVoice && spanishVoices.length > 0) {
+        selectedVoice = spanishVoices.find(voice => {
+          const voiceName = voice.name.toLowerCase();
+          const isFeminineName = femaleVoiceNames.some(femaleName => voiceName.includes(femaleName));
+          const isNotMale = !isMaleVoice(voiceName);
+          return isFeminineName && isNotMale;
+        });
+      }
+      
+      // PRIORIDAD 5: Cualquier voz no masculina local
+      if (!selectedVoice && spanishVoices.length > 0) {
         selectedVoice = spanishVoices.find(voice => {
           const voiceName = voice.name.toLowerCase();
           const isNotMale = !isMaleVoice(voiceName);
-          
-          // Preferir voces que son locales (mejor calidad) y no masculinas
           return isNotMale && voice.localService;
         });
       }
@@ -3647,32 +3704,43 @@
       // Repetir 3 veces con pausas
       const fullMessage = `${mainMessage}. ${detailedMessage}. ${callMessage}`;
       
+      // Función helper para crear utterance con voz mejorada
+      const createUtteranceWithVoice = (message) => {
+        const utterance = new SpeechSynthesisUtterance(message);
+        utterance.lang = 'es-ES';
+        utterance.rate = 0.7; // Más lento para claridad
+        utterance.volume = 1.0; // Volumen máximo
+        
+        // Configurar voz femenina en español (usando función helper mejorada)
+        const selectedVoice = getFemaleSpanishVoice();
+        
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+          console.log('🎤 Voz seleccionada:', selectedVoice.name, selectedVoice.lang, 'localService:', selectedVoice.localService);
+        } else {
+          console.warn('⚠️ No se encontró voz en español, usando configuración por defecto');
+        }
+        
+        return utterance;
+      };
+      
       // Primera repetición
       setTimeout(() => {
-        const utterance1 = new SpeechSynthesisUtterance(fullMessage);
-        utterance1.lang = 'es-ES';
-        utterance1.rate = 0.7; // Más lento para claridad
-        utterance1.volume = 1.0; // Volumen máximo
+        const utterance1 = createUtteranceWithVoice(fullMessage);
         window.speechSynthesis.speak(utterance1);
       }, 100);
       
-      // Segunda repetición (después de 8 segundos)
+      // Segunda repetición (después de 15 segundos - mejorado)
       setTimeout(() => {
-        const utterance2 = new SpeechSynthesisUtterance(fullMessage);
-        utterance2.lang = 'es-ES';
-        utterance2.rate = 0.7;
-        utterance2.volume = 1.0;
+        const utterance2 = createUtteranceWithVoice(fullMessage);
         window.speechSynthesis.speak(utterance2);
-      }, 8000);
+      }, 15000);
       
-      // Tercera repetición (después de 16 segundos)
+      // Tercera repetición (después de 30 segundos - mejorado)
       setTimeout(() => {
-        const utterance3 = new SpeechSynthesisUtterance(fullMessage);
-        utterance3.lang = 'es-ES';
-        utterance3.rate = 0.7;
-        utterance3.volume = 1.0;
+        const utterance3 = createUtteranceWithVoice(fullMessage);
         window.speechSynthesis.speak(utterance3);
-      }, 16000);
+      }, 30000);
       
       console.log(`🔊 Alerta múltiple: ${children.length} niños - ${names.length} nombres únicos`);
     }
@@ -5253,7 +5321,7 @@
         console.error('Error ending session:', error);
         // Solo mostrar error si no es un problema de sesión ya finalizada
         if (!error.message.includes('404') && !error.message.includes('not found')) {
-          showStatusMessage('Error al finalizar sesión: ' + error.message, 'error');
+        showStatusMessage('Error al finalizar sesión: ' + error.message, 'error');
         } else {
           // Silently handle 404 errors by just refreshing data
           console.log('🚨 Handling 404 silently, refreshing data...');
@@ -5599,10 +5667,10 @@
              try {
                console.log('Initializing voice notification system...');
                await initializeNotificationPermissions();
-             } catch (error) {
+        } catch (error) {
                console.error('Failed to initialize voice notifications, continuing...', error);
-             }
-             
+        }
+        
              // Solicitar permisos de notificación
              try {
                console.log('Requesting notification permission...');
@@ -5733,7 +5801,7 @@
     ['click', 'keydown', 'touchstart', 'mousedown'].forEach(eventType => {
       document.addEventListener(eventType, activateVoiceSystemOnUserInteraction, { once: true });
     });
-
+    
     // Sincronización cuando se enfoca la ventana
     window.addEventListener('focus', () => {
       console.log('Window focused, forcing sync...');
