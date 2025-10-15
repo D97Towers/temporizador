@@ -1270,9 +1270,33 @@
       color: #999;
     }
 
-    /* Botón para expandir/colapsar historial - OCULTO */
+    /* Botón para expandir/colapsar historial - RESTAURADO */
     .history-toggle {
-      display: none !important;
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(102, 126, 234, 0.1);
+      border: 1px solid rgba(102, 126, 234, 0.3);
+      border-radius: 8px;
+      color: #667eea;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      margin: 15px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .history-toggle:hover {
+      background: rgba(102, 126, 234, 0.15);
+      border-color: rgba(102, 126, 234, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .history-toggle.expanded {
+      background: rgba(102, 126, 234, 0.2);
     }
 
 
@@ -2684,13 +2708,28 @@
       const femaleVoiceNames = [
         'maria', 'lucia', 'carmen', 'sofia', 'ana', 'paula', 'laura', 'monica', 'isabel', 'teresa', 
         'espeaker', 'female', 'woman', 'girl', 'es_', 'es-mx', 'es-es', 'espa', 'spanish',
-        'monica', 'isabella', 'patricia', 'cristina', 'rosa', 'elena'
+        'monica', 'isabella', 'patricia', 'cristina', 'rosa', 'elena', 'maria', 'esmeralda'
       ];
       
-      // Buscar primero voces que contengan palabras femeninas específicas
+      // Lista específica de nombres masculinos a excluir
+      const maleVoiceNames = [
+        'eddy', 'carlos', 'juan', 'diego', 'male', 'men', 'man', 'masculino', 'antonio', 'miguel',
+        'pedro', 'jose', 'manuel', 'rafael', 'daniel', 'andres', 'roberto', 'fernando', 'eduardo',
+        'alejandro', 'sergio', 'pablo', 'mario', 'ricardo', 'alberto', 'enrique', 'ramon', 'javier',
+        'gabriel', 'luis', 'felipe', 'sebastian', 'adrian', 'david'
+      ];
+      
+      // Función helper para verificar si una voz es masculina
+      const isMaleVoice = (voiceName) => {
+        return maleVoiceNames.some(maleName => voiceName.toLowerCase().includes(maleName));
+      };
+      
+      // Buscar primero voces que contengan palabras femeninas específicas Y que NO sean masculinas
       let selectedVoice = spanishVoices.find(voice => {
         const voiceName = voice.name.toLowerCase();
-        return femaleVoiceNames.some(femaleName => voiceName.includes(femaleName));
+        const isFeminineName = femaleVoiceNames.some(femaleName => voiceName.includes(femaleName));
+        const isNotMale = !isMaleVoice(voiceName);
+        return isFeminineName && isNotMale;
       });
       
       // Buscar también por propiedades del navegador y sistema operativo
@@ -2698,22 +2737,26 @@
         // En algunos sistemas, las voces femeninas están marcadas de manera diferente
         selectedVoice = spanishVoices.find(voice => {
           const voiceName = voice.name.toLowerCase();
-          // Evitar voces que claramente son masculinas
-          const maleIndicators = ['male', 'men', 'man', 'masculino', 'carlos', 'juan', 'diego'];
-          const isNotMale = !maleIndicators.some(indicator => voiceName.includes(indicator));
+          const isNotMale = !isMaleVoice(voiceName);
           
-          // Preferir voces que son locales (mejor calidad)
+          // Preferir voces que son locales (mejor calidad) y no masculinas
           return isNotMale && voice.localService;
         });
       }
       
-      // Último recurso: usar primera voz disponible que no sea claramente masculina
+      // Último recurso: usar primera voz disponible que NO sea claramente masculina
       if (!selectedVoice && spanishVoices.length > 0) {
-        const maleIndicators = ['male', 'men', 'man', 'masculino'];
         selectedVoice = spanishVoices.find(voice => {
-          const voiceName = voice.name.toLowerCase();
-          return !maleIndicators.some(indicator => voiceName.includes(indicator));
+          return !isMaleVoice(voice.name);
         }) || spanishVoices[0];
+      }
+      
+      // Verificar una vez más que la voz seleccionada no sea masculina
+      if (selectedVoice && isMaleVoice(selectedVoice.name)) {
+        console.warn('⚠️ Voz seleccionada es masculina, buscando alternativa...');
+        selectedVoice = spanishVoices.find(voice => {
+          return !isMaleVoice(voice.name) && voice !== selectedVoice;
+        });
       }
       
       console.log('👩 Voz femenina seleccionada:', selectedVoice ? `${selectedVoice.name} (${selectedVoice.lang})` : 'ninguna');
@@ -4642,14 +4685,14 @@
       
       let html = '';
       
-      // Botón para expandir/colapsar si hay más de 5 sesiones - DESHABILITADO
-      // if (sessions.length > 5) {
-      //   html += `
-      //   <button class="history-toggle" onclick="toggleHistoryView()" id="historyToggle">
-      //     <i class="fas fa-chevron-down"></i>
-      //     Ver ${hiddenSessions.length} sesiones anteriores
-      //   </button>`;
-      // }
+      // Botón para expandir/colapsar si hay más de 5 sesiones - RESTAURADO
+      if (sessions.length > 5) {
+        html += `
+        <button class="history-toggle" onclick="toggleHistoryView()" id="historyToggle">
+          <i class="fas fa-chevron-down"></i>
+          Ver ${hiddenSessions.length} sesiones anteriores
+        </button>`;
+      }
       
       html += recentSessions.map(s => {
         const child = childrenCache.find(c => c.id === s.childId);
@@ -4859,15 +4902,18 @@
       const toggleBtn = document.getElementById('historyToggle');
       
       if (hiddenSessions && toggleBtn) {
+        // Obtener el número de sesiones ocultas del texto del botón original
+        const hiddenCount = hiddenSessions.children.length;
+        
         if (hiddenSessions.classList.contains('history-hidden')) {
           // Expandir
           hiddenSessions.classList.remove('history-hidden');
-          toggleBtn.innerHTML = '<i class="fas fa-chevron-up"></i> Ocultar sesiones anteriores';
+          toggleBtn.innerHTML = `<i class="fas fa-chevron-up"></i> Ocultar ${hiddenCount} sesiones anteriores`;
           toggleBtn.classList.add('expanded');
         } else {
           // Colapsar
           hiddenSessions.classList.add('history-hidden');
-          toggleBtn.innerHTML = '<i class="fas fa-chevron-down"></i> Ver sesiones anteriores';
+          toggleBtn.innerHTML = `<i class="fas fa-chevron-down"></i> Ver ${hiddenCount} sesiones anteriores`;
           toggleBtn.classList.remove('expanded');
         }
       }
