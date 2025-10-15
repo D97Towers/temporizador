@@ -69,6 +69,11 @@ function authGate(req, res, next) {
     hasPassword: !!APP_PASSWORD
   });
   
+  // 🚨 HOTFIX: Desactivar autenticación temporalmente para recuperar acceso a datos
+  // TODO: Reactivar cuando el sistema de login esté completamente probado
+  console.log('⚠️ AUTH TEMPORARILY DISABLED - Skipping auth gate');
+  return next();
+  
   // SIEMPRE forzar autenticación si hay password configurado
   if (!APP_PASSWORD) {
     console.log('❌ No password configured, skipping auth');
