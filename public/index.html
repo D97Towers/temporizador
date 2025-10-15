@@ -209,8 +209,8 @@
            
         /* Ocultar botón X en móvil */
         .close-button {
-          display: none !important;
-        }
+             display: none !important;
+           }
            
            .header {
              padding-left: 20px !important;
@@ -1223,9 +1223,9 @@
 
     /* Botón para expandir/colapsar historial */
     .history-toggle {
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
-      border: none;
+      background: linear-gradient(135deg, #667eea, #764ba2) !important;
+      color: white !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
       padding: 8px 16px;
       border-radius: 6px;
       font-size: 12px;
@@ -1235,11 +1235,14 @@
       display: flex;
       align-items: center;
       gap: 6px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      opacity: 1 !important;
     }
 
     .history-toggle:hover {
-      background: linear-gradient(135deg, #5a6fd8, #6a4190);
+      background: linear-gradient(135deg, #5a6fd8, #6a4190) !important;
       transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
 
     .history-toggle i {
@@ -1978,18 +1981,18 @@
     
     <div class="sidebar" id="sidebar">
       <div class="nav-buttons">
-        <button onclick="showSection('dashboard')" class="nav-btn" id="nav-dashboard">
-          <i class="fas fa-chart-bar"></i> Dashboard <span class="shortcut-key">1</span>
-        </button>
-        <button onclick="showSection('sessions')" class="nav-btn" id="nav-sessions">
-          <i class="fas fa-play-circle"></i> Sesiones <span class="shortcut-key">2</span>
-        </button>
-        <button onclick="showSection('children')" class="nav-btn" id="nav-children">
-          <i class="fas fa-child"></i> Niños <span class="shortcut-key">3</span>
-        </button>
-        <button onclick="showSection('games')" class="nav-btn" id="nav-games">
-          <i class="fas fa-gamepad"></i> Juegos <span class="shortcut-key">4</span>
-        </button>
+      <button onclick="showSection('dashboard')" class="nav-btn" id="nav-dashboard">
+        <i class="fas fa-chart-bar"></i> Dashboard <span class="shortcut-key">1</span>
+      </button>
+      <button onclick="showSection('sessions')" class="nav-btn" id="nav-sessions">
+        <i class="fas fa-play-circle"></i> Sesiones <span class="shortcut-key">2</span>
+      </button>
+      <button onclick="showSection('children')" class="nav-btn" id="nav-children">
+        <i class="fas fa-child"></i> Niños <span class="shortcut-key">3</span>
+      </button>
+      <button onclick="showSection('games')" class="nav-btn" id="nav-games">
+        <i class="fas fa-gamepad"></i> Juegos <span class="shortcut-key">4</span>
+      </button>
       </div>
       <div class="sidebar-footer">
         <button onclick="logout()" class="nav-btn logout-btn-sidebar" title="Cerrar sesión">
@@ -2004,20 +2007,20 @@
       <h2><i class="fas fa-gamepad"></i> Temporizador</h2>
     </div>
     <div class="desktop-nav-container">
-      <nav class="desktop-nav">
-        <button onclick="showSection('dashboard')" class="desktop-nav-btn" id="nav-dashboard">
-          <i class="fas fa-chart-bar"></i> Dashboard
-        </button>
-        <button onclick="showSection('sessions')" class="desktop-nav-btn" id="nav-sessions">
-          <i class="fas fa-play-circle"></i> Sesiones
-        </button>
-        <button onclick="showSection('children')" class="desktop-nav-btn" id="nav-children">
-          <i class="fas fa-child"></i> Niños
-        </button>
-        <button onclick="showSection('games')" class="desktop-nav-btn" id="nav-games">
-          <i class="fas fa-gamepad"></i> Juegos
-        </button>
-      </nav>
+    <nav class="desktop-nav">
+      <button onclick="showSection('dashboard')" class="desktop-nav-btn" id="nav-dashboard">
+        <i class="fas fa-chart-bar"></i> Dashboard
+      </button>
+      <button onclick="showSection('sessions')" class="desktop-nav-btn" id="nav-sessions">
+        <i class="fas fa-play-circle"></i> Sesiones
+      </button>
+      <button onclick="showSection('children')" class="desktop-nav-btn" id="nav-children">
+        <i class="fas fa-child"></i> Niños
+      </button>
+      <button onclick="showSection('games')" class="desktop-nav-btn" id="nav-games">
+        <i class="fas fa-gamepad"></i> Juegos
+      </button>
+    </nav>
       <div class="desktop-sidebar-footer">
         <button onclick="logout()" class="desktop-nav-btn logout-btn-desktop" title="Cerrar sesión">
           <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
