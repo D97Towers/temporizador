@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const crypto = require('crypto');
+const cookieParser = require('cookie-parser');
 
 // Importar base de datos Supabase
 const db = require('./supabase-database');
@@ -12,6 +13,7 @@ const app = express();
 // Middleware base
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 
 // ============================================================================
 // Acceso protegido opcional por contraseña (sin costo)
@@ -69,15 +71,26 @@ function authGate(req, res, next) {
     hasPassword: !!APP_PASSWORD
   });
   
-  // 🚨 HOTFIX: Desactivar autenticación temporalmente para recuperar acceso a datos
-  // TODO: Reactivar cuando el sistema de login esté completamente probado
-  console.log('⚠️ AUTH TEMPORARILY DISABLED - Skipping auth gate');
-  return next();
-  
-  // SIEMPRE forzar autenticación si hay password configurado
+  // Si no hay password configurado, no requerir autenticación
   if (!APP_PASSWORD) {
     console.log('❌ No password configured, skipping auth');
-    return next(); // Desactivado si no hay password configurada
+    return next();
+  }
+  
+  // Permitir todas las rutas API sin autenticación
+  const isAPIRequest = req.path && (
+    req.path.startsWith('/children') ||
+    req.path.startsWith('/games') ||
+    req.path.startsWith('/sessions') ||
+    req.path.startsWith('/login') ||
+    req.path.startsWith('/logout') ||
+    req.path.startsWith('/api/') ||
+    req.path.startsWith('/test')
+  );
+  
+  if (isAPIRequest) {
+    console.log('🔓 API request allowed without auth:', req.path);
+    return next();
   }
   
   console.log('🔒 Auth gate active, checking token...');
@@ -85,18 +98,23 @@ function authGate(req, res, next) {
   // Permitir rutas de login y recursos públicos del login
   if (isWhitelisted(req)) return next();
 
-  const token = parseCookies(req)[ACCESS_COOKIE];
-  if (token && token === generateToken()) return next();
-
-  // Si es API, responder 401; si es HTML, redirigir a login
-  const isAPIRequest = req.path && (req.path.startsWith('/children') || req.path.startsWith('/games') || req.path.startsWith('/sessions') || req.path.startsWith('/login') || req.path.startsWith('/logout'));
+  // Verificar token de autenticación (usar cookie-parser primero, fallback a parseCookies)
+  const token = req.cookies?.[ACCESS_COOKIE] || parseCookies(req)[ACCESS_COOKIE];
+  const expectedToken = generateToken();
   
-  if (isAPIRequest) {
-    console.log('🔒 API request blocked:', req.path);
-    return res.status(401).json({ error: 'No autorizado' });
+  if (token && token === expectedToken) {
+    console.log('✅ Valid token found, allowing access');
+    return next();
   }
+  
+  console.log('❌ No valid token found:', { 
+    hasToken: !!token, 
+    tokenMatch: token === expectedToken,
+    cookies: req.cookies ? Object.keys(req.cookies) : 'no cookies'
+  });
 
-  console.log('🔒 Redirecting to login for:', req.path);
+  // Para rutas HTML, redirigir a login
+  console.log('🔒 No valid token, redirecting to login for:', req.path);
   res.setHeader('Cache-Control', 'no-store');
   return res.sendFile(path.join(__dirname, 'public', 'login.html'));
 }
@@ -418,7 +436,7 @@ app.get('/api/urgent-debug', async (req, res) => {
     
     res.json({
       status: 'OK',
-      auth_disabled: true,
+      auth_enabled: !!APP_PASSWORD,
       database_working: true,
       data: {
         children_count: children.length,
@@ -436,6 +454,19 @@ app.get('/api/urgent-debug', async (req, res) => {
       stack: error.stack
     });
   }
+});
+
+// 🔐 DIAGNÓSTICO DE AUTENTICACIÓN
+app.get('/api/auth-status', (req, res) => {
+  const token = req.cookies?.[ACCESS_COOKIE] || parseCookies(req)[ACCESS_COOKIE];
+  const expectedToken = generateToken();
+  
+  res.json({
+    auth_enabled: !!APP_PASSWORD,
+    has_token: !!token,
+    token_valid: token === expectedToken,
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
 // Endpoint de prueba simple
@@ -792,28 +823,45 @@ async function ensureDatabaseInitialized() {
 
 // Rutas de login/logout (sin auth)
 app.post('/login', (req, res) => {
-  if (!APP_PASSWORD) return res.status(404).json({ error: 'Login deshabilitado' });
+  console.log('🔐 Login attempt:', { hasPassword: !!APP_PASSWORD, body: req.body });
+  
+  if (!APP_PASSWORD) {
+    return res.status(404).json({ error: 'Login deshabilitado - no hay contraseña configurada' });
+  }
+  
   const { password } = req.body || {};
   if (!password || password !== APP_PASSWORD) {
+    console.log('❌ Invalid password attempt');
     return res.status(401).json({ error: 'Contraseña inválida' });
   }
-  res.cookie?.(ACCESS_COOKIE, generateToken(), {
+  
+  const token = generateToken();
+  console.log('✅ Valid password, generating token:', token.substring(0, 10) + '...');
+  
+  // Usar cookie-parser para establecer cookie
+  res.cookie(ACCESS_COOKIE, token, {
     httpOnly: true,
     sameSite: 'lax',
-    secure: true,
-    maxAge: 1000 * 60 * 60 * 12 // 12h
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 1000 * 60 * 60 * 12 // 12 horas
   });
-  // fallback si no existe res.cookie (sin cookie-parser): set-cookie manual
-  if (!res.getHeader('Set-Cookie')) {
-    res.setHeader('Set-Cookie', `${ACCESS_COOKIE}=${generateToken()}; HttpOnly; SameSite=Lax; Max-Age=${60 * 60 * 12}; Path=/; Secure`);
-  }
-  return res.json({ ok: true });
+  
+  return res.json({ ok: true, message: 'Login exitoso' });
 });
 
-app.post('/logout', (_req, res) => {
-  res.setHeader('Set-Cookie', `${ACCESS_COOKIE}=; HttpOnly; SameSite=Lax; Max-Age=0; Path=/; Secure`);
-  res.status(200).json({ ok: true });
+app.post('/logout', (req, res) => {
+  console.log('🚪 Logout request');
+  res.clearCookie(ACCESS_COOKIE, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/'
+  });
+  res.status(200).json({ ok: true, message: 'Sesión cerrada' });
 });
+
+// Aplicar middleware de autenticación SOLO para rutas HTML (después de APIs)
+app.use(authGate);
 
 // Servir estáticos después del gate
 // IMPORTANTE: Solo servir archivos estáticos DESPUÉS de la autenticación
