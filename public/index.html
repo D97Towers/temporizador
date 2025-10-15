@@ -3141,26 +3141,61 @@
       }
     }
 
-    // Sistema de inicialización de permisos (mejores prácticas)
+    // Sistema de inicialización de permisos (mejores prácticas para producción)
     async function initializeNotificationPermissions() {
       try {
+        console.log('🎤 Inicializando sistema de notificaciones de voz...');
+        
         // Verificar soporte de APIs
         const hasSpeechSynthesis = 'speechSynthesis' in window;
         const hasNotifications = 'Notification' in window;
         
+        console.log('🔍 Soporte APIs:', { speechSynthesis: hasSpeechSynthesis, notifications: hasNotifications });
+        
         if (!hasSpeechSynthesis) {
           console.warn('⚠️ Speech Synthesis no soportado en este navegador');
           voiceNotificationsEnabled = false;
+          showStatusMessage('⚠️ Navegador no soporta síntesis de voz', 'warning');
           return;
         }
         
         if (!hasNotifications) {
           console.warn('⚠️ Notifications API no soportado en este navegador');
-          return;
+        }
+        
+        // Verificar voces disponibles - CRÍTICO para producción
+        let voices = window.speechSynthesis.getVoices();
+        
+        // En algunos navegadores, las voces necesitan tiempo para cargar
+        if (voices.length === 0) {
+          console.log('🔄 Cargando voces del navegador...');
+          await new Promise(resolve => {
+            const loadVoices = () => {
+              voices = window.speechSynthesis.getVoices();
+              if (voices.length > 0) {
+                resolve();
+              } else {
+                setTimeout(loadVoices, 100);
+              }
+            };
+            loadVoices();
+          });
+        }
+        
+        console.log('🎙️ Voces disponibles:', voices.length);
+        
+        const spanishVoices = voices.filter(voice => voice.lang.startsWith('es'));
+        console.log('🇪🇸 Voces en español:', spanishVoices.length);
+        
+        if (spanishVoices.length === 0) {
+          console.warn('⚠️ No se encontraron voces en español disponibles');
+          showStatusMessage('⚠️ No hay voces en español - usará inglés como fallback', 'warning');
+        } else {
+          console.log('✅ Voces en español encontradas:', spanishVoices.map(v => v.name).join(', '));
         }
         
         // Solicitar permisos de notificaciones del navegador
-        if (Notification.permission === 'default') {
+        if (hasNotifications && Notification.permission === 'default') {
           const permission = await Notification.requestPermission();
           browserNotificationsEnabled = permission === 'granted';
           
@@ -3169,33 +3204,85 @@
           } else {
             showStatusMessage('🔕 Notificaciones del navegador denegadas', 'warning');
           }
-        } else {
+        } else if (hasNotifications) {
           browserNotificationsEnabled = Notification.permission === 'granted';
         }
         
-        // Verificar voces disponibles
-        const voices = window.speechSynthesis.getVoices();
-        const spanishVoices = voices.filter(voice => voice.lang.startsWith('es'));
-        
-        if (spanishVoices.length === 0) {
-          console.warn('⚠️ No se encontraron voces en español');
-          showStatusMessage('⚠️ No hay voces en español disponibles', 'warning');
-        }
+        // PRUEBA CRÍTICA: Hacer un test de voz para activar el sistema
+        await testVoiceSystem();
         
         voicePermissionsGranted = true;
+        console.log('✅ Sistema de notificaciones inicializado correctamente');
         
       } catch (error) {
-        console.error('Error inicializando permisos:', error);
-        showStatusMessage('❌ Error configurando notificaciones', 'error');
+        console.error('❌ Error inicializando permisos:', error);
+        showStatusMessage('❌ Error configurando notificaciones: ' + error.message, 'error');
+        voicePermissionsGranted = false;
+      }
+    }
+    
+    // Función para probar el sistema de voz (crítico para producción)
+    async function testVoiceSystem() {
+      try {
+        console.log('🧪 Probando sistema de voz...');
+        
+        if (!('speechSynthesis' in window)) {
+          throw new Error('Speech Synthesis no soportado');
+        }
+        
+        // Cancelar cualquier síntesis previa
+        window.speechSynthesis.cancel();
+        
+        // Crear un test básico
+        const testUtterance = new SpeechSynthesisUtterance('Prueba');
+        testUtterance.volume = 0.01; // Muy bajo para no molestar
+        testUtterance.rate = 2;
+        
+        // Configurar voz en español si está disponible
+        const voices = window.speechSynthesis.getVoices();
+        const spanishVoice = voices.find(voice => voice.lang.startsWith('es'));
+        if (spanishVoice) {
+          testUtterance.voice = spanishVoice;
+          console.log('✅ Voz en español configurada:', spanishVoice.name);
+        } else {
+          testUtterance.lang = 'es-ES';
+          console.log('⚠️ Usando fallback de idioma español');
+        }
+        
+        // Configurar eventos para detectar problemas
+        testUtterance.onstart = () => {
+          console.log('✅ Sistema de voz funcionando correctamente');
+        };
+        
+        testUtterance.onerror = (event) => {
+          console.error('❌ Error en sistema de voz:', event.error);
+          voiceNotificationsEnabled = false;
+        };
+        
+        // Ejecutar test (sin esperar)
+        window.speechSynthesis.speak(testUtterance);
+        
+        // Esperar un momento para ver si hay errores
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        return true;
+        
+      } catch (error) {
+        console.error('❌ Fallo en test de voz:', error);
+        voiceNotificationsEnabled = false;
+        return false;
       }
     }
 
-    // Control de notificaciones de voz (mejorado)
+    // Control de notificaciones de voz (mejorado para producción)
     function toggleVoiceNotifications() {
       if (!voicePermissionsGranted) {
         showStatusMessage('⚠️ Primero inicialice los permisos de notificaciones', 'warning');
         return;
       }
+      
+      // Activar sistema de voz en esta interacción del usuario
+      activateVoiceSystemOnUserInteraction();
       
       voiceNotificationsEnabled = !voiceNotificationsEnabled;
       
@@ -3208,11 +3295,27 @@
         icon.className = 'fas fa-volume-up';
         voiceStatus.textContent = 'Voz Activada';
         showStatusMessage('🔊 Notificaciones de voz activadas', 'success');
+        
+        // Hacer un test rápido para verificar que funciona
+        setTimeout(() => {
+          try {
+            const testUtterance = new SpeechSynthesisUtterance('Voz activada');
+            testUtterance.volume = 0.3;
+            testUtterance.rate = 1.2;
+            window.speechSynthesis.speak(testUtterance);
+          } catch (error) {
+            console.error('Error en test de voz:', error);
+          }
+        }, 500);
+        
       } else {
         voiceToggle.classList.add('muted');
         icon.className = 'fas fa-volume-mute';
         voiceStatus.textContent = 'Voz Desactivada';
         showStatusMessage('🔇 Notificaciones de voz desactivadas', 'info');
+        
+        // Cancelar cualquier síntesis en curso
+        window.speechSynthesis.cancel();
       }
     }
 
@@ -3303,40 +3406,88 @@
       }
     }
 
-    // Función para repetir mensajes 3 veces
+    // Función para repetir mensajes 3 veces (mejorada para producción)
     function speakWithRepetition(message, alertCount) {
+      // Verificar que el sistema de voz esté disponible y habilitado
+      if (!voiceNotificationsEnabled || !('speechSynthesis' in window)) {
+        console.warn('⚠️ Sistema de voz no disponible');
+        return;
+      }
+      
+      console.log(`🔊 Iniciando alerta de voz: ${alertCount} niño(s)`);
+      
       // Ajustar velocidad según cantidad de niños
       const rate = alertCount > 3 ? 0.7 : 0.8;
       const volume = alertCount > 3 ? 1.0 : 0.9;
       
+      // Función helper para crear y configurar utterance
+      const createUtterance = (msg) => {
+        const utterance = new SpeechSynthesisUtterance(msg);
+        utterance.lang = 'es-ES';
+        utterance.rate = rate;
+        utterance.volume = volume;
+        
+        // Buscar voz en español
+        const voices = window.speechSynthesis.getVoices();
+        const spanishVoice = voices.find(voice => voice.lang.startsWith('es') && voice.localService);
+        if (spanishVoice) {
+          utterance.voice = spanishVoice;
+        }
+        
+        // Eventos para debugging en producción
+        utterance.onstart = () => {
+          console.log('✅ Reproduciendo mensaje de voz');
+        };
+        
+        utterance.onerror = (event) => {
+          console.error('❌ Error reproduciendo voz:', event.error);
+        };
+        
+        utterance.onend = () => {
+          console.log('✅ Mensaje de voz completado');
+        };
+        
+        return utterance;
+      };
+      
       // Primera repetición (inmediata)
       setTimeout(() => {
-        const utterance1 = new SpeechSynthesisUtterance(message);
-        utterance1.lang = 'es-ES';
-        utterance1.rate = rate;
-        utterance1.volume = volume;
-        window.speechSynthesis.speak(utterance1);
+        try {
+          // Cancelar cualquier síntesis previa
+          window.speechSynthesis.cancel();
+          
+          const utterance1 = createUtterance(message);
+          window.speechSynthesis.speak(utterance1);
+        } catch (error) {
+          console.error('❌ Error en primera repetición de voz:', error);
+        }
       }, 100);
       
-      // Segunda repetición (después de 15 segundos - más razonable)
+      // Segunda repetición (después de 15 segundos)
       setTimeout(() => {
-        const utterance2 = new SpeechSynthesisUtterance(message);
-        utterance2.lang = 'es-ES';
-        utterance2.rate = rate;
-        utterance2.volume = volume;
-        window.speechSynthesis.speak(utterance2);
+        try {
+          if (voiceNotificationsEnabled && window.speechSynthesis.speaking === false) {
+            const utterance2 = createUtterance(message);
+            window.speechSynthesis.speak(utterance2);
+          }
+        } catch (error) {
+          console.error('❌ Error en segunda repetición de voz:', error);
+        }
       }, 15000);
       
-      // Tercera repetición (después de 30 segundos - más razonable)
+      // Tercera repetición (después de 30 segundos)
       setTimeout(() => {
-        const utterance3 = new SpeechSynthesisUtterance(message);
-        utterance3.lang = 'es-ES';
-        utterance3.rate = rate;
-        utterance3.volume = volume;
-        window.speechSynthesis.speak(utterance3);
+        try {
+          if (voiceNotificationsEnabled && window.speechSynthesis.speaking === false) {
+            const utterance3 = createUtterance(message);
+            window.speechSynthesis.speak(utterance3);
+          }
+        } catch (error) {
+          console.error('❌ Error en tercera repetición de voz:', error);
+        }
       }, 30000);
       
-      console.log(`🔊 Alerta repetitiva: ${alertCount} niño(s) - 3 repeticiones`);
+      console.log(`🔊 Alerta repetitiva programada: ${alertCount} niño(s) - 3 repeticiones`);
     }
 
     // Función para alertas de múltiples niños (más de 5) - DEPRECATED
@@ -5188,15 +5339,15 @@
           .then(response => {
             if (response.ok) {
               return response.json().then(status => {
-                console.log('Server status:', status);
-                console.log('Server has', status.children, 'children,', status.games, 'games,', status.activeSessions, 'active sessions');
+            console.log('Server status:', status);
+            console.log('Server has', status.children, 'children,', status.games, 'games,', status.activeSessions, 'active sessions');
               });
-            } else {
+          } else {
               console.error('Server not responding:', response.status);
-            }
+          }
           })
           .catch(error => {
-            console.error('Cannot connect to server:', error);
+          console.error('Cannot connect to server:', error);
           });
         
         // SINCRONIZACIÓN COMPLETA - Limpiar todo y recargar
@@ -5250,8 +5401,16 @@
         });
         
         // Actualizar dashboard con todos los datos cargados
-        updateDashboard();
+          updateDashboard();
         
+             // 🎤 CRÍTICO: Inicializar sistema de notificaciones de voz
+             try {
+               console.log('Initializing voice notification system...');
+               await initializeNotificationPermissions();
+             } catch (error) {
+               console.error('Failed to initialize voice notifications, continuing...', error);
+             }
+             
              // Solicitar permisos de notificación
              try {
                console.log('Requesting notification permission...');
@@ -5355,6 +5514,29 @@
       }
     });
     
+    // 🎤 CRÍTICO: Activar sistema de voz en primera interacción del usuario
+    let voiceSystemActivated = false;
+    
+    function activateVoiceSystemOnUserInteraction() {
+      if (voiceSystemActivated || !voiceNotificationsEnabled) return;
+      
+      console.log('🎤 Activando sistema de voz por interacción del usuario...');
+      
+      // Hacer un test rápido para activar el sistema
+      const testUtterance = new SpeechSynthesisUtterance('');
+      testUtterance.volume = 0.01;
+      window.speechSynthesis.speak(testUtterance);
+      window.speechSynthesis.cancel();
+      
+      voiceSystemActivated = true;
+      console.log('✅ Sistema de voz activado para producción');
+    }
+    
+    // Activar en cualquier interacción del usuario (crítico para políticas de autoplay)
+    ['click', 'keydown', 'touchstart', 'mousedown'].forEach(eventType => {
+      document.addEventListener(eventType, activateVoiceSystemOnUserInteraction, { once: true });
+    });
+
     // Sincronización cuando se enfoca la ventana
     window.addEventListener('focus', () => {
       console.log('Window focused, forcing sync...');
