@@ -101,54 +101,13 @@ function authGate(req, res, next) {
   return res.sendFile(path.join(__dirname, 'public', 'login.html'));
 }
 
-app.use(authGate);
+// 🚨 HOTFIX: NO aplicar authGate a APIs - solo a rutas HTML
+// Las APIs deben funcionar sin autenticación
 
-// Rutas de login/logout
-app.post('/login', (req, res) => {
-  if (!APP_PASSWORD) return res.status(404).json({ error: 'Login deshabilitado' });
-  const { password } = req.body || {};
-  if (!password || password !== APP_PASSWORD) {
-    return res.status(401).json({ error: 'Contraseña inválida' });
-  }
-  res.cookie?.(ACCESS_COOKIE, generateToken(), {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: true,
-    maxAge: 1000 * 60 * 60 * 12 // 12h
-  });
-  // fallback si no existe res.cookie (sin cookie-parser): set-cookie manual
-  if (!res.getHeader('Set-Cookie')) {
-    res.setHeader('Set-Cookie', `${ACCESS_COOKIE}=${generateToken()}; HttpOnly; SameSite=Lax; Max-Age=${60 * 60 * 12}; Path=/; Secure`);
-  }
-  return res.json({ ok: true });
-});
-
-app.post('/logout', (_req, res) => {
-  res.setHeader('Set-Cookie', `${ACCESS_COOKIE}=; HttpOnly; SameSite=Lax; Max-Age=0; Path=/; Secure`);
-  res.status(200).json({ ok: true });
-});
-
-// Servir estáticos después del gate
-// IMPORTANTE: Solo servir archivos estáticos DESPUÉS de la autenticación
-app.use('/public', express.static('public'));
-
-// Ruta específica para servir index.html (después de autenticación)
-app.get('/', (req, res) => {
-  console.log('🔒 Serving index.html after auth check');
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// Interceptar TODAS las rutas para forzar autenticación
-app.get('*', (req, res) => {
-  console.log('🔒 Catch-all route intercepted:', req.path);
-  if (req.path === '/login.html' || req.path === '/public/login.html') {
-    return res.sendFile(path.join(__dirname, 'public', 'login.html'));
-  }
-  // Para cualquier otra ruta, redirigir al login
-  console.log('🔒 Redirecting to login for:', req.path);
-  res.setHeader('Cache-Control', 'no-store');
-  return res.sendFile(path.join(__dirname, 'public', 'login.html'));
-});
+// 🚨 URGENTE: RUTAS API PRIMERO - SIN AUTENTICACIÓN
+// ============================================================================
+// RUTAS API (DEBEN IR ANTES DE CUALQUIER MIDDLEWARE DE AUTENTICACIÓN)
+// ============================================================================
 
 // Control de concurrencia simple
 const writeLock = new Map();
@@ -175,10 +134,6 @@ function validateChild(req, res, next) {
   }
   next();
 }
-
-// ============================================================================
-// RUTAS API
-// ============================================================================
 
 // Obtener todos los niños con tiempo total jugado
 app.get('/children', async (req, res) => {
@@ -831,9 +786,55 @@ async function ensureDatabaseInitialized() {
   }
 }
 
-// Servir archivos estáticos
+// ============================================================================
+// RUTAS DE LOGIN Y CATCH-ALL (DESPUÉS DE TODAS LAS APIs)
+// ============================================================================
+
+// Rutas de login/logout (sin auth)
+app.post('/login', (req, res) => {
+  if (!APP_PASSWORD) return res.status(404).json({ error: 'Login deshabilitado' });
+  const { password } = req.body || {};
+  if (!password || password !== APP_PASSWORD) {
+    return res.status(401).json({ error: 'Contraseña inválida' });
+  }
+  res.cookie?.(ACCESS_COOKIE, generateToken(), {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: true,
+    maxAge: 1000 * 60 * 60 * 12 // 12h
+  });
+  // fallback si no existe res.cookie (sin cookie-parser): set-cookie manual
+  if (!res.getHeader('Set-Cookie')) {
+    res.setHeader('Set-Cookie', `${ACCESS_COOKIE}=${generateToken()}; HttpOnly; SameSite=Lax; Max-Age=${60 * 60 * 12}; Path=/; Secure`);
+  }
+  return res.json({ ok: true });
+});
+
+app.post('/logout', (_req, res) => {
+  res.setHeader('Set-Cookie', `${ACCESS_COOKIE}=; HttpOnly; SameSite=Lax; Max-Age=0; Path=/; Secure`);
+  res.status(200).json({ ok: true });
+});
+
+// Servir estáticos después del gate
+// IMPORTANTE: Solo servir archivos estáticos DESPUÉS de la autenticación
+app.use('/public', express.static('public'));
+
+// Ruta específica para servir index.html (después de autenticación)
 app.get('/', (req, res) => {
+  console.log('🔒 Serving index.html after auth check');
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Interceptar TODAS las rutas para forzar autenticación
+app.get('*', (req, res) => {
+  console.log('🔒 Catch-all route intercepted:', req.path);
+  if (req.path === '/login.html' || req.path === '/public/login.html') {
+    return res.sendFile(path.join(__dirname, 'public', 'login.html'));
+  }
+  // Para cualquier otra ruta, redirigir al login
+  console.log('🔒 Redirecting to login for:', req.path);
+  res.setHeader('Cache-Control', 'no-store');
+  return res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
 // Iniciar servidor
