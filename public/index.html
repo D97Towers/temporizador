@@ -561,6 +561,8 @@
       position: absolute;
       top: 20px;
       right: 20px;
+      display: flex;
+      gap: 10px;
     }
 
     .voice-toggle-btn {
@@ -590,6 +592,16 @@
 
     .voice-toggle-btn.muted i {
       color: #ff6b6b;
+    }
+
+    .test-voice-btn {
+      background: rgba(34, 197, 94, 0.2) !important;
+      border-color: rgba(34, 197, 94, 0.4) !important;
+    }
+
+    .test-voice-btn:hover {
+      background: rgba(34, 197, 94, 0.3) !important;
+      border-color: rgba(34, 197, 94, 0.6) !important;
     }
 
 
@@ -2046,6 +2058,10 @@
           <i class="fas fa-volume-up"></i>
           <span id="voiceStatus">Voz Activada</span>
         </button>
+        <button onclick="testVoiceNotifications()" class="voice-toggle-btn test-voice-btn" title="Probar notificaciones de voz">
+          <i class="fas fa-play"></i>
+          <span>Probar Voz</span>
+        </button>
       </div>
     </div>
 
@@ -3127,6 +3143,49 @@
         voiceStatus.textContent = 'Voz Desactivada';
         showStatusMessage('🔇 Notificaciones de voz desactivadas', 'info');
       }
+    }
+
+    // Función de prueba para notificaciones de voz
+    function testVoiceNotifications() {
+      console.log('🧪 Probando notificaciones de voz...');
+      
+      // Prueba 1: Un solo niño
+      showStatusMessage('🧪 Prueba 1: Un solo niño', 'info');
+      setTimeout(() => {
+        showConsolidatedTimeAlert('Juan', 'Carlos & María');
+      }, 1000);
+      
+      // Prueba 2: Dos niños
+      setTimeout(() => {
+        showStatusMessage('🧪 Prueba 2: Dos niños', 'info');
+        showConsolidatedTimeAlert('Ana', 'Pedro & Carmen');
+      }, 4000);
+      
+      setTimeout(() => {
+        showConsolidatedTimeAlert('Luis', 'Miguel & Rosa');
+      }, 4200);
+      
+      // Prueba 3: Múltiples niños
+      setTimeout(() => {
+        showStatusMessage('🧪 Prueba 3: Múltiples niños', 'info');
+        showConsolidatedTimeAlert('Sofia', 'Jorge & Laura');
+      }, 8000);
+      
+      setTimeout(() => {
+        showConsolidatedTimeAlert('Diego', 'Andrés & Patricia');
+      }, 8200);
+      
+      setTimeout(() => {
+        showConsolidatedTimeAlert('Valentina', 'Roberto & Ana');
+      }, 8400);
+      
+      setTimeout(() => {
+        showConsolidatedTimeAlert('Mateo', 'Fernando & Cristina');
+      }, 8600);
+      
+      setTimeout(() => {
+        showConsolidatedTimeAlert('Isabella', 'Eduardo & Mónica');
+      }, 8800);
     }
 
     // Sistema de notificaciones de voz
