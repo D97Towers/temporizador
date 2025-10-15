@@ -2760,6 +2760,7 @@
       }
       msg.className = `status-message ${type} show`;
       msg.style.display = 'flex'; // Asegurar que se muestre
+      msg.style.transform = 'translateX(0)'; // Asegurar que esté en posición visible
       
       // Marcar sesión como alertada si es una alerta de sesión
       if (sessionId) {
@@ -2830,6 +2831,7 @@
         }
         msg.className = 'status-message';
         msg.style.display = 'none'; // Ocultar completamente el elemento
+        msg.style.transform = 'translateX(400px)'; // Resetear transform para la próxima vez
       }, 300); // Esperar a que termine la transición CSS
     }
 
