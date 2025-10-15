@@ -3946,14 +3946,14 @@
       
       let html = '';
       
-      // Botón para expandir/colapsar si hay más de 5 sesiones
-      if (sessions.length > 5) {
-        html += `
-        <button class="history-toggle" onclick="toggleHistoryView()" id="historyToggle">
-          <i class="fas fa-chevron-down"></i>
-          Ver ${hiddenSessions.length} sesiones anteriores
-        </button>`;
-      }
+      // Botón para expandir/colapsar si hay más de 5 sesiones - DESHABILITADO
+      // if (sessions.length > 5) {
+      //   html += `
+      //   <button class="history-toggle" onclick="toggleHistoryView()" id="historyToggle">
+      //     <i class="fas fa-chevron-down"></i>
+      //     Ver ${hiddenSessions.length} sesiones anteriores
+      //   </button>`;
+      // }
       
       html += recentSessions.map(s => {
         const child = childrenCache.find(c => c.id === s.childId);
