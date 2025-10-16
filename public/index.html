@@ -2688,8 +2688,26 @@
       }
     }
 
-    // Función helper para seleccionar voz femenina en español (como en mejoras-ui)
+    // Función para detectar el navegador
+    function detectBrowser() {
+      const userAgent = navigator.userAgent.toLowerCase();
+      if (userAgent.includes('safari') && !userAgent.includes('chrome')) {
+        return 'safari';
+      } else if (userAgent.includes('firefox')) {
+        return 'firefox';
+      } else if (userAgent.includes('chrome')) {
+        return 'chrome';
+      } else if (userAgent.includes('edge')) {
+        return 'edge';
+      }
+      return 'unknown';
+    }
+
+    // Función helper para seleccionar voz femenina en español (optimizada por navegador)
     function getFemaleSpanishVoice() {
+      const browser = detectBrowser();
+      console.log('🌐 Navegador detectado:', browser);
+      
       // Intentar cargar voces si no están disponibles
       let voices = window.speechSynthesis.getVoices();
       
@@ -2818,6 +2836,49 @@
       
       console.log('👩 Voz femenina seleccionada:', selectedVoice ? `${selectedVoice.name} (${selectedVoice.lang})` : 'ninguna');
       return selectedVoice;
+    }
+
+    // Función para obtener parámetros de voz optimizados por navegador
+    function getVoiceParameters() {
+      const browser = detectBrowser();
+      
+      const params = {
+        safari: {
+          rate: 0.9,
+          pitch: 1.0,
+          volume: 0.8,
+          lang: 'es-ES'
+        },
+        firefox: {
+          rate: 0.7,  // Más lento en Firefox para mejor claridad
+          pitch: 0.9, // Pitch ligeramente más bajo para sonar más natural
+          volume: 0.9,
+          lang: 'es-ES'
+        },
+        chrome: {
+          rate: 0.8,
+          pitch: 1.0,
+          volume: 0.8,
+          lang: 'es-ES'
+        },
+        edge: {
+          rate: 0.8,
+          pitch: 1.0,
+          volume: 0.8,
+          lang: 'es-ES'
+        },
+        default: {
+          rate: 0.8,
+          pitch: 1.0,
+          volume: 0.8,
+          lang: 'es-ES'
+        }
+      };
+      
+      const selectedParams = params[browser] || params.default;
+      console.log(`🎛️ Parámetros de voz para ${browser}:`, selectedParams);
+      
+      return selectedParams;
     }
 
     // ============================================================================
@@ -3461,13 +3522,17 @@
         voiceStatus.textContent = 'Voz Activada';
         showStatusMessage('🔊 Notificaciones de voz activadas', 'success');
         
-        // Hacer un test rápido para verificar que funciona - USANDO LA MISMA VOZ
+        // Hacer un test rápido para verificar que funciona - USANDO LA MISMA VOZ Y PARÁMETROS OPTIMIZADOS
         setTimeout(() => {
           try {
             const testUtterance = new SpeechSynthesisUtterance('Voz activada');
-            testUtterance.lang = 'es-ES';
-            testUtterance.volume = 0.3;
-            testUtterance.rate = 1.2;
+            
+            // Obtener parámetros optimizados por navegador
+            const voiceParams = getVoiceParameters();
+            testUtterance.lang = voiceParams.lang;
+            testUtterance.rate = voiceParams.rate * 1.2; // Un poco más rápido para el test
+            testUtterance.pitch = voiceParams.pitch;
+            testUtterance.volume = 0.3; // Volumen bajo para el test
             
             // Configurar la MISMA voz que se usa para los nombres de los niños
             const selectedVoice = getFemaleSpanishVoice();
@@ -3605,17 +3670,21 @@
       
       console.log(`🔊 Iniciando alerta de voz: ${alertCount} niño(s)`);
       
-      // Ajustar velocidad según cantidad de niños
-      const rate = alertCount > 3 ? 0.7 : 0.8;
-      const volume = alertCount > 3 ? 1.0 : 0.9;
+      // Obtener parámetros base optimizados por navegador
+      const baseVoiceParams = getVoiceParameters();
+      
+      // Ajustar velocidad según cantidad de niños (basado en parámetros del navegador)
+      const rate = alertCount > 3 ? baseVoiceParams.rate * 0.9 : baseVoiceParams.rate;
+      const volume = alertCount > 3 ? Math.min(baseVoiceParams.volume * 1.1, 1.0) : baseVoiceParams.volume;
       
       // Las voces se cargarán en getFemaleSpanishVoice si es necesario
       
       // Función helper para crear y configurar utterance
       const createUtterance = (msg) => {
         const utterance = new SpeechSynthesisUtterance(msg);
-        utterance.lang = 'es-ES';
+        utterance.lang = baseVoiceParams.lang;
         utterance.rate = rate;
+        utterance.pitch = baseVoiceParams.pitch;
         utterance.volume = volume;
         
         // Configurar voz femenina en español (usando función helper)
@@ -3715,12 +3784,16 @@
       // Repetir 3 veces con pausas
       const fullMessage = `${mainMessage}. ${detailedMessage}. ${callMessage}`;
       
-      // Función helper para crear utterance con voz mejorada
+      // Función helper para crear utterance con voz mejorada y parámetros optimizados por navegador
       const createUtteranceWithVoice = (message) => {
         const utterance = new SpeechSynthesisUtterance(message);
-        utterance.lang = 'es-ES';
-        utterance.rate = 0.7; // Más lento para claridad
-        utterance.volume = 1.0; // Volumen máximo
+        
+        // Obtener parámetros optimizados por navegador
+        const voiceParams = getVoiceParameters();
+        utterance.lang = voiceParams.lang;
+        utterance.rate = voiceParams.rate;
+        utterance.pitch = voiceParams.pitch;
+        utterance.volume = voiceParams.volume;
         
         // Configurar voz femenina en español (usando función helper mejorada)
         const selectedVoice = getFemaleSpanishVoice();
@@ -3785,6 +3858,13 @@
         // Crear la síntesis de voz
         const utterance = new SpeechSynthesisUtterance(message);
         
+        // Obtener parámetros optimizados por navegador
+        const voiceParams = getVoiceParameters();
+        utterance.lang = voiceParams.lang;
+        utterance.rate = voiceParams.rate;
+        utterance.pitch = voiceParams.pitch;
+        utterance.volume = voiceParams.volume;
+        
         // Configurar voz femenina en español (usando función helper)
         const selectedVoice = getFemaleSpanishVoice();
         
@@ -3792,14 +3872,8 @@
           utterance.voice = selectedVoice;
           console.log('🎤 Voz seleccionada en speakChildName:', selectedVoice.name, selectedVoice.lang);
         } else {
-          utterance.lang = 'es-ES'; // Fallback al español
           console.warn('⚠️ No se encontró voz en español, usando configuración por defecto');
         }
-
-        // Configurar parámetros de voz
-        utterance.rate = 0.9; // Velocidad ligeramente más lenta para claridad
-        utterance.pitch = 1.0; // Tono normal
-        utterance.volume = 0.8; // Volumen alto pero no molesto
 
         // Reproducir el mensaje
         window.speechSynthesis.speak(utterance);
