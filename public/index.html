@@ -3461,12 +3461,23 @@
         voiceStatus.textContent = 'Voz Activada';
         showStatusMessage('🔊 Notificaciones de voz activadas', 'success');
         
-        // Hacer un test rápido para verificar que funciona
+        // Hacer un test rápido para verificar que funciona - USANDO LA MISMA VOZ
         setTimeout(() => {
           try {
             const testUtterance = new SpeechSynthesisUtterance('Voz activada');
+            testUtterance.lang = 'es-ES';
             testUtterance.volume = 0.3;
             testUtterance.rate = 1.2;
+            
+            // Configurar la MISMA voz que se usa para los nombres de los niños
+            const selectedVoice = getFemaleSpanishVoice();
+            if (selectedVoice) {
+              testUtterance.voice = selectedVoice;
+              console.log('🎤 Test de voz usando la misma voz que los nombres:', selectedVoice.name, selectedVoice.lang);
+            } else {
+              console.warn('⚠️ No se encontró voz en español para el test');
+            }
+            
             window.speechSynthesis.speak(testUtterance);
           } catch (error) {
             console.error('Error en test de voz:', error);
