@@ -4091,22 +4091,30 @@
       // 🚀 OPTIMIZACIÓN: Reduce timeout para carga inicial más rápida
       const timeoutMs = options.initialLoad ? 5000 : 8000; // 5s para carga inicial, 8s para el resto
       
+      // Extraer opciones especiales
+      const { initialLoad, silent404, ...fetchOptions } = options;
+      
       for (let i = 0; i < retries; i++) {
         try {
           // Crear AbortController para timeout
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
           
-          const fetchOptions = {
-            ...options,
+          const finalFetchOptions = {
+            ...fetchOptions,
             signal: controller.signal
           };
           
-          const res = await fetch(url, fetchOptions);
+          const res = await fetch(url, finalFetchOptions);
           clearTimeout(timeoutId);
           
           if (res.ok) {
             return res;
+          }
+          
+          // Manejo especial para 404 silencioso (para finalizar sesiones)
+          if (res.status === 404 && silent404) {
+            return res; // Retornar la respuesta 404 sin lanzar error
           }
           
           // Manejo especial para rate limiting (429)
@@ -5369,7 +5377,8 @@
         
         const res = await fetchWithRetry(api + '/sessions/' + sessionId + '/end', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
+          silent404: true // Suprimir errores 404 en consola para finalizar sesiones
         });
         
         console.log('🚨 End session response status:', res.status);
