@@ -2762,16 +2762,29 @@
         // Preferir nombres premium pero no ser restrictivo
         const isPremium = premiumFemaleVoices.some(name => voiceName.includes(name));
         
-        // Para Chrome y Firefox, ser MUY selectivo con voces naturales
-        if (browser === 'chrome' || browser === 'firefox') {
-          // Evitar voces que suenan robóticas en estos navegadores (lista expandida)
+        // Para Firefox, ser EXTREMADAMENTE selectivo para evitar sonido robótico
+        if (browser === 'firefox') {
+          // Evitar voces que suenan robóticas en Firefox (lista muy expandida)
+          const avoidRobotic = !(['robot', 'artificial', 'neural', 'enhanced', 'tts', 'synthetic', 'digital', 'machine', 'auto', 'generated', 'system', 'speak', 'voice', 'speech', 'sapi', 'espeak', 'festival', 'mary'].some(flag => voiceName.includes(flag)));
+          
+          // Solo voces con nombres muy naturales en Firefox
+          const naturalNames = ['maria', 'monica', 'lucia', 'sofia', 'carmen', 'ana', 'laura', 'isabel', 'teresa'];
+          const hasNaturalName = naturalNames.some(name => voiceName.includes(name));
+          
+          // Para Firefox, ser EXTREMADAMENTE estricto: solo voces naturales o premium
+          return goodAccent && isLocal && avoidRobotic && (isPremium || hasNaturalName);
+        }
+        
+        // Para Chrome, ser MUY selectivo con voces naturales
+        if (browser === 'chrome') {
+          // Evitar voces que suenan robóticas en Chrome (lista expandida)
           const avoidRobotic = !(['robot', 'artificial', 'neural', 'enhanced', 'tts', 'synthetic', 'digital', 'machine', 'auto', 'generated', 'system'].some(flag => voiceName.includes(flag)));
           
           // Preferir voces con nombres que suenan más naturales (lista expandida)
           const naturalNames = ['maria', 'monica', 'lucia', 'sofia', 'carmen', 'ana', 'laura', 'isabel', 'teresa', 'paula', 'claudia', 'natalia', 'veronica', 'patricia'];
           const hasNaturalName = naturalNames.some(name => voiceName.includes(name));
           
-          // Para Chrome y Firefox, ser MUY estricto: solo voces naturales o premium
+          // Para Chrome, ser MUY estricto: solo voces naturales o premium
           return goodAccent && isLocal && avoidRobotic && (isPremium || hasNaturalName);
         }
         
@@ -2862,8 +2875,8 @@
           lang: 'es-ES'
         },
         firefox: {
-          rate: 0.55, // MUCHO más lento en Firefox para acento natural
-          pitch: 0.8, // Pitch significativamente más bajo para sonar más natural
+          rate: 0.45, // EXTREMADAMENTE lento en Firefox para evitar sonido robótico
+          pitch: 0.75, // Pitch muy bajo para sonar más humano
           volume: 0.9,
           lang: 'es-ES'
         },
@@ -2923,6 +2936,55 @@
       speechSynthesis.speak(utterance);
     }
     
+    // Función específica para probar Firefox con parámetros anti-robóticos
+    function testFirefoxAntiRobotic() {
+      if (detectBrowser() !== 'firefox') {
+        console.log('⚠️ Esta función es específica para Firefox');
+        return;
+      }
+      
+      const firefoxVariations = [
+        { rate: 0.4, pitch: 0.7, volume: 0.9, name: 'EXTREMO lento + pitch muy bajo' },
+        { rate: 0.45, pitch: 0.75, volume: 0.9, name: 'MUY lento + pitch bajo (actual)' },
+        { rate: 0.5, pitch: 0.8, volume: 0.9, name: 'Lento + pitch medio-bajo' },
+        { rate: 0.55, pitch: 0.85, volume: 0.9, name: 'Lento + pitch medio' }
+      ];
+      
+      let currentIndex = 0;
+      
+      function playNext() {
+        if (currentIndex >= firefoxVariations.length) {
+          console.log('🎯 Prueba anti-robótica de Firefox completada');
+          return;
+        }
+        
+        const variation = firefoxVariations[currentIndex];
+        console.log(`🧪 Firefox Anti-Robótico: ${variation.name}`, variation);
+        
+        const utterance = new SpeechSynthesisUtterance(`Prueba Firefox ${currentIndex + 1}: ${variation.name}`);
+        utterance.lang = 'es-ES';
+        utterance.rate = variation.rate;
+        utterance.pitch = variation.pitch;
+        utterance.volume = variation.volume;
+        
+        const selectedVoice = getFemaleSpanishVoice();
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+        }
+        
+        utterance.onend = () => {
+          setTimeout(() => {
+            currentIndex++;
+            playNext();
+          }, 1500);
+        };
+        
+        speechSynthesis.speak(utterance);
+      }
+      
+      playNext();
+    }
+
     // Función para probar diferentes combinaciones de parámetros
     function testVoiceVariations() {
       const variations = [
@@ -2970,6 +3032,7 @@
     // Hacer funciones disponibles globalmente para pruebas en consola
     window.testVoiceParameters = testVoiceParameters;
     window.testVoiceVariations = testVoiceVariations;
+    window.testFirefoxAntiRobotic = testFirefoxAntiRobotic;
 
     // ============================================================================
     // FUNCIONES DE SEGURIDAD CRÍTICAS PARA PRODUCCIÓN
