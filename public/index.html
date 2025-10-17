@@ -2762,15 +2762,16 @@
         // Preferir nombres premium pero no ser restrictivo
         const isPremium = premiumFemaleVoices.some(name => voiceName.includes(name));
         
-        // Para Chrome y Firefox, ser más selectivo con voces naturales
+        // Para Chrome y Firefox, ser MUY selectivo con voces naturales
         if (browser === 'chrome' || browser === 'firefox') {
-          // Evitar voces que suenan robóticas en estos navegadores
-          const avoidRobotic = !(['robot', 'artificial', 'neural', 'enhanced', 'tts'].some(flag => voiceName.includes(flag)));
+          // Evitar voces que suenan robóticas en estos navegadores (lista expandida)
+          const avoidRobotic = !(['robot', 'artificial', 'neural', 'enhanced', 'tts', 'synthetic', 'digital', 'machine', 'auto', 'generated', 'system'].some(flag => voiceName.includes(flag)));
           
-          // Preferir voces con nombres que suenan más naturales
-          const naturalNames = ['maria', 'monica', 'lucia', 'sofia', 'carmen', 'ana', 'laura', 'isabel', 'teresa'];
+          // Preferir voces con nombres que suenan más naturales (lista expandida)
+          const naturalNames = ['maria', 'monica', 'lucia', 'sofia', 'carmen', 'ana', 'laura', 'isabel', 'teresa', 'paula', 'claudia', 'natalia', 'veronica', 'patricia'];
           const hasNaturalName = naturalNames.some(name => voiceName.includes(name));
           
+          // Para Chrome y Firefox, ser MUY estricto: solo voces naturales o premium
           return goodAccent && isLocal && avoidRobotic && (isPremium || hasNaturalName);
         }
         
@@ -2861,20 +2862,20 @@
           lang: 'es-ES'
         },
         firefox: {
-          rate: 0.65, // Más lento en Firefox para mejor claridad y naturalidad
-          pitch: 0.85, // Pitch más bajo para sonar más natural
+          rate: 0.55, // MUCHO más lento en Firefox para acento natural
+          pitch: 0.8, // Pitch significativamente más bajo para sonar más natural
           volume: 0.9,
           lang: 'es-ES'
         },
         chrome: {
-          rate: 0.75, // Más lento que Safari para mejor naturalidad
-          pitch: 0.95, // Pitch ligeramente más bajo para sonar más natural
+          rate: 0.6, // MUCHO más lento que Safari para acento natural
+          pitch: 0.85, // Pitch significativamente más bajo para sonar más natural
           volume: 0.85,
           lang: 'es-ES'
         },
         edge: {
-          rate: 0.75, // Más lento que Safari para mejor naturalidad
-          pitch: 0.95, // Pitch ligeramente más bajo para sonar más natural
+          rate: 0.6, // MUCHO más lento que Safari para acento natural
+          pitch: 0.85, // Pitch significativamente más bajo para sonar más natural
           volume: 0.85,
           lang: 'es-ES'
         },
@@ -2891,6 +2892,84 @@
       
       return selectedParams;
     }
+
+    // Función temporal para probar parámetros de voz
+    function testVoiceParameters() {
+      const browser = detectBrowser();
+      console.log(`🧪 Probando parámetros de voz para ${browser.toUpperCase()}`);
+      
+      const testMessage = "Hola, soy una prueba de voz en español";
+      const currentParams = getVoiceParameters();
+      
+      console.log('🎛️ Parámetros actuales:', currentParams);
+      
+      // Probar con parámetros actuales
+      const utterance = new SpeechSynthesisUtterance(testMessage);
+      utterance.lang = currentParams.lang;
+      utterance.rate = currentParams.rate;
+      utterance.pitch = currentParams.pitch;
+      utterance.volume = currentParams.volume;
+      
+      const selectedVoice = getFemaleSpanishVoice();
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+        console.log('🎤 Usando voz:', selectedVoice.name);
+      }
+      
+      utterance.onend = () => {
+        console.log('✅ Prueba completada');
+      };
+      
+      speechSynthesis.speak(utterance);
+    }
+    
+    // Función para probar diferentes combinaciones de parámetros
+    function testVoiceVariations() {
+      const variations = [
+        { rate: 0.5, pitch: 0.8, volume: 0.9, name: 'MUY lento + pitch bajo' },
+        { rate: 0.6, pitch: 0.85, volume: 0.9, name: 'Lento + pitch medio-bajo' },
+        { rate: 0.7, pitch: 0.9, volume: 0.9, name: 'Medio-lento + pitch medio' },
+        { rate: 0.8, pitch: 0.95, volume: 0.9, name: 'Medio + pitch alto' }
+      ];
+      
+      let currentIndex = 0;
+      
+      function playNext() {
+        if (currentIndex >= variations.length) {
+          console.log('🎯 Prueba de variaciones completada');
+          return;
+        }
+        
+        const variation = variations[currentIndex];
+        console.log(`🧪 Probando: ${variation.name}`, variation);
+        
+        const utterance = new SpeechSynthesisUtterance(`Prueba ${currentIndex + 1}: ${variation.name}`);
+        utterance.lang = 'es-ES';
+        utterance.rate = variation.rate;
+        utterance.pitch = variation.pitch;
+        utterance.volume = variation.volume;
+        
+        const selectedVoice = getFemaleSpanishVoice();
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+        }
+        
+        utterance.onend = () => {
+          setTimeout(() => {
+            currentIndex++;
+            playNext();
+          }, 1000);
+        };
+        
+        speechSynthesis.speak(utterance);
+      }
+      
+      playNext();
+    }
+    
+    // Hacer funciones disponibles globalmente para pruebas en consola
+    window.testVoiceParameters = testVoiceParameters;
+    window.testVoiceVariations = testVoiceVariations;
 
     // ============================================================================
     // FUNCIONES DE SEGURIDAD CRÍTICAS PARA PRODUCCIÓN
