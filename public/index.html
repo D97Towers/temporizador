@@ -2748,7 +2748,7 @@
         return maleVoiceNames.some(maleName => voiceName.toLowerCase().includes(maleName));
       };
       
-      // Función para verificar calidad de acento español - MÁS FLEXIBLE
+      // Función para verificar calidad de acento español - OPTIMIZADA POR NAVEGADOR
       const isHighQualitySpanish = (voice) => {
         const voiceName = voice.name.toLowerCase();
         const lang = voice.lang.toLowerCase();
@@ -2762,9 +2762,20 @@
         // Preferir nombres premium pero no ser restrictivo
         const isPremium = premiumFemaleVoices.some(name => voiceName.includes(name));
         
-        // NO evitar voces con ciertas palabras - ser más inclusivo
-        const isGoodName = isPremium || !(['robot', 'artificial'].some(flag => voiceName.includes(flag)));
+        // Para Chrome y Firefox, ser más selectivo con voces naturales
+        if (browser === 'chrome' || browser === 'firefox') {
+          // Evitar voces que suenan robóticas en estos navegadores
+          const avoidRobotic = !(['robot', 'artificial', 'neural', 'enhanced', 'tts'].some(flag => voiceName.includes(flag)));
+          
+          // Preferir voces con nombres que suenan más naturales
+          const naturalNames = ['maria', 'monica', 'lucia', 'sofia', 'carmen', 'ana', 'laura', 'isabel', 'teresa'];
+          const hasNaturalName = naturalNames.some(name => voiceName.includes(name));
+          
+          return goodAccent && isLocal && avoidRobotic && (isPremium || hasNaturalName);
+        }
         
+        // Para Safari, mantener lógica original (más flexible)
+        const isGoodName = isPremium || !(['robot', 'artificial'].some(flag => voiceName.includes(flag)));
         return goodAccent && isLocal && isGoodName;
       };
       
@@ -2850,27 +2861,27 @@
           lang: 'es-ES'
         },
         firefox: {
-          rate: 0.7,  // Más lento en Firefox para mejor claridad
-          pitch: 0.9, // Pitch ligeramente más bajo para sonar más natural
+          rate: 0.65, // Más lento en Firefox para mejor claridad y naturalidad
+          pitch: 0.85, // Pitch más bajo para sonar más natural
           volume: 0.9,
           lang: 'es-ES'
         },
         chrome: {
-          rate: 0.8,
-          pitch: 1.0,
-          volume: 0.8,
+          rate: 0.75, // Más lento que Safari para mejor naturalidad
+          pitch: 0.95, // Pitch ligeramente más bajo para sonar más natural
+          volume: 0.85,
           lang: 'es-ES'
         },
         edge: {
-          rate: 0.8,
-          pitch: 1.0,
-          volume: 0.8,
+          rate: 0.75, // Más lento que Safari para mejor naturalidad
+          pitch: 0.95, // Pitch ligeramente más bajo para sonar más natural
+          volume: 0.85,
           lang: 'es-ES'
         },
         default: {
-          rate: 0.8,
-          pitch: 1.0,
-          volume: 0.8,
+          rate: 0.75, // Usar configuración más conservadora por defecto
+          pitch: 0.95,
+          volume: 0.85,
           lang: 'es-ES'
         }
       };
