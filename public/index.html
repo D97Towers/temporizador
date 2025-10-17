@@ -2731,21 +2731,28 @@
         return maleNames.some(maleName => voiceName.toLowerCase().includes(maleName));
       };
       
-      // Función simplificada para seleccionar voz de calidad
+      // Función ULTRA ESTRICTA para seleccionar solo voces humanas reales
       const isQualityVoice = (voice) => {
         const voiceName = voice.name.toLowerCase();
         const lang = voice.lang.toLowerCase();
         
-        // Criterios básicos: acento español, voz local, no robótica
+        // CRITERIOS ULTRA ESTRICTOS PARA SONIDO HUMANO:
         const hasSpanishAccent = lang.includes('es-es') || lang.includes('es-mx') || lang.startsWith('es');
         const isLocal = voice.localService;
-        const notRobotic = !['robot', 'artificial', 'neural', 'tts', 'synthetic', 'digital', 'machine', 'auto', 'generated'].some(flag => voiceName.includes(flag));
-        const isNatural = ['maria', 'monica', 'lucia', 'sofia', 'carmen', 'ana', 'laura', 'isabel', 'teresa', 'paula', 'claudia'].some(name => voiceName.includes(name));
         
-        return hasSpanishAccent && isLocal && notRobotic && isNatural;
+        // EVITAR TODAS las voces robóticas/artificiales
+        const notRobotic = !['robot', 'artificial', 'neural', 'tts', 'synthetic', 'digital', 'machine', 'auto', 'generated', 'system', 'speak', 'voice', 'speech', 'sapi', 'espeak', 'festival', 'mary', 'enhanced', 'premium', 'cloud'].some(flag => voiceName.includes(flag));
+        
+        // SOLO nombres que suenen 100% humanos
+        const isHuman = ['maria', 'monica', 'lucia', 'sofia', 'carmen', 'ana', 'laura', 'isabel', 'teresa', 'paula', 'claudia', 'natalia', 'veronica', 'patricia', 'cristina', 'rosa', 'elena'].some(name => voiceName.includes(name));
+        
+        // ADICIONAL: preferir voces con nombres reales de personas
+        const hasRealPersonName = voiceName.match(/\b(maria|monica|lucia|sofia|carmen|ana|laura|isabel|teresa|paula|claudia|natalia|veronica|patricia|cristina|rosa|elena)\b/);
+        
+        return hasSpanishAccent && isLocal && notRobotic && isHuman && hasRealPersonName;
       };
       
-      // Selección simplificada de voz femenina de calidad
+      // SELECCIÓN ULTRA ESTRICTA: solo voces que suenen 100% humanas
       let selectedVoice = spanishVoices.find(voice => {
         const voiceName = voice.name.toLowerCase();
         const isNotMale = !isMaleVoice(voiceName);
@@ -2753,11 +2760,23 @@
         return isNotMale && isQuality;
       });
       
-      // Fallback: cualquier voz femenina no masculina
+      // FALLBACK 1: voces con nombres reales pero menos estricto
       if (!selectedVoice) {
         selectedVoice = spanishVoices.find(voice => {
           const voiceName = voice.name.toLowerCase();
-          return !isMaleVoice(voiceName);
+          const isNotMale = !isMaleVoice(voiceName);
+          const isRealName = ['maria', 'monica', 'lucia', 'sofia', 'carmen', 'ana', 'laura', 'isabel', 'teresa', 'paula', 'claudia'].some(name => voiceName.includes(name));
+          return isNotMale && isRealName;
+        });
+      }
+      
+      // FALLBACK 2: cualquier voz femenina que no sea claramente robótica
+      if (!selectedVoice) {
+        selectedVoice = spanishVoices.find(voice => {
+          const voiceName = voice.name.toLowerCase();
+          const isNotMale = !isMaleVoice(voiceName);
+          const notObviouslyRobotic = !['robot', 'artificial', 'neural', 'tts', 'synthetic', 'digital', 'machine', 'auto', 'generated'].some(flag => voiceName.includes(flag));
+          return isNotMale && notObviouslyRobotic;
         });
       }
       
@@ -2784,16 +2803,25 @@
     function getVoiceParameters() {
       const browser = detectBrowser();
       
-      // Configuración optimizada basada en características de cada motor TTS
+      // Configuración ULTRA NATURAL para sonido humano - parámetros extremos
       const voiceConfig = {
-        safari: { rate: 0.85, pitch: 1.0, volume: 0.8 },     // Motor nativo macOS - excelente calidad
-        firefox: { rate: 0.7, pitch: 0.95, volume: 0.85 },   // Aumentado para acercarse a Safari
-        chrome: { rate: 0.8, pitch: 1.0, volume: 0.8 },      // Aumentado para acercarse a Safari
-        edge: { rate: 0.8, pitch: 1.0, volume: 0.8 },        // Aumentado para acercarse a Safari
-        default: { rate: 0.8, pitch: 1.0, volume: 0.8 }      // Aumentado para acercarse a Safari
+        safari: { rate: 0.9, pitch: 1.1, volume: 0.8 },      // Safari ya bueno, optimizado
+        firefox: { rate: 0.6, pitch: 1.2, volume: 0.9 },     // Rate más lento + pitch más alto = más humano
+        chrome: { rate: 0.75, pitch: 1.1, volume: 0.85 },    // Balanceado para sonar humano
+        edge: { rate: 0.75, pitch: 1.1, volume: 0.85 },      // Igual que Chrome
+        default: { rate: 0.8, pitch: 1.1, volume: 0.85 }     // Fallback humano
       };
       
-      return { ...voiceConfig[browser] || voiceConfig.default, lang: 'es-ES' };
+      const params = { ...voiceConfig[browser] || voiceConfig.default, lang: 'es-ES' };
+      
+      // POST-PROCESAMIENTO PARA SONIDO MÁS HUMANO
+      if (browser === 'firefox' || browser === 'chrome' || browser === 'edge') {
+        // Para navegadores con motores TTS inferiores, aplicar correcciones adicionales
+        params.rate = Math.max(params.rate * 0.9, 0.5); // Ligeramente más lento para sonar más humano
+        params.pitch = Math.min(params.pitch * 1.05, 1.3); // Pitch ligeramente más alto para sonar más natural
+      }
+      
+      return params;
     }
 
 
