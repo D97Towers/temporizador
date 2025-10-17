@@ -2786,11 +2786,11 @@
       
       // Configuración optimizada basada en características de cada motor TTS
       const voiceConfig = {
-        safari: { rate: 0.85, pitch: 1.0, volume: 0.8 },     // Motor nativo macOS - buena calidad
-        firefox: { rate: 0.5, pitch: 0.8, volume: 0.9 },     // Motor TTS más robótico - parámetros extremos
-        chrome: { rate: 0.65, pitch: 0.9, volume: 0.85 },    // Motor TTS medio - parámetros moderados
-        edge: { rate: 0.65, pitch: 0.9, volume: 0.85 },      // Similar a Chrome
-        default: { rate: 0.7, pitch: 0.95, volume: 0.85 }    // Fallback conservador
+        safari: { rate: 0.85, pitch: 1.0, volume: 0.8 },     // Motor nativo macOS - excelente calidad
+        firefox: { rate: 0.7, pitch: 0.95, volume: 0.85 },   // Aumentado para acercarse a Safari
+        chrome: { rate: 0.8, pitch: 1.0, volume: 0.8 },      // Aumentado para acercarse a Safari
+        edge: { rate: 0.8, pitch: 1.0, volume: 0.8 },        // Aumentado para acercarse a Safari
+        default: { rate: 0.8, pitch: 1.0, volume: 0.8 }      // Aumentado para acercarse a Safari
       };
       
       return { ...voiceConfig[browser] || voiceConfig.default, lang: 'es-ES' };
