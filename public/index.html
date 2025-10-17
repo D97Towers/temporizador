@@ -2723,124 +2723,41 @@
       
       console.log('🎙️ Todas las voces en español:', spanishVoices.map(v => ({ name: v.name, lang: v.lang, localService: v.localService })));
       
-      // Nombres de voces femeninas con mejor acento español - prioridad por calidad
-      const premiumFemaleVoices = [
-        'maria', 'monica', 'lucia', 'sofia', 'carmen', 'ana', 'laura', 'isabel', 
-        'teresa', 'patricia', 'cristina', 'rosa', 'elena', 'esmeralda', 'isabella'
-      ];
+      // Lista de nombres masculinos a excluir
+      const maleNames = ['eddy', 'carlos', 'juan', 'diego', 'male', 'men', 'man', 'masculino', 'antonio', 'miguel', 'pedro', 'jose', 'manuel', 'rafael', 'daniel', 'andres', 'roberto', 'fernando', 'eduardo', 'alejandro', 'sergio', 'pablo', 'mario', 'ricardo', 'alberto', 'enrique', 'ramon', 'javier', 'gabriel', 'luis', 'felipe', 'sebastian', 'adrian', 'david'];
       
-      // Nombres de voces femeninas generales
-      const femaleVoiceNames = [
-        ...premiumFemaleVoices,
-        'espeaker', 'female', 'woman', 'girl'
-      ];
-      
-      // Lista específica de nombres masculinos a excluir
-      const maleVoiceNames = [
-        'eddy', 'carlos', 'juan', 'diego', 'male', 'men', 'man', 'masculino', 'antonio', 'miguel',
-        'pedro', 'jose', 'manuel', 'rafael', 'daniel', 'andres', 'roberto', 'fernando', 'eduardo',
-        'alejandro', 'sergio', 'pablo', 'mario', 'ricardo', 'alberto', 'enrique', 'ramon', 'javier',
-        'gabriel', 'luis', 'felipe', 'sebastian', 'adrian', 'david'
-      ];
-      
-      // Función helper para verificar si una voz es masculina
+      // Función para verificar si una voz es masculina
       const isMaleVoice = (voiceName) => {
-        return maleVoiceNames.some(maleName => voiceName.toLowerCase().includes(maleName));
+        return maleNames.some(maleName => voiceName.toLowerCase().includes(maleName));
       };
       
-      // Función para verificar calidad de acento español - OPTIMIZADA POR NAVEGADOR
-      const isHighQualitySpanish = (voice) => {
+      // Función simplificada para seleccionar voz de calidad
+      const isQualityVoice = (voice) => {
         const voiceName = voice.name.toLowerCase();
         const lang = voice.lang.toLowerCase();
         
-        // Preferir voces de España (es-ES) o México (es-MX) pero ser más flexible
-        const goodAccent = lang.includes('es-es') || lang.includes('es-mx') || lang.includes('es-419') || lang.startsWith('es');
-        
-        // Preferir voces locales
+        // Criterios básicos: acento español, voz local, no robótica
+        const hasSpanishAccent = lang.includes('es-es') || lang.includes('es-mx') || lang.startsWith('es');
         const isLocal = voice.localService;
+        const notRobotic = !['robot', 'artificial', 'neural', 'tts', 'synthetic', 'digital', 'machine', 'auto', 'generated'].some(flag => voiceName.includes(flag));
+        const isNatural = ['maria', 'monica', 'lucia', 'sofia', 'carmen', 'ana', 'laura', 'isabel', 'teresa', 'paula', 'claudia'].some(name => voiceName.includes(name));
         
-        // Preferir nombres premium pero no ser restrictivo
-        const isPremium = premiumFemaleVoices.some(name => voiceName.includes(name));
-        
-        // Para Firefox, ser EXTREMADAMENTE selectivo para evitar sonido robótico
-        if (browser === 'firefox') {
-          // Evitar voces que suenan robóticas en Firefox (lista muy expandida)
-          const avoidRobotic = !(['robot', 'artificial', 'neural', 'enhanced', 'tts', 'synthetic', 'digital', 'machine', 'auto', 'generated', 'system', 'speak', 'voice', 'speech', 'sapi', 'espeak', 'festival', 'mary'].some(flag => voiceName.includes(flag)));
-          
-          // Solo voces con nombres muy naturales en Firefox
-          const naturalNames = ['maria', 'monica', 'lucia', 'sofia', 'carmen', 'ana', 'laura', 'isabel', 'teresa'];
-          const hasNaturalName = naturalNames.some(name => voiceName.includes(name));
-          
-          // Para Firefox, ser EXTREMADAMENTE estricto: solo voces naturales o premium
-          return goodAccent && isLocal && avoidRobotic && (isPremium || hasNaturalName);
-        }
-        
-        // Para Chrome, ser MUY selectivo con voces naturales
-        if (browser === 'chrome') {
-          // Evitar voces que suenan robóticas en Chrome (lista expandida)
-          const avoidRobotic = !(['robot', 'artificial', 'neural', 'enhanced', 'tts', 'synthetic', 'digital', 'machine', 'auto', 'generated', 'system'].some(flag => voiceName.includes(flag)));
-          
-          // Preferir voces con nombres que suenan más naturales (lista expandida)
-          const naturalNames = ['maria', 'monica', 'lucia', 'sofia', 'carmen', 'ana', 'laura', 'isabel', 'teresa', 'paula', 'claudia', 'natalia', 'veronica', 'patricia'];
-          const hasNaturalName = naturalNames.some(name => voiceName.includes(name));
-          
-          // Para Chrome, ser MUY estricto: solo voces naturales o premium
-          return goodAccent && isLocal && avoidRobotic && (isPremium || hasNaturalName);
-        }
-        
-        // Para Safari, mantener lógica original (más flexible)
-        const isGoodName = isPremium || !(['robot', 'artificial'].some(flag => voiceName.includes(flag)));
-        return goodAccent && isLocal && isGoodName;
+        return hasSpanishAccent && isLocal && notRobotic && isNatural;
       };
       
-      // PRIORIDAD 1: Voces premium femeninas con buen acento español
+      // Selección simplificada de voz femenina de calidad
       let selectedVoice = spanishVoices.find(voice => {
         const voiceName = voice.name.toLowerCase();
-        const isPremiumFeminine = premiumFemaleVoices.some(name => voiceName.includes(name));
         const isNotMale = !isMaleVoice(voiceName);
-        const isGoodQuality = isHighQualitySpanish(voice);
-        return isPremiumFeminine && isNotMale && isGoodQuality;
+        const isQuality = isQualityVoice(voice);
+        return isNotMale && isQuality;
       });
       
-      // PRIORIDAD 2: Cualquier voz femenina con buen acento español local
+      // Fallback: cualquier voz femenina no masculina
       if (!selectedVoice) {
         selectedVoice = spanishVoices.find(voice => {
           const voiceName = voice.name.toLowerCase();
-          const isFeminineName = femaleVoiceNames.some(femaleName => voiceName.includes(femaleName));
-          const isNotMale = !isMaleVoice(voiceName);
-          const isGoodQuality = isHighQualitySpanish(voice);
-          return isFeminineName && isNotMale && isGoodQuality;
-        });
-      }
-      
-      // PRIORIDAD 3: Voces femeninas locales sin filtro de acento estricto
-      if (!selectedVoice && spanishVoices.length > 0) {
-        selectedVoice = spanishVoices.find(voice => {
-          const voiceName = voice.name.toLowerCase();
-          const isFeminineName = femaleVoiceNames.some(femaleName => voiceName.includes(femaleName));
-          const isNotMale = !isMaleVoice(voiceName);
-          
-          // Preferir voces locales pero ser más flexible con acento
-          return isFeminineName && isNotMale && voice.localService;
-        });
-      }
-      
-      // PRIORIDAD 4: Cualquier voz femenina no masculina
-      if (!selectedVoice && spanishVoices.length > 0) {
-        selectedVoice = spanishVoices.find(voice => {
-          const voiceName = voice.name.toLowerCase();
-          const isFeminineName = femaleVoiceNames.some(femaleName => voiceName.includes(femaleName));
-          const isNotMale = !isMaleVoice(voiceName);
-          return isFeminineName && isNotMale;
-        });
-      }
-      
-      // PRIORIDAD 5: Cualquier voz no masculina local
-      if (!selectedVoice && spanishVoices.length > 0) {
-        selectedVoice = spanishVoices.find(voice => {
-          const voiceName = voice.name.toLowerCase();
-          const isNotMale = !isMaleVoice(voiceName);
-          return isNotMale && voice.localService;
+          return !isMaleVoice(voiceName);
         });
       }
       
@@ -2863,176 +2780,22 @@
       return selectedVoice;
     }
 
-    // Función para obtener parámetros de voz optimizados por navegador
+    // Parámetros de voz optimizados para sonido natural en español
     function getVoiceParameters() {
       const browser = detectBrowser();
       
-      const params = {
-        safari: {
-          rate: 0.9,
-          pitch: 1.0,
-          volume: 0.8,
-          lang: 'es-ES'
-        },
-        firefox: {
-          rate: 0.45, // EXTREMADAMENTE lento en Firefox para evitar sonido robótico
-          pitch: 0.75, // Pitch muy bajo para sonar más humano
-          volume: 0.9,
-          lang: 'es-ES'
-        },
-        chrome: {
-          rate: 0.6, // MUCHO más lento que Safari para acento natural
-          pitch: 0.85, // Pitch significativamente más bajo para sonar más natural
-          volume: 0.85,
-          lang: 'es-ES'
-        },
-        edge: {
-          rate: 0.6, // MUCHO más lento que Safari para acento natural
-          pitch: 0.85, // Pitch significativamente más bajo para sonar más natural
-          volume: 0.85,
-          lang: 'es-ES'
-        },
-        default: {
-          rate: 0.75, // Usar configuración más conservadora por defecto
-          pitch: 0.95,
-          volume: 0.85,
-          lang: 'es-ES'
-        }
+      // Configuración optimizada basada en características de cada motor TTS
+      const voiceConfig = {
+        safari: { rate: 0.85, pitch: 1.0, volume: 0.8 },     // Motor nativo macOS - buena calidad
+        firefox: { rate: 0.5, pitch: 0.8, volume: 0.9 },     // Motor TTS más robótico - parámetros extremos
+        chrome: { rate: 0.65, pitch: 0.9, volume: 0.85 },    // Motor TTS medio - parámetros moderados
+        edge: { rate: 0.65, pitch: 0.9, volume: 0.85 },      // Similar a Chrome
+        default: { rate: 0.7, pitch: 0.95, volume: 0.85 }    // Fallback conservador
       };
       
-      const selectedParams = params[browser] || params.default;
-      console.log(`🎛️ Parámetros de voz para ${browser}:`, selectedParams);
-      
-      return selectedParams;
+      return { ...voiceConfig[browser] || voiceConfig.default, lang: 'es-ES' };
     }
 
-    // Función temporal para probar parámetros de voz
-    function testVoiceParameters() {
-      const browser = detectBrowser();
-      console.log(`🧪 Probando parámetros de voz para ${browser.toUpperCase()}`);
-      
-      const testMessage = "Hola, soy una prueba de voz en español";
-      const currentParams = getVoiceParameters();
-      
-      console.log('🎛️ Parámetros actuales:', currentParams);
-      
-      // Probar con parámetros actuales
-      const utterance = new SpeechSynthesisUtterance(testMessage);
-      utterance.lang = currentParams.lang;
-      utterance.rate = currentParams.rate;
-      utterance.pitch = currentParams.pitch;
-      utterance.volume = currentParams.volume;
-      
-      const selectedVoice = getFemaleSpanishVoice();
-      if (selectedVoice) {
-        utterance.voice = selectedVoice;
-        console.log('🎤 Usando voz:', selectedVoice.name);
-      }
-      
-      utterance.onend = () => {
-        console.log('✅ Prueba completada');
-      };
-      
-      speechSynthesis.speak(utterance);
-    }
-    
-    // Función específica para probar Firefox con parámetros anti-robóticos
-    function testFirefoxAntiRobotic() {
-      if (detectBrowser() !== 'firefox') {
-        console.log('⚠️ Esta función es específica para Firefox');
-        return;
-      }
-      
-      const firefoxVariations = [
-        { rate: 0.4, pitch: 0.7, volume: 0.9, name: 'EXTREMO lento + pitch muy bajo' },
-        { rate: 0.45, pitch: 0.75, volume: 0.9, name: 'MUY lento + pitch bajo (actual)' },
-        { rate: 0.5, pitch: 0.8, volume: 0.9, name: 'Lento + pitch medio-bajo' },
-        { rate: 0.55, pitch: 0.85, volume: 0.9, name: 'Lento + pitch medio' }
-      ];
-      
-      let currentIndex = 0;
-      
-      function playNext() {
-        if (currentIndex >= firefoxVariations.length) {
-          console.log('🎯 Prueba anti-robótica de Firefox completada');
-          return;
-        }
-        
-        const variation = firefoxVariations[currentIndex];
-        console.log(`🧪 Firefox Anti-Robótico: ${variation.name}`, variation);
-        
-        const utterance = new SpeechSynthesisUtterance(`Prueba Firefox ${currentIndex + 1}: ${variation.name}`);
-        utterance.lang = 'es-ES';
-        utterance.rate = variation.rate;
-        utterance.pitch = variation.pitch;
-        utterance.volume = variation.volume;
-        
-        const selectedVoice = getFemaleSpanishVoice();
-        if (selectedVoice) {
-          utterance.voice = selectedVoice;
-        }
-        
-        utterance.onend = () => {
-          setTimeout(() => {
-            currentIndex++;
-            playNext();
-          }, 1500);
-        };
-        
-        speechSynthesis.speak(utterance);
-      }
-      
-      playNext();
-    }
-
-    // Función para probar diferentes combinaciones de parámetros
-    function testVoiceVariations() {
-      const variations = [
-        { rate: 0.5, pitch: 0.8, volume: 0.9, name: 'MUY lento + pitch bajo' },
-        { rate: 0.6, pitch: 0.85, volume: 0.9, name: 'Lento + pitch medio-bajo' },
-        { rate: 0.7, pitch: 0.9, volume: 0.9, name: 'Medio-lento + pitch medio' },
-        { rate: 0.8, pitch: 0.95, volume: 0.9, name: 'Medio + pitch alto' }
-      ];
-      
-      let currentIndex = 0;
-      
-      function playNext() {
-        if (currentIndex >= variations.length) {
-          console.log('🎯 Prueba de variaciones completada');
-          return;
-        }
-        
-        const variation = variations[currentIndex];
-        console.log(`🧪 Probando: ${variation.name}`, variation);
-        
-        const utterance = new SpeechSynthesisUtterance(`Prueba ${currentIndex + 1}: ${variation.name}`);
-        utterance.lang = 'es-ES';
-        utterance.rate = variation.rate;
-        utterance.pitch = variation.pitch;
-        utterance.volume = variation.volume;
-        
-        const selectedVoice = getFemaleSpanishVoice();
-        if (selectedVoice) {
-          utterance.voice = selectedVoice;
-        }
-        
-        utterance.onend = () => {
-          setTimeout(() => {
-            currentIndex++;
-            playNext();
-          }, 1000);
-        };
-        
-        speechSynthesis.speak(utterance);
-      }
-      
-      playNext();
-    }
-    
-    // Hacer funciones disponibles globalmente para pruebas en consola
-    window.testVoiceParameters = testVoiceParameters;
-    window.testVoiceVariations = testVoiceVariations;
-    window.testFirefoxAntiRobotic = testFirefoxAntiRobotic;
 
     // ============================================================================
     // FUNCIONES DE SEGURIDAD CRÍTICAS PARA PRODUCCIÓN
