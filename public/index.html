@@ -3895,6 +3895,19 @@
     let alertedSessions = new Set(); // Para evitar alertas duplicadas
     let pendingTimeAlerts = new Map(); // Para consolidar alertas de tiempo terminado
     let timeAlertTimeout = null; // Para agrupar alertas cercanas en tiempo
+    
+    // SISTEMA DE COLA DE VOZ PARA EVITAR INTERRUPCIONES
+    let voiceQueue = [];
+    let isVoicePlaying = false;
+    let voiceQueueProcessing = false;
+    
+    // SISTEMA ADAPTATIVO DE ALERTAS
+    let adaptiveAlertSystem = {
+      enabled: true,
+      maxRepetitions: 3,
+      baseDelay: 8000,
+      maxDelay: 30000
+    };
 
     // Sistema de alertas inteligente para evitar redundancias
     function showSmartAlert(text, type = 'success', sessionId = null, options = {}) {
@@ -3906,6 +3919,12 @@
         return;
       }
       console.log(`✅ Alerta aprobada por preferencias: ${text}`);
+      
+      // SISTEMA INTELIGENTE DE CONSOLIDACIÓN DE ALERTAS
+      if (type === 'warning' && text.includes('quedan solo') && text.includes('segundos')) {
+        handleTimeAlert(text, sessionId, options);
+        return;
+      }
       
       // Determinar qué tipo de alerta mostrar
       const alertTypes = determineAlertTypes(type, options);
@@ -3923,6 +3942,195 @@
       // Mostrar notificación del navegador si está habilitada
       if (alertTypes.browser && browserNotificationsEnabled) {
         showBrowserNotification(getNotificationTitle(type), text);
+      }
+    }
+    
+    // SISTEMA INTELIGENTE DE CONSOLIDACIÓN DE ALERTAS DE TIEMPO
+    function handleTimeAlert(text, sessionId, options) {
+      console.log(`🧠 SISTEMA INTELIGENTE: Procesando alerta de tiempo: "${text}"`);
+      
+      // Extraer información del niño de la alerta
+      const childName = extractChildNameFromAlert(text);
+      const timeLeft = extractTimeFromAlert(text);
+      
+      if (!childName) {
+        console.log(`⚠️ No se pudo extraer nombre del niño de: "${text}"`);
+        showVisualAlert(text, 'warning', sessionId);
+        return;
+      }
+      
+      // Agregar a alertas pendientes
+      pendingTimeAlerts.set(childName, {
+        text: text,
+        sessionId: sessionId,
+        timeLeft: timeLeft,
+        timestamp: Date.now()
+      });
+      
+      console.log(`📊 Alertas pendientes: ${pendingTimeAlerts.size}`);
+      
+      // Cancelar timeout anterior si existe
+      if (timeAlertTimeout) {
+        clearTimeout(timeAlertTimeout);
+      }
+      
+      // Configurar timeout para consolidar alertas
+      timeAlertTimeout = setTimeout(() => {
+        showConsolidatedTimeAlert();
+      }, 2000); // Esperar 2 segundos para consolidar
+    }
+    
+    // Extraer nombre del niño de la alerta
+    function extractChildNameFromAlert(text) {
+      const match = text.match(/A\s+(\w+)\s+le\s+quedan/);
+      return match ? match[1] : null;
+    }
+    
+    // Extraer tiempo restante de la alerta
+    function extractTimeFromAlert(text) {
+      const match = text.match(/(\d+)\s+segundos/);
+      return match ? parseInt(match[1]) : 0;
+    }
+    
+    // Mostrar alerta consolidada de tiempo
+    function showConsolidatedTimeAlert() {
+      if (pendingTimeAlerts.size === 0) return;
+      
+      console.log(`🧠 CONSOLIDANDO ${pendingTimeAlerts.size} ALERTAS DE TIEMPO`);
+      
+      const alerts = Array.from(pendingTimeAlerts.values());
+      const alertCount = alerts.length;
+      
+      let consolidatedText;
+      let consolidatedOptions = {
+        alertCount: alertCount,
+        pendingAlerts: alerts,
+        consolidated: true
+      };
+      
+      if (alertCount === 1) {
+        // Una sola alerta - mostrar normal
+        consolidatedText = alerts[0].text;
+      } else if (alertCount === 2) {
+        // Dos alertas - mostrar juntas
+        const child1 = extractChildNameFromAlert(alerts[0].text);
+        const child2 = extractChildNameFromAlert(alerts[1].text);
+        consolidatedText = `¡Atención! A ${child1} y ${child2} les quedan pocos segundos`;
+      } else if (alertCount <= 5) {
+        // 3-5 alertas - mostrar lista
+        const children = alerts.map(alert => extractChildNameFromAlert(alert.text));
+        consolidatedText = `¡Atención! A ${children.join(', ')} les quedan pocos segundos`;
+      } else {
+        // 6+ alertas - mostrar consolidado
+        consolidatedText = `¡Atención! A ${alertCount} niños les quedan pocos segundos`;
+      }
+      
+      // Mostrar alerta visual consolidada
+      showVisualAlert(consolidatedText, 'warning', null);
+      
+      // Mostrar alerta de voz consolidada si está habilitada
+      if (voiceNotificationsEnabled) {
+        speakAlertWithRepetition(alerts, alertCount);
+      }
+      
+      // Limpiar alertas pendientes
+      pendingTimeAlerts.clear();
+    }
+    
+    // SISTEMA DE COLA DE VOZ PARA EVITAR INTERRUPCIONES
+    function addToVoiceQueue(message, options = {}) {
+      console.log(`🎵 Agregando a cola de voz: "${message}"`);
+      voiceQueue.push({ message, options, timestamp: Date.now() });
+      
+      if (!voiceQueueProcessing) {
+        processVoiceQueue();
+      }
+    }
+    
+    async function processVoiceQueue() {
+      if (voiceQueueProcessing || voiceQueue.length === 0) return;
+      
+      voiceQueueProcessing = true;
+      console.log(`🎵 Procesando cola de voz (${voiceQueue.length} mensajes pendientes)`);
+      
+      while (voiceQueue.length > 0) {
+        const { message, options } = voiceQueue.shift();
+        console.log(`🎵 Reproduciendo: "${message}"`);
+        
+        await speakWithHybridVoice(message, options);
+        
+        // Pausa entre mensajes para evitar solapamiento
+        if (voiceQueue.length > 0) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+      
+      voiceQueueProcessing = false;
+      console.log(`🎵 Cola de voz procesada completamente`);
+    }
+    
+    // SISTEMA ADAPTATIVO DE REPETICIONES
+    function calculateAdaptiveRepetitions(message, alertCount) {
+      if (!adaptiveAlertSystem.enabled) {
+        return 1; // Repetición única si está deshabilitado
+      }
+      
+      let repetitions;
+      let delay;
+      
+      if (alertCount === 1) {
+        // 1 niño: 2 repeticiones (inmediata + 15s)
+        repetitions = 2;
+        delay = 15000;
+      } else if (alertCount <= 3) {
+        // 2-3 niños: 2 repeticiones (inmediata + 20s)
+        repetitions = 2;
+        delay = 20000;
+      } else if (alertCount <= 5) {
+        // 4-5 niños: 1 repetición (inmediata)
+        repetitions = 1;
+        delay = 0;
+      } else {
+        // 6+ niños: 1 mensaje consolidado (inmediata)
+        repetitions = 1;
+        delay = 0;
+      }
+      
+      console.log(`🧠 ADAPTATIVO: ${alertCount} niños → ${repetitions} repeticiones, delay: ${delay}ms`);
+      return { repetitions, delay };
+    }
+    
+    // FUNCIÓN DE VOZ CON REPETICIONES ADAPTATIVAS
+    async function speakAlertWithRepetition(pendingAlerts, alertCount) {
+      if (!voiceNotificationsEnabled) return;
+      
+      console.log(`🧠 SISTEMA ADAPTATIVO: Procesando ${alertCount} alertas`);
+      
+      // Calcular repeticiones adaptativas
+      const { repetitions, delay } = calculateAdaptiveRepetitions('', alertCount);
+      
+      // Generar mensaje consolidado
+      let message;
+      if (alertCount === 1) {
+        const childName = extractChildNameFromAlert(pendingAlerts[0].text);
+        message = `Atención, ${childName} terminó su tiempo de juego`;
+      } else if (alertCount === 2) {
+        const child1 = extractChildNameFromAlert(pendingAlerts[0].text);
+        const child2 = extractChildNameFromAlert(pendingAlerts[1].text);
+        message = `Atención, ${child1} y ${child2} terminaron su tiempo de juego`;
+      } else if (alertCount <= 5) {
+        const children = pendingAlerts.map(alert => extractChildNameFromAlert(alert.text));
+        message = `Atención, ${children.join(', ')} terminaron su tiempo de juego`;
+      } else {
+        message = `Atención, ${alertCount} niños terminaron su tiempo de juego`;
+      }
+      
+      // Agregar repeticiones a la cola
+      for (let i = 0; i < repetitions; i++) {
+        addToVoiceQueue(message, { 
+          priority: 'high',
+          delay: i > 0 ? delay : 0 
+        });
       }
     }
     
