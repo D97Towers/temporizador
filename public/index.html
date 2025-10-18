@@ -4820,15 +4820,26 @@
     function closeAlert(alertId) {
       const alert = document.getElementById(alertId);
       if (alert) {
+        alert.style.display = 'none';
         alert.style.opacity = '0';
         alert.style.transform = 'translateX(100%)';
         alert.style.transition = 'all 0.3s ease';
         setTimeout(() => {
-          if (alert.parentNode) {
-          alert.remove();
+          if (alert && alert.parentNode) {
+            alert.remove();
           }
-        }, 300);
+        }, 100);
       }
+    }
+
+    // Función para limpiar alertas transparentes
+    function clearTransparentAlerts() {
+      const alerts = document.querySelectorAll('.status-message, .alert-container > div');
+      alerts.forEach(alert => {
+        if (alert.style.opacity === '0' || alert.style.display === 'none') {
+          alert.remove();
+        }
+      });
     }
     
     
@@ -6583,6 +6594,9 @@
 
     async function initializeApp() {
       if (isInitialized) return;
+      
+      // Limpiar alertas transparentes al inicializar
+      clearTransparentAlerts();
       
       try {
         console.log('Initializing app...');
