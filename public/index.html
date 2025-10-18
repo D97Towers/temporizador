@@ -3270,8 +3270,11 @@
       voiceQueue.push({
         message: message,
         options: options,
-        timestamp: now
+        timestamp: now,
+        id: Math.random().toString(36).substr(2, 9) // ID único para tracking
       });
+      
+      console.log(`📊 Cola actual: ${voiceQueue.length} mensajes pendientes`);
       
       // Procesar cola si no está en proceso
       if (!voiceQueueProcessing) {
@@ -3296,31 +3299,41 @@
         }
         
         const voiceItem = voiceQueue.shift();
-        console.log(`🎤 Reproduciendo: "${voiceItem.message}"`);
+        console.log(`🎤 Reproduciendo: "${voiceItem.message}" (ID: ${voiceItem.id})`);
         
         isVoicePlaying = true;
+        
+        // NO cancelar speechSynthesis aquí - respetar mensaje en curso
         const utterance = createHybridUtterance(voiceItem.message, voiceItem.options.alertCount || 1);
         
+        utterance.onstart = () => {
+          console.log(`🔊 Audio iniciado: "${voiceItem.message}" (ID: ${voiceItem.id})`);
+        };
+        
         utterance.onend = () => {
-          console.log(`✅ Mensaje completado: "${voiceItem.message}"`);
+          console.log(`✅ Mensaje completado: "${voiceItem.message}" (ID: ${voiceItem.id})`);
           isVoicePlaying = false;
-          // Pequeña pausa antes del siguiente mensaje
-          setTimeout(playNextInQueue, 500);
+          
+          // Pausa entre mensajes para evitar solapamiento
+          const pauseTime = 800; // 800ms entre mensajes
+          console.log(`⏸️ Pausa de ${pauseTime}ms antes del siguiente mensaje...`);
+          setTimeout(playNextInQueue, pauseTime);
         };
         
         utterance.onerror = (e) => {
-          console.error(`❌ Error en mensaje: "${voiceItem.message}"`, e);
+          console.error(`❌ Error en mensaje: "${voiceItem.message}" (ID: ${voiceItem.id})`, e);
           console.log(`🔍 Tipo de error: ${e.error}, CharIndex: ${e.charIndex}`);
           
           isVoicePlaying = false;
           
-          // Si es error de interrupción, esperar un poco más antes de continuar
-          const delay = e.error === 'interrupted' ? 1000 : 100;
-          console.log(`⏳ Esperando ${delay}ms antes de continuar...`);
+          // Si es error de interrupción, esperar más tiempo
+          const delay = e.error === 'interrupted' ? 2000 : 500;
+          console.log(`⏳ Error ${e.error}, esperando ${delay}ms antes de continuar...`);
           
           setTimeout(playNextInQueue, delay);
         };
         
+        // Reproducir sin cancelar audio previo
         speechSynthesis.speak(utterance);
       }
       
@@ -4090,8 +4103,8 @@
         // FORZAR ACTIVACIÓN DE AUDIO - URGENTE
         console.log(`🚨 FORZANDO ACTIVACIÓN DE AUDIO URGENTE`);
         
-        // Cancelar cualquier voz anterior
-        speechSynthesis.cancel();
+        // NO cancelar aquí - respetar cola secuencial
+        // speechSynthesis.cancel();
         
         // Esperar un momento para asegurar cancelación
         setTimeout(() => {
@@ -5496,8 +5509,8 @@
           throw new Error('Speech Synthesis no soportado');
         }
         
-        // Cancelar cualquier síntesis previa
-        window.speechSynthesis.cancel();
+        // NO cancelar aquí - respetar cola secuencial
+        // window.speechSynthesis.cancel();
         
         // Crear un test básico SILENCIOSO
         const testUtterance = new SpeechSynthesisUtterance('');
@@ -5603,8 +5616,8 @@
         voiceStatus.textContent = 'Voz Desactivada';
         showStatusMessage('🔇 Notificaciones de voz desactivadas', 'info');
         
-        // Cancelar cualquier síntesis en curso
-        window.speechSynthesis.cancel();
+        // NO cancelar aquí - respetar cola secuencial
+        // window.speechSynthesis.cancel();
       }
     }
 
