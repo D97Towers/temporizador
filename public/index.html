@@ -2737,12 +2737,6 @@
       }
     }
     
-    function hideStatusMessage() {
-      const msg = document.getElementById('statusMessage');
-      if (msg) {
-        msg.style.display = 'none';
-      }
-    }
 
     // Variables globales críticas para el sistema de voz
     let voiceNotificationsEnabled = true; // Control de notificaciones de voz
@@ -4024,42 +4018,11 @@
     // Función para ocultar manualmente el mensaje de estado
     function hideStatusMessage() {
       const msg = document.getElementById('statusMessage');
-      
-      // Limpiar timeout si existe
-      if (msg && msg.timeoutId) {
-        clearTimeout(msg.timeoutId);
-        msg.timeoutId = null;
+      if (msg) {
+        msg.style.display = 'none';
+        msg.style.opacity = '0';
+        msg.style.transform = 'translateX(400px)';
       }
-      
-      // Si no existe el elemento, no hacer nada
-      if (!msg || !msg.parentNode) {
-        return;
-      }
-      
-      // ANIMACIÓN: Primero ocultar con transición suave
-      msg.classList.remove('show');
-      
-      // Después de la animación, remover completamente del DOM
-      setTimeout(() => {
-        if (msg && msg.parentNode) {
-          msg.parentNode.removeChild(msg);
-          
-          // Recrear el elemento limpio
-          const newMsg = document.createElement('div');
-          newMsg.id = 'statusMessage';
-          newMsg.className = 'status-message';
-          newMsg.innerHTML = `
-            <span class="status-text"></span>
-            <button class="status-close" onclick="hideStatusMessage()" title="Cerrar">
-              <i class="fas fa-times"></i>
-            </button>
-          `;
-          newMsg.style.display = 'none';
-          
-          // Insertar el nuevo elemento en el mismo lugar
-          document.body.appendChild(newMsg);
-        }
-      }, 300); // Esperar a que termine la animación CSS
     }
 
     function showLoading(buttonId, show = true) {
@@ -4834,6 +4797,15 @@
 
     // Función para limpiar alertas transparentes
     function clearTransparentAlerts() {
+      // Limpiar statusMessage específicamente
+      const statusMsg = document.getElementById('statusMessage');
+      if (statusMsg) {
+        statusMsg.style.display = 'none';
+        statusMsg.style.opacity = '0';
+        statusMsg.style.transform = 'translateX(400px)';
+      }
+      
+      // Limpiar otras alertas transparentes
       const alerts = document.querySelectorAll('.status-message, .alert-container > div');
       alerts.forEach(alert => {
         if (alert.style.opacity === '0' || alert.style.display === 'none') {
@@ -6597,6 +6569,14 @@
       
       // Limpiar alertas transparentes al inicializar
       clearTransparentAlerts();
+      
+      // Limpiar específicamente el statusMessage
+      const statusMsg = document.getElementById('statusMessage');
+      if (statusMsg) {
+        statusMsg.style.display = 'none';
+        statusMsg.style.opacity = '0';
+        statusMsg.style.transform = 'translateX(400px)';
+      }
       
       try {
         console.log('Initializing app...');
