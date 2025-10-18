@@ -2803,28 +2803,28 @@
     function getVoiceParameters() {
       const browser = detectBrowser();
       
-      // Configuración ULTRA EXTREMA para Firefox - parámetros más agresivos
+      // Configuración REALISTA basada en limitaciones de motores TTS
       const voiceConfig = {
-        safari: { rate: 0.9, pitch: 1.1, volume: 0.8 },      // Safari ya bueno
-        firefox: { rate: 0.3, pitch: 1.6, volume: 0.95 },    // ULTRA lento + pitch máximo
-        chrome: { rate: 0.5, pitch: 1.3, volume: 0.85 },     // Muy lento + pitch alto
-        edge: { rate: 0.5, pitch: 1.3, volume: 0.85 },      // Igual que Chrome
-        default: { rate: 0.6, pitch: 1.2, volume: 0.85 }    // Fallback más lento
+        safari: { rate: 0.9, pitch: 1.1, volume: 0.8 },      // Safari - motor nativo excelente
+        firefox: { rate: 0.7, pitch: 1.0, volume: 0.8 },     // Firefox - aceptar limitaciones
+        chrome: { rate: 0.8, pitch: 1.1, volume: 0.8 },      // Chrome - motor medio
+        edge: { rate: 0.8, pitch: 1.1, volume: 0.8 },        // Edge - similar a Chrome
+        default: { rate: 0.8, pitch: 1.0, volume: 0.8 }     // Fallback conservador
       };
       
       const params = { ...voiceConfig[browser] || voiceConfig.default, lang: 'es-ES' };
       
-      // POST-PROCESAMIENTO ULTRA EXTREMO PARA FIREFOX
+      // POST-PROCESAMIENTO REALISTA - aceptar limitaciones de motores TTS
       if (browser === 'firefox') {
-        // Para Firefox, aplicar correcciones ULTRA agresivas
-        params.rate = Math.max(params.rate * 0.7, 0.2); // ULTRA lento para Firefox
-        params.pitch = Math.min(params.pitch * 1.2, 1.8); // Pitch ULTRA alto para Firefox
-        params.volume = Math.min(params.volume * 1.2, 1.0); // Volumen más alto para Firefox
+        // Firefox tiene limitaciones fundamentales - usar parámetros conservadores
+        params.rate = Math.max(params.rate * 0.95, 0.6); // Ligeramente más lento
+        params.pitch = Math.min(params.pitch * 1.05, 1.2); // Pitch ligeramente más alto
+        params.volume = Math.min(params.volume * 1.05, 1.0); // Volumen ligeramente más alto
       } else if (browser === 'chrome' || browser === 'edge') {
-        // Para Chrome/Edge, aplicar correcciones agresivas
-        params.rate = Math.max(params.rate * 0.8, 0.3); // MUCHO más lento para sonar más humano
-        params.pitch = Math.min(params.pitch * 1.1, 1.5); // Pitch significativamente más alto
-        params.volume = Math.min(params.volume * 1.1, 1.0); // Volumen ligeramente más alto
+        // Chrome/Edge - parámetros moderados
+        params.rate = Math.max(params.rate * 0.9, 0.7); // Ligeramente más lento
+        params.pitch = Math.min(params.pitch * 1.05, 1.3); // Pitch ligeramente más alto
+        params.volume = Math.min(params.volume * 1.05, 1.0); // Volumen ligeramente más alto
       }
       
       return params;
@@ -3058,11 +3058,58 @@
       testNextConfig();
     }
     
+    // Función de evaluación realista de limitaciones TTS
+    function evaluateTTSLimitations() {
+      const browser = detectBrowser();
+      console.log(`🔍 EVALUACIÓN DE LIMITACIONES TTS PARA ${browser.toUpperCase()}`);
+      
+      const limitations = {
+        safari: {
+          quality: 'EXCELENTE',
+          humanSound: 'SÍ',
+          recommendation: 'Usar Safari para mejor experiencia de voz',
+          reason: 'Motor TTS nativo de macOS con voces de alta calidad'
+        },
+        firefox: {
+          quality: 'LIMITADA',
+          humanSound: 'NO',
+          recommendation: 'Considerar usar Safari o Chrome para voz',
+          reason: 'Motor TTS de Firefox tiene limitaciones fundamentales'
+        },
+        chrome: {
+          quality: 'MEDIA',
+          humanSound: 'PARCIAL',
+          recommendation: 'Aceptable para uso básico',
+          reason: 'Motor TTS de Chrome es mejor que Firefox pero inferior a Safari'
+        },
+        edge: {
+          quality: 'MEDIA',
+          humanSound: 'PARCIAL',
+          recommendation: 'Similar a Chrome',
+          reason: 'Motor TTS de Edge es similar a Chrome'
+        }
+      };
+      
+      const currentLimitation = limitations[browser] || limitations.default;
+      
+      console.log(`📊 EVALUACIÓN PARA ${browser.toUpperCase()}:`);
+      console.log(`   Calidad: ${currentLimitation.quality}`);
+      console.log(`   Sonido Humano: ${currentLimitation.humanSound}`);
+      console.log(`   Recomendación: ${currentLimitation.recommendation}`);
+      console.log(`   Razón: ${currentLimitation.reason}`);
+      
+      if (browser === 'firefox') {
+        console.log(`⚠️ ADVERTENCIA: Firefox tiene limitaciones fundamentales de TTS`);
+        console.log(`💡 SOLUCIÓN: Considerar usar Safari para mejor experiencia de voz`);
+      }
+    }
+    
     // Hacer funciones disponibles globalmente para pruebas
     window.testAllBrowsersVoiceQuality = testAllBrowsersVoiceQuality;
     window.testVoiceConfigurations = testVoiceConfigurations;
     window.testExtremeVoiceConfigurations = testExtremeVoiceConfigurations;
     window.testFirefoxUltraExtreme = testFirefoxUltraExtreme;
+    window.evaluateTTSLimitations = evaluateTTSLimitations;
 
 
     // ============================================================================
