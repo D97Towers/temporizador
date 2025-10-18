@@ -4319,6 +4319,321 @@
     // Hacer función global para diagnóstico
     window.diagnoseVoiceSystem = diagnoseVoiceSystem;
     
+    // 🚨 CORRECCIÓN URGENTE DE TODOS LOS PROBLEMAS IDENTIFICADOS
+    function fixAllVoiceProblems() {
+      console.log(`🚨 APLICANDO CORRECCIONES URGENTES A TODOS LOS PROBLEMAS`);
+      console.log(`=======================================================`);
+      
+      // PROBLEMA 1: extractChildNameFromAlert() más robusto
+      function extractChildNameFromAlertFixed(text) {
+        if (!text || typeof text !== 'string') {
+          console.log(`⚠️ extractChildNameFromAlert: texto inválido`);
+          return null;
+        }
+        
+        // Múltiples patrones para mayor robustez
+        const patterns = [
+          /A (\w+) le quedan/,
+          /(\w+) le quedan/,
+          /A (\w+) le queda/,
+          /(\w+) le queda/
+        ];
+        
+        for (const pattern of patterns) {
+          const match = text.match(pattern);
+          if (match && match[1]) {
+            console.log(`✅ extractChildNameFromAlert: "${match[1]}" extraído de "${text}"`);
+            return match[1];
+          }
+        }
+        
+        console.log(`❌ extractChildNameFromAlert: no se pudo extraer nombre de "${text}"`);
+        return null;
+      }
+      
+      // PROBLEMA 2: detectGenderByName() con acentos
+      function detectGenderByNameFixed(name) {
+        if (!name || typeof name !== 'string') {
+          console.log(`⚠️ detectGenderByName: nombre inválido`);
+          return 'unknown';
+        }
+        
+        const normalizedName = name.toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, ''); // Remover acentos
+        
+        const femaleNames = [
+          'sofia', 'maria', 'ana', 'lucia', 'carla', 'laura', 'isabella', 'valentina',
+          'camila', 'natalia', 'andrea', 'paula', 'fernanda', 'alejandra', 'diana'
+        ];
+        
+        const maleNames = [
+          'david', 'mathias', 'cristian', 'ramon', 'santiago', 'carlos', 'juan', 'pedro',
+          'miguel', 'antonio', 'jose', 'manuel', 'francisco', 'alejandro', 'daniel'
+        ];
+        
+        if (femaleNames.includes(normalizedName)) {
+          console.log(`✅ detectGenderByName: "${name}" → female`);
+          return 'female';
+        }
+        if (maleNames.includes(normalizedName)) {
+          console.log(`✅ detectGenderByName: "${name}" → male`);
+          return 'male';
+        }
+        
+        console.log(`⚠️ detectGenderByName: "${name}" → unknown`);
+        return 'unknown';
+      }
+      
+      // PROBLEMA 3: generateNaturalVoiceMessage() con validación
+      function generateNaturalVoiceMessageFixed(pendingAlerts, alertCount) {
+        console.log(`🎯 GENERANDO MENSAJE NATURAL PARA ${alertCount} NIÑOS`);
+        
+        // VALIDACIÓN CRÍTICA DE ENTRADA
+        if (!pendingAlerts || !Array.isArray(pendingAlerts) || pendingAlerts.length === 0) {
+          console.log(`❌ generateNaturalVoiceMessage: pendingAlerts inválido`);
+          return "Hola, algunos niños han terminado su tiempo de juego. Por favor, recógelos.";
+        }
+        
+        if (!alertCount || alertCount < 1) {
+          console.log(`❌ generateNaturalVoiceMessage: alertCount inválido`);
+          return "Hola, algunos niños han terminado su tiempo de juego. Por favor, recógelos.";
+        }
+        
+        // Extraer información de los niños con validación
+        const childrenInfo = pendingAlerts.map((alert, index) => {
+          if (!alert || !alert.text) {
+            console.log(`⚠️ generateNaturalVoiceMessage: alert ${index} inválido`);
+            return null;
+          }
+          
+          const childName = extractChildNameFromAlertFixed(alert.text);
+          if (!childName) {
+            console.log(`⚠️ generateNaturalVoiceMessage: no se pudo extraer nombre del alert ${index}`);
+            return null;
+          }
+          
+          const gender = detectGenderByNameFixed(childName);
+          return {
+            name: childName,
+            gender: gender,
+            relationship: gender === 'female' ? 'hija' : (gender === 'male' ? 'hijo' : 'niño')
+          };
+        }).filter(child => child !== null);
+        
+        console.log(`👶 INFORMACIÓN DE NIÑOS:`, childrenInfo);
+        
+        if (childrenInfo.length === 0) {
+          console.log(`❌ generateNaturalVoiceMessage: no se pudieron extraer nombres válidos`);
+          return "Hola, algunos niños han terminado su tiempo de juego. Por favor, recógelos.";
+        }
+        
+        // GENERAR MENSAJE SEGÚN ESCENARIOS NATURALES
+        if (alertCount === 1) {
+          const child = childrenInfo[0];
+          return `Hola, ${child.name} ha terminado su tiempo de juego. Por favor, recógelo.`;
+          
+        } else if (alertCount === 2) {
+          const child1 = childrenInfo[0];
+          const child2 = childrenInfo[1];
+          return `Hola, ${child1.name} y ${child2.name} han terminado su tiempo de juego. Por favor, recógelos.`;
+          
+        } else if (alertCount <= 5) {
+          const names = childrenInfo.map(child => child.name);
+          const lastChild = names.pop();
+          const otherChildren = names.join(', ');
+          return `Hola, ${otherChildren} y ${lastChild} han terminado su tiempo de juego. Por favor, recógelos.`;
+          
+        } else {
+          return `Hola, ${alertCount} niños han terminado su tiempo de juego. Por favor, recógelos.`;
+        }
+      }
+      
+      // PROBLEMA 4: calculateAdaptiveRepetitions() con edge cases
+      function calculateAdaptiveRepetitionsFixed(message, alertCount) {
+        if (!adaptiveAlertSystem || !adaptiveAlertSystem.enabled) {
+          console.log(`⚠️ calculateAdaptiveRepetitions: adaptiveAlertSystem deshabilitado`);
+          return { repetitions: 1, delay: 0 };
+        }
+        
+        // VALIDACIÓN DE ENTRADA
+        if (!alertCount || alertCount < 1 || alertCount > 20) {
+          console.log(`⚠️ calculateAdaptiveRepetitions: alertCount inválido (${alertCount})`);
+          return { repetitions: 1, delay: 0 };
+        }
+        
+        let repetitions;
+        let delay;
+        
+        if (alertCount === 1) {
+          repetitions = 2;
+          delay = 15000;
+        } else if (alertCount <= 3) {
+          repetitions = 2;
+          delay = 20000;
+        } else if (alertCount <= 5) {
+          repetitions = 1;
+          delay = 0;
+        } else {
+          repetitions = 1;
+          delay = 0;
+        }
+        
+        console.log(`🧠 ADAPTATIVO: ${alertCount} niños → ${repetitions} repeticiones, delay: ${delay}ms`);
+        return { repetitions, delay };
+      }
+      
+      // PROBLEMA 5-10: Sistema de cola de voz robusto
+      let voiceQueueFixed = [];
+      let isVoicePlayingFixed = false;
+      let voiceQueueProcessingFixed = false;
+      let voiceQueueMaxSize = 10; // Límite de cola
+      let audioTimeout = 10000; // 10 segundos timeout
+      
+      function addToVoiceQueueFixed(message, options = {}) {
+        console.log(`📝 AGREGANDO A COLA DE VOZ: "${message}"`);
+        
+        // VALIDACIÓN DE ENTRADA
+        if (!message || typeof message !== 'string' || message.trim().length === 0) {
+          console.log(`❌ addToVoiceQueue: mensaje inválido`);
+          return false;
+        }
+        
+        // LIMITAR TAMAÑO DE COLA
+        if (voiceQueueFixed.length >= voiceQueueMaxSize) {
+          console.log(`⚠️ addToVoiceQueue: cola llena (${voiceQueueMaxSize}), removiendo mensaje más antiguo`);
+          voiceQueueFixed.shift(); // Remover el más antiguo
+        }
+        
+        voiceQueueFixed.push({ 
+          message: message.trim(), 
+          options, 
+          timestamp: Date.now(),
+          id: Math.random().toString(36).substr(2, 9)
+        });
+        
+        console.log(`📊 Cola actual: ${voiceQueueFixed.length} mensajes`);
+        
+        // PROCESAR COLA SI NO ESTÁ EN PROCESO
+        if (!voiceQueueProcessingFixed) {
+          setTimeout(() => processVoiceQueueFixed(), 100);
+        }
+        
+        return true;
+      }
+      
+      function processVoiceQueueFixed() {
+        if (isVoicePlayingFixed || voiceQueueProcessingFixed || voiceQueueFixed.length === 0) {
+          console.log(`⏸️ COLA DE VOZ: No procesando (playing: ${isVoicePlayingFixed}, processing: ${voiceQueueProcessingFixed}, queue: ${voiceQueueFixed.length})`);
+          return;
+        }
+        
+        console.log(`🎵 PROCESANDO COLA DE VOZ: ${voiceQueueFixed.length} mensajes pendientes`);
+        voiceQueueProcessingFixed = true;
+        
+        const item = voiceQueueFixed.shift();
+        console.log(`🔊 REPRODUCIENDO: "${item.message}" (ID: ${item.id})`);
+        
+        // VALIDAR SPEECH SYNTHESIS
+        if (typeof speechSynthesis === 'undefined') {
+          console.log(`❌ processVoiceQueue: speechSynthesis no disponible`);
+          voiceQueueProcessingFixed = false;
+          return;
+        }
+        
+        // CREAR UTTERANCE CON TIMEOUT
+        const utterance = new SpeechSynthesisUtterance(item.message);
+        utterance.volume = 0.9;
+        utterance.rate = 0.8;
+        utterance.pitch = 1.1;
+        utterance.lang = 'es-ES';
+        
+        // TIMEOUT PARA AUDIO
+        const timeoutId = setTimeout(() => {
+          console.log(`⏰ TIMEOUT DE AUDIO: "${item.message}" (ID: ${item.id})`);
+          speechSynthesis.cancel();
+          isVoicePlayingFixed = false;
+          voiceQueueProcessingFixed = false;
+          
+          // CONTINUAR CON SIGUIENTE MENSAJE
+          if (voiceQueueFixed.length > 0) {
+            setTimeout(() => processVoiceQueueFixed(), 500);
+          }
+        }, audioTimeout);
+        
+        // MANEJAR EVENTOS DE AUDIO
+        utterance.onstart = () => {
+          console.log(`🔊 AUDIO INICIADO: "${item.message}" (ID: ${item.id})`);
+          isVoicePlayingFixed = true;
+        };
+        
+        utterance.onend = () => {
+          console.log(`✅ AUDIO COMPLETADO: "${item.message}" (ID: ${item.id})`);
+          clearTimeout(timeoutId);
+          isVoicePlayingFixed = false;
+          voiceQueueProcessingFixed = false;
+          
+          // CONTINUAR CON SIGUIENTE MENSAJE
+          if (voiceQueueFixed.length > 0) {
+            setTimeout(() => processVoiceQueueFixed(), 500);
+          } else {
+            console.log(`🏁 COLA DE VOZ VACÍA`);
+          }
+        };
+        
+        utterance.onerror = (error) => {
+          console.log(`❌ ERROR DE AUDIO: "${item.message}" (ID: ${item.id}) - ${error.error}`);
+          clearTimeout(timeoutId);
+          isVoicePlayingFixed = false;
+          voiceQueueProcessingFixed = false;
+          
+          // CONTINUAR CON SIGUIENTE MENSAJE
+          if (voiceQueueFixed.length > 0) {
+            setTimeout(() => processVoiceQueueFixed(), 500);
+          }
+        };
+        
+        // REPRODUCIR AUDIO
+        try {
+          speechSynthesis.speak(utterance);
+        } catch (error) {
+          console.log(`❌ ERROR AL REPRODUCIR: ${error.message}`);
+          clearTimeout(timeoutId);
+          isVoicePlayingFixed = false;
+          voiceQueueProcessingFixed = false;
+          
+          // CONTINUAR CON SIGUIENTE MENSAJE
+          if (voiceQueueFixed.length > 0) {
+            setTimeout(() => processVoiceQueueFixed(), 500);
+          }
+        }
+      }
+      
+      // FUNCIÓN DE LIMPIEZA DE COLA
+      function clearVoiceQueueFixed() {
+        console.log(`🧹 LIMPIANDO COLA DE VOZ: ${voiceQueueFixed.length} mensajes`);
+        speechSynthesis.cancel();
+        voiceQueueFixed = [];
+        isVoicePlayingFixed = false;
+        voiceQueueProcessingFixed = false;
+      }
+      
+      // HACER FUNCIONES GLOBALES
+      window.extractChildNameFromAlertFixed = extractChildNameFromAlertFixed;
+      window.detectGenderByNameFixed = detectGenderByNameFixed;
+      window.generateNaturalVoiceMessageFixed = generateNaturalVoiceMessageFixed;
+      window.calculateAdaptiveRepetitionsFixed = calculateAdaptiveRepetitionsFixed;
+      window.addToVoiceQueueFixed = addToVoiceQueueFixed;
+      window.processVoiceQueueFixed = processVoiceQueueFixed;
+      window.clearVoiceQueueFixed = clearVoiceQueueFixed;
+      
+      console.log(`✅ TODAS LAS CORRECCIONES APLICADAS`);
+      console.log(`📋 FUNCIONES CORREGIDAS DISPONIBLES GLOBALMENTE`);
+    }
+    
+    // Hacer función global para correcciones
+    window.fixAllVoiceProblems = fixAllVoiceProblems;
+    
     // SISTEMA ADAPTATIVO DE REPETICIONES
     function calculateAdaptiveRepetitions(message, alertCount) {
       if (!adaptiveAlertSystem.enabled) {
