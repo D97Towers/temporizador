@@ -4056,7 +4056,14 @@
         const { message, options } = voiceQueue.shift();
         console.log(`🎵 Reproduciendo: "${message}"`);
         
-        await speakWithHybridVoice(message, options);
+        // DIAGNÓSTICO DE AUDIO
+        console.log(`🔍 DIAGNÓSTICO DE AUDIO:`);
+        console.log(`  - speechSynthesis disponible: ${typeof speechSynthesis !== 'undefined'}`);
+        console.log(`  - voces disponibles: ${speechSynthesis.getVoices().length}`);
+        console.log(`  - voiceNotificationsEnabled: ${voiceNotificationsEnabled}`);
+        
+        // Reproducir directamente sin agregar a cola
+        await playVoiceMessage(message, options);
         
         // Pausa entre mensajes para evitar solapamiento
         if (voiceQueue.length > 0) {
@@ -4066,6 +4073,57 @@
       
       voiceQueueProcessing = false;
       console.log(`🎵 Cola de voz procesada completamente`);
+    }
+    
+    // FUNCIÓN PARA REPRODUCIR MENSAJE DE VOZ DIRECTAMENTE
+    async function playVoiceMessage(message, options = {}) {
+      console.log(`🔊 playVoiceMessage: "${message}"`);
+      
+      return new Promise((resolve) => {
+        // Cancelar cualquier voz anterior
+        speechSynthesis.cancel();
+        
+        // Crear utterance
+        const utterance = new SpeechSynthesisUtterance(message);
+        
+        // Configurar voz
+        const voice = getFemaleSpanishVoice();
+        if (voice) {
+          utterance.voice = voice;
+          console.log(`🔊 Voz seleccionada: ${voice.name} (${voice.lang})`);
+        }
+        
+        // Configurar parámetros
+        utterance.rate = 0.8;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+        utterance.lang = 'es-ES';
+        
+        // Eventos
+        utterance.onstart = () => {
+          console.log(`🔊 AUDIO INICIADO: "${message}"`);
+        };
+        
+        utterance.onend = () => {
+          console.log(`🔊 AUDIO TERMINADO: "${message}"`);
+          resolve();
+        };
+        
+        utterance.onerror = (event) => {
+          console.error(`❌ ERROR DE AUDIO:`, event.error);
+          console.log(`🔍 Diagnóstico de error:`, {
+            error: event.error,
+            message: message,
+            voicesAvailable: speechSynthesis.getVoices().length,
+            voiceSystemActivated: voiceSystemActivated
+          });
+          resolve();
+        };
+        
+        // Reproducir
+        console.log(`🔊 INICIANDO REPRODUCCIÓN: "${message}"`);
+        speechSynthesis.speak(utterance);
+      });
     }
     
     // SISTEMA ADAPTATIVO DE REPETICIONES
@@ -4101,9 +4159,19 @@
     
     // FUNCIÓN DE VOZ CON REPETICIONES ADAPTATIVAS
     async function speakAlertWithRepetition(pendingAlerts, alertCount) {
-      if (!voiceNotificationsEnabled) return;
+      if (!voiceNotificationsEnabled) {
+        console.log(`🔇 Voz deshabilitada, saltando speakAlertWithRepetition`);
+        return;
+      }
       
       console.log(`🧠 SISTEMA ADAPTATIVO: Procesando ${alertCount} alertas`);
+      
+      // DIAGNÓSTICO DE VOZ - Verificar estado del sistema
+      console.log(`🔍 DIAGNÓSTICO DE VOZ:`);
+      console.log(`  - voiceNotificationsEnabled: ${voiceNotificationsEnabled}`);
+      console.log(`  - voiceSystemActivated: ${voiceSystemActivated}`);
+      console.log(`  - speechSynthesis disponible: ${typeof speechSynthesis !== 'undefined'}`);
+      console.log(`  - voces disponibles: ${speechSynthesis.getVoices().length}`);
       
       // Calcular repeticiones adaptativas
       const { repetitions, delay } = calculateAdaptiveRepetitions('', alertCount);
@@ -4123,6 +4191,8 @@
       } else {
         message = `Atención, ${alertCount} niños terminaron su tiempo de juego`;
       }
+      
+      console.log(`🔊 MENSAJE GENERADO: "${message}"`);
       
       // Agregar repeticiones a la cola
       for (let i = 0; i < repetitions; i++) {
