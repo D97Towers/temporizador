@@ -4044,45 +4044,6 @@
       }, 1000); // Esperar 1 segundo para consolidar
     }
     
-    // SISTEMA DE COLA DE VOZ PARA EVITAR INTERRUPCIONES
-    function addToVoiceQueue(message, options = {}) {
-      console.log(`🎵 Agregando a cola de voz: "${message}"`);
-      voiceQueue.push({ message, options, timestamp: Date.now() });
-      
-      if (!voiceQueueProcessing) {
-        processVoiceQueue();
-      }
-    }
-    
-    async function processVoiceQueue() {
-      if (voiceQueueProcessing || voiceQueue.length === 0) return;
-      
-      voiceQueueProcessing = true;
-      console.log(`🎵 Procesando cola de voz (${voiceQueue.length} mensajes pendientes)`);
-      
-      while (voiceQueue.length > 0) {
-        const { message, options } = voiceQueue.shift();
-        console.log(`🎵 Reproduciendo: "${message}"`);
-        
-        // DIAGNÓSTICO DE AUDIO
-        console.log(`🔍 DIAGNÓSTICO DE AUDIO:`);
-        console.log(`  - speechSynthesis disponible: ${typeof speechSynthesis !== 'undefined'}`);
-        console.log(`  - voces disponibles: ${speechSynthesis.getVoices().length}`);
-        console.log(`  - voiceNotificationsEnabled: ${voiceNotificationsEnabled}`);
-        
-        // Reproducir directamente sin agregar a cola
-        await playVoiceMessage(message, options);
-        
-        // Pausa entre mensajes para evitar solapamiento
-        if (voiceQueue.length > 0) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-      }
-      
-      voiceQueueProcessing = false;
-      console.log(`🎵 Cola de voz procesada completamente`);
-    }
-    
     // FUNCIÓN PARA REPRODUCIR MENSAJE DE VOZ DIRECTAMENTE - URGENTE
     async function playVoiceMessage(message, options = {}) {
       console.log(`🔊 playVoiceMessage: "${message}"`);
@@ -5581,39 +5542,6 @@
       speakWithRepetition(fullMessage, alertCount);
     }
 
-    // Función para notificaciones del navegador (mejores prácticas)
-    function showBrowserNotification(title, body) {
-      if (!browserNotificationsEnabled || !('Notification' in window)) {
-        return;
-      }
-      
-      try {
-        const notification = new Notification(title, {
-          body: body,
-          icon: '/favicon.ico', // Icono de la aplicación
-          badge: '/favicon.ico',
-          tag: 'time-alert', // Para evitar duplicados
-          requireInteraction: false, // Se cierra automáticamente
-          silent: false // Permitir sonido del sistema
-        });
-        
-        // Auto-cerrar después de 10 segundos
-        setTimeout(() => {
-          notification.close();
-        }, 10000);
-        
-        // Manejar clic en la notificación
-        notification.onclick = () => {
-          window.focus();
-          notification.close();
-        };
-        
-        console.log('🔔 Notificación del navegador enviada');
-        
-      } catch (error) {
-        console.error('Error mostrando notificación del navegador:', error);
-      }
-    }
 
     // Función helper global para crear utterance híbrido
     function createHybridUtterance(msg, alertCount = 1) {
@@ -5673,42 +5601,6 @@
       console.log(`🔊 Alerta adaptativa programada: ${alertCount} niño(s) - ${repetitions.length} repeticiones`);
     }
 
-    // Función para calcular repeticiones adaptativas
-    function calculateAdaptiveRepetitions(message, alertCount) {
-      const repetitions = [];
-      
-      // LÓGICA ADAPTATIVA PARA EVITAR CONTAMINACIÓN DE AUDIO:
-      if (alertCount === 1) {
-        // 1 niño: 2 repeticiones (inmediata + 15s)
-        repetitions.push(
-          { message: message, options: { alertCount, repetition: 1, immediate: true } },
-          { message: message, options: { alertCount, repetition: 2, delay: 15000 } }
-        );
-        console.log(`🎯 1 niño: 2 repeticiones (inmediata + 15s)`);
-      } else if (alertCount <= 3) {
-        // 2-3 niños: 2 repeticiones (inmediata + 20s)
-        repetitions.push(
-          { message: message, options: { alertCount, repetition: 1, immediate: true } },
-          { message: message, options: { alertCount, repetition: 2, delay: 20000 } }
-        );
-        console.log(`🎯 2-3 niños: 2 repeticiones (inmediata + 20s)`);
-      } else if (alertCount <= 5) {
-        // 4-5 niños: 1 repetición (inmediata solamente)
-        repetitions.push(
-          { message: message, options: { alertCount, repetition: 1, immediate: true } }
-        );
-        console.log(`🎯 4-5 niños: 1 repetición (inmediata solamente)`);
-      } else {
-        // 6+ niños: 1 repetición con mensaje consolidado
-        const consolidatedMessage = `Atención: ${alertCount} niños han terminado su tiempo de juego. Por favor, padres, recojan a sus hijos inmediatamente`;
-        repetitions.push(
-          { message: consolidatedMessage, options: { alertCount, repetition: 1, immediate: true, consolidated: true } }
-        );
-        console.log(`🎯 6+ niños: 1 repetición consolidada`);
-      }
-      
-      return repetitions;
-    }
 
     // Función para alertas de múltiples niños (más de 5) - DEPRECATED
     function speakMultipleChildrenAlert(pendingAlerts) {
@@ -5977,22 +5869,6 @@
       currentExtendSession = null;
     }
 
-    // Validaciones ROBUSTAS
-    function validateName(name, type) {
-      if (!name || name.trim().length === 0) {
-        showStatusMessage(`Por favor ingrese el ${type}`, 'error');
-        return false;
-      }
-      if (name.trim().length < 2) {
-        showStatusMessage(`El ${type} debe tener al menos 2 caracteres`, 'error');
-        return false;
-      }
-      if (name.trim().length > 50) {
-        showStatusMessage(`El ${type} no puede tener más de 50 caracteres`, 'error');
-        return false;
-      }
-      return true;
-    }
 
     function validateSession(childId, gameId, duration) {
       // Solo validar duración aquí, los otros valores ya se validaron arriba
