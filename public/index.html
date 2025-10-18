@@ -4165,6 +4165,7 @@
       }
       
       console.log(`🧠 SISTEMA ADAPTATIVO: Procesando ${alertCount} alertas`);
+      console.log(`📊 pendingAlerts:`, pendingAlerts);
       
       // DIAGNÓSTICO DE VOZ - Verificar estado del sistema
       console.log(`🔍 DIAGNÓSTICO DE VOZ:`);
@@ -4173,23 +4174,43 @@
       console.log(`  - speechSynthesis disponible: ${typeof speechSynthesis !== 'undefined'}`);
       console.log(`  - voces disponibles: ${speechSynthesis.getVoices().length}`);
       
+      // VALIDAR DATOS DE ENTRADA
+      if (!pendingAlerts || pendingAlerts.length === 0) {
+        console.log(`⚠️ speakAlertWithRepetition: pendingAlerts vacío o inválido`);
+        return;
+      }
+      
       // Calcular repeticiones adaptativas
       const { repetitions, delay } = calculateAdaptiveRepetitions('', alertCount);
       
-      // Generar mensaje consolidado
+      // GENERAR MENSAJE CON LÓGICA DE ESCENARIOS CORRECTA
       let message;
+      
       if (alertCount === 1) {
+        // ESCENARIO 1: Un solo niño
         const childName = extractChildNameFromAlert(pendingAlerts[0].text);
+        const gender = detectGenderByName(childName);
+        const relationship = gender === 'female' ? 'hija' : (gender === 'male' ? 'hijo' : 'niño');
         message = `Atención, ${childName} terminó su tiempo de juego`;
+        console.log(`🎯 ESCENARIO 1: Un niño (${childName}, ${relationship})`);
+        
       } else if (alertCount === 2) {
+        // ESCENARIO 2: Dos niños
         const child1 = extractChildNameFromAlert(pendingAlerts[0].text);
         const child2 = extractChildNameFromAlert(pendingAlerts[1].text);
         message = `Atención, ${child1} y ${child2} terminaron su tiempo de juego`;
+        console.log(`🎯 ESCENARIO 2: Dos niños (${child1}, ${child2})`);
+        
       } else if (alertCount <= 5) {
-        const children = pendingAlerts.map(alert => extractChildNameFromAlert(alert.text));
+        // ESCENARIO 3: 3-5 niños - mostrar lista
+        const children = pendingAlerts.map(alert => extractChildNameFromAlert(alert.text)).filter(name => name);
         message = `Atención, ${children.join(', ')} terminaron su tiempo de juego`;
+        console.log(`🎯 ESCENARIO 3: 3-5 niños (${children.join(', ')})`);
+        
       } else {
+        // ESCENARIO 4: 6+ niños - mensaje consolidado
         message = `Atención, ${alertCount} niños terminaron su tiempo de juego`;
+        console.log(`🎯 ESCENARIO 4: 6+ niños (${alertCount})`);
       }
       
       console.log(`🔊 MENSAJE GENERADO: "${message}"`);
@@ -6606,7 +6627,8 @@
         ]);
         console.log('✅ Data refreshed after ending session');
         
-        showStatusMessage('Sesión finalizada correctamente', 'success');
+        // NO mostrar mensaje de voz para finalización manual
+        // showStatusMessage('Sesión finalizada correctamente', 'success');
         
         // Limpiar alertas de esta sesión
         clearSessionAlert(sessionId);
