@@ -4220,15 +4220,31 @@
         };
         
         testUtterance.onerror = (event) => {
-          console.error('❌ Error en sistema de voz:', event.error);
+          console.warn('⚠️ Error en sistema de voz (continuando sin voz):', event.error);
           voiceNotificationsEnabled = false;
+          voiceSystemActivated = false;
+          // NO bloquear la aplicación por errores de voz
+          console.log('🔧 Sistema de voz deshabilitado, aplicación continúa normalmente');
+          // Resolver inmediatamente para no bloquear
+          return true;
         };
         
         // Ejecutar test (sin esperar)
         window.speechSynthesis.speak(testUtterance);
         
-        // Esperar un momento para ver si hay errores
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Esperar un momento para ver si hay errores (con timeout)
+        await new Promise(resolve => {
+          const timeout = setTimeout(() => {
+            console.log('⏰ Timeout en test de voz - continuando');
+            resolve(true);
+          }, 1000); // 1 segundo máximo
+          
+          // Si hay error, se resuelve en onerror
+          testUtterance.onend = () => {
+            clearTimeout(timeout);
+            resolve(true);
+          };
+        });
         
         return true;
         
@@ -6478,13 +6494,13 @@
         // Actualizar dashboard con todos los datos cargados
           updateDashboard();
         
-             // 🎤 CRÍTICO: Inicializar sistema de notificaciones de voz
-             try {
-               console.log('Initializing voice notification system...');
-               await initializeNotificationPermissions();
-        } catch (error) {
-               console.error('Failed to initialize voice notifications, continuing...', error);
-        }
+             // 🎤 SISTEMA DE VOZ: Inicializar de forma no bloqueante
+             console.log('Initializing voice notification system (non-blocking)...');
+             initializeNotificationPermissions().catch(error => {
+               console.warn('⚠️ Voice system failed (app continues normally):', error);
+               voiceNotificationsEnabled = false;
+               voiceSystemActivated = false;
+             });
         
              // Solicitar permisos de notificación
              try {
