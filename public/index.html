@@ -4959,8 +4959,21 @@
       
       const childNames = pendingAlerts.map(alert => {
         console.log(`🔍 DEBUG: Procesando alert:`, alert);
-        const name = extractChildNameFromAlert(alert.text);
-        console.log(`🔍 DEBUG: Nombre extraído: "${name}"`);
+        
+        // MANEJAR DOS TIPOS DE ESTRUCTURA:
+        let name = null;
+        
+        if (alert.name) {
+          // Estructura: {name: 'sofia', parents: 'Papá: fernando'}
+          name = alert.name;
+          console.log(`🔍 DEBUG: Nombre directo: "${name}"`);
+        } else if (alert.text) {
+          // Estructura: {text: '¡Atención! A sofia le quedan solo 30 segundos'}
+          name = extractChildNameFromAlert(alert.text);
+          console.log(`🔍 DEBUG: Nombre extraído de texto: "${name}"`);
+        }
+        
+        console.log(`🔍 DEBUG: Nombre final: "${name}"`);
         return name && name !== 'null' ? name : null;
       }).filter(name => name !== null);
       
@@ -4971,21 +4984,30 @@
       
       // Obtener información de padres de pendingAlerts
       const childrenWithParents = pendingAlerts.map(alert => {
-        const childName = extractChildNameFromAlert(alert.text);
-        // Buscar información del niño en childrenCache
-        const child = childrenCache.find(c => c.name === childName);
+        let childName = null;
         let parentsInfo = '';
         
-        if (child) {
-          const fatherName = child.fatherName || child.father_name;
-          const motherName = child.motherName || child.mother_name;
+        if (alert.name) {
+          // Estructura: {name: 'sofia', parents: 'Papá: fernando'}
+          childName = alert.name;
+          parentsInfo = alert.parents ? ` (${alert.parents})` : '';
+        } else if (alert.text) {
+          // Estructura: {text: '¡Atención! A sofia le quedan solo 30 segundos'}
+          childName = extractChildNameFromAlert(alert.text);
+          // Buscar información del niño en childrenCache
+          const child = childrenCache.find(c => c.name === childName);
           
-          if (fatherName && motherName) {
-            parentsInfo = ` (${fatherName} & ${motherName})`;
-          } else if (fatherName) {
-            parentsInfo = ` (Papá: ${fatherName})`;
-          } else if (motherName) {
-            parentsInfo = ` (Mamá: ${motherName})`;
+          if (child) {
+            const fatherName = child.fatherName || child.father_name;
+            const motherName = child.motherName || child.mother_name;
+            
+            if (fatherName && motherName) {
+              parentsInfo = ` (${fatherName} & ${motherName})`;
+            } else if (fatherName) {
+              parentsInfo = ` (Papá: ${fatherName})`;
+            } else if (motherName) {
+              parentsInfo = ` (Mamá: ${motherName})`;
+            }
           }
         }
         
