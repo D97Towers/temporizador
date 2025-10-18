@@ -2755,9 +2755,9 @@
       showVoiceAlerts: true,         // Mostrar alertas de voz
       showBrowserNotifications: true, // Mostrar notificaciones del navegador
       showConfigAlerts: false,       // Mostrar alertas de configuración
-      showStatusAlerts: false,       // Mostrar alertas de estado (inicio/fin sesión)
+      showStatusAlerts: true,        // Mostrar alertas de estado (inicio/fin sesión)
       showErrorAlerts: true,         // Mostrar alertas de error
-      showSuccessAlerts: false,      // Mostrar alertas de éxito
+      showSuccessAlerts: true,       // Mostrar alertas de éxito
       show30SecondAlerts: false     // Mostrar alertas de 30 segundos (SUPRIMIDAS)
     };
     
@@ -3997,7 +3997,11 @@
         }
       } else if (type === 'warning') {
         // Alertas de warning con texto largo (nombres + padres) necesitan más tiempo
-        timeoutDuration = text.length > 50 ? 8000 : 6000; // Más tiempo para texto largo
+        if (text.includes('terminó su tiempo') || text.includes('Tiempo terminado')) {
+          timeoutDuration = 12000; // 12 segundos para alertas de tiempo terminado
+        } else {
+          timeoutDuration = text.length > 50 ? 8000 : 6000; // Más tiempo para texto largo
+        }
       } else {
         timeoutDuration = text.length < 10 ? 2000 : 4000; // Éxito menos tiempo
       }
