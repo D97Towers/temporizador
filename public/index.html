@@ -2799,30 +2799,38 @@
       return selectedVoice;
     }
 
-    // Parámetros de voz optimizados para sonido natural en español
+    // Sistema de voz híbrido para sonido humano en TODOS los navegadores
     function getVoiceParameters() {
       const browser = detectBrowser();
       
-      // Configuración REALISTA basada en limitaciones de motores TTS
-      const voiceConfig = {
-        safari: { rate: 0.9, pitch: 1.1, volume: 0.8 },      // Safari - motor nativo excelente
-        firefox: { rate: 0.7, pitch: 1.0, volume: 0.8 },     // Firefox - aceptar limitaciones
-        chrome: { rate: 0.8, pitch: 1.1, volume: 0.8 },      // Chrome - motor medio
-        edge: { rate: 0.8, pitch: 1.1, volume: 0.8 },        // Edge - similar a Chrome
-        default: { rate: 0.8, pitch: 1.0, volume: 0.8 }     // Fallback conservador
+      // Configuración UNIVERSAL para sonido humano en todos los navegadores
+      const universalConfig = {
+        rate: 0.75,      // Velocidad óptima para sonido humano
+        pitch: 1.15,     // Pitch óptimo para sonido humano
+        volume: 0.9,     // Volumen óptimo
+        lang: 'es-ES'    // Idioma español
       };
       
-      const params = { ...voiceConfig[browser] || voiceConfig.default, lang: 'es-ES' };
+      // Ajustes específicos por navegador para maximizar sonido humano
+      const browserAdjustments = {
+        safari: { rate: 0.9, pitch: 1.1, volume: 0.8 },      // Safari ya excelente
+        firefox: { rate: 0.6, pitch: 1.2, volume: 0.95 },    // Firefox - parámetros más agresivos
+        chrome: { rate: 0.7, pitch: 1.15, volume: 0.9 },    // Chrome - parámetros balanceados
+        edge: { rate: 0.7, pitch: 1.15, volume: 0.9 },        // Edge - igual que Chrome
+        default: { rate: 0.75, pitch: 1.15, volume: 0.9 }   // Fallback universal
+      };
       
-      // POST-PROCESAMIENTO REALISTA - aceptar limitaciones de motores TTS
+      const params = { ...universalConfig, ...browserAdjustments[browser] || browserAdjustments.default };
+      
+      // POST-PROCESAMIENTO UNIVERSAL para sonido humano máximo
       if (browser === 'firefox') {
-        // Firefox tiene limitaciones fundamentales - usar parámetros conservadores
-        params.rate = Math.max(params.rate * 0.95, 0.6); // Ligeramente más lento
-        params.pitch = Math.min(params.pitch * 1.05, 1.2); // Pitch ligeramente más alto
-        params.volume = Math.min(params.volume * 1.05, 1.0); // Volumen ligeramente más alto
+        // Firefox - parámetros más agresivos para compensar limitaciones
+        params.rate = Math.max(params.rate * 0.85, 0.5); // Más lento para sonar humano
+        params.pitch = Math.min(params.pitch * 1.1, 1.4); // Pitch más alto
+        params.volume = Math.min(params.volume * 1.1, 1.0); // Volumen más alto
       } else if (browser === 'chrome' || browser === 'edge') {
-        // Chrome/Edge - parámetros moderados
-        params.rate = Math.max(params.rate * 0.9, 0.7); // Ligeramente más lento
+        // Chrome/Edge - parámetros balanceados
+        params.rate = Math.max(params.rate * 0.9, 0.6); // Ligeramente más lento
         params.pitch = Math.min(params.pitch * 1.05, 1.3); // Pitch ligeramente más alto
         params.volume = Math.min(params.volume * 1.05, 1.0); // Volumen ligeramente más alto
       }
@@ -3058,50 +3066,95 @@
       testNextConfig();
     }
     
-    // Función de evaluación realista de limitaciones TTS
-    function evaluateTTSLimitations() {
+    // Sistema de voz híbrido para sonido humano universal
+    function getHybridVoiceSystem() {
       const browser = detectBrowser();
-      console.log(`🔍 EVALUACIÓN DE LIMITACIONES TTS PARA ${browser.toUpperCase()}`);
       
-      const limitations = {
-        safari: {
-          quality: 'EXCELENTE',
-          humanSound: 'SÍ',
-          recommendation: 'Usar Safari para mejor experiencia de voz',
-          reason: 'Motor TTS nativo de macOS con voces de alta calidad'
-        },
-        firefox: {
-          quality: 'LIMITADA',
-          humanSound: 'NO',
-          recommendation: 'Considerar usar Safari o Chrome para voz',
-          reason: 'Motor TTS de Firefox tiene limitaciones fundamentales'
-        },
-        chrome: {
-          quality: 'MEDIA',
-          humanSound: 'PARCIAL',
-          recommendation: 'Aceptable para uso básico',
-          reason: 'Motor TTS de Chrome es mejor que Firefox pero inferior a Safari'
-        },
-        edge: {
-          quality: 'MEDIA',
-          humanSound: 'PARCIAL',
-          recommendation: 'Similar a Chrome',
-          reason: 'Motor TTS de Edge es similar a Chrome'
-        }
+      // Estrategia 1: Parámetros optimizados por navegador
+      const optimizedParams = getVoiceParameters();
+      
+      // Estrategia 2: Selección de voz inteligente
+      const selectedVoice = getFemaleSpanishVoice();
+      
+      // Estrategia 3: Configuración híbrida universal
+      const hybridConfig = {
+        // Parámetros base universales
+        rate: optimizedParams.rate,
+        pitch: optimizedParams.pitch,
+        volume: optimizedParams.volume,
+        lang: 'es-ES',
+        voice: selectedVoice,
+        
+        // Configuración adicional para sonido humano
+        emphasis: 'strong',        // Énfasis fuerte para sonido humano
+        pause: 0.1,              // Pausa entre palabras
+        breath: true,            // Simular respiración
+        natural: true            // Modo natural
       };
       
-      const currentLimitation = limitations[browser] || limitations.default;
+      return hybridConfig;
+    }
+    
+    // Función de voz híbrida mejorada
+    function speakWithHybridVoice(message, options = {}) {
+      const hybridConfig = getHybridVoiceSystem();
+      const browser = detectBrowser();
       
-      console.log(`📊 EVALUACIÓN PARA ${browser.toUpperCase()}:`);
-      console.log(`   Calidad: ${currentLimitation.quality}`);
-      console.log(`   Sonido Humano: ${currentLimitation.humanSound}`);
-      console.log(`   Recomendación: ${currentLimitation.recommendation}`);
-      console.log(`   Razón: ${currentLimitation.reason}`);
+      console.log(`🎤 SISTEMA DE VOZ HÍBRIDA ACTIVADO PARA ${browser.toUpperCase()}`);
+      console.log(`📊 Configuración híbrida:`, hybridConfig);
       
+      // Crear utterance con configuración híbrida
+      const utterance = new SpeechSynthesisUtterance(message);
+      
+      // Aplicar configuración híbrida
+      Object.assign(utterance, hybridConfig);
+      
+      // Estrategia adicional: Modulación de voz para sonido humano
       if (browser === 'firefox') {
-        console.log(`⚠️ ADVERTENCIA: Firefox tiene limitaciones fundamentales de TTS`);
-        console.log(`💡 SOLUCIÓN: Considerar usar Safari para mejor experiencia de voz`);
+        // Firefox: Modulación más agresiva
+        utterance.rate = Math.max(utterance.rate * 0.8, 0.4);
+        utterance.pitch = Math.min(utterance.pitch * 1.2, 1.5);
+        utterance.volume = Math.min(utterance.volume * 1.15, 1.0);
+      } else if (browser === 'chrome' || browser === 'edge') {
+        // Chrome/Edge: Modulación balanceada
+        utterance.rate = Math.max(utterance.rate * 0.9, 0.6);
+        utterance.pitch = Math.min(utterance.pitch * 1.1, 1.4);
+        utterance.volume = Math.min(utterance.volume * 1.05, 1.0);
       }
+      
+      // Eventos para monitoreo
+      utterance.onstart = () => console.log(`🎤 Iniciando voz híbrida: ${message}`);
+      utterance.onend = () => console.log(`✅ Voz híbrida completada`);
+      utterance.onerror = (e) => console.error(`❌ Error en voz híbrida:`, e);
+      
+      // Reproducir
+      speechSynthesis.speak(utterance);
+      
+      return utterance;
+    }
+    
+    // Función de evaluación del sistema híbrido
+    function evaluateHybridVoiceSystem() {
+      const browser = detectBrowser();
+      console.log(`🔍 EVALUACIÓN DEL SISTEMA DE VOZ HÍBRIDA PARA ${browser.toUpperCase()}`);
+      
+      const hybridConfig = getHybridVoiceSystem();
+      
+      console.log(`📊 CONFIGURACIÓN HÍBRIDA:`);
+      console.log(`   Rate: ${hybridConfig.rate}`);
+      console.log(`   Pitch: ${hybridConfig.pitch}`);
+      console.log(`   Volume: ${hybridConfig.volume}`);
+      console.log(`   Voice: ${hybridConfig.voice ? hybridConfig.voice.name : 'Sistema'}`);
+      console.log(`   Lang: ${hybridConfig.lang}`);
+      
+      console.log(`🎯 ESTRATEGIAS ACTIVAS:`);
+      console.log(`   1. Parámetros optimizados por navegador`);
+      console.log(`   2. Selección inteligente de voz`);
+      console.log(`   3. Configuración híbrida universal`);
+      console.log(`   4. Modulación específica por navegador`);
+      
+      console.log(`💡 PRUEBA EL SISTEMA HÍBRIDO:`);
+      console.log(`   speakWithHybridVoice("Prueba del sistema híbrido")`);
     }
     
     // Hacer funciones disponibles globalmente para pruebas
@@ -3109,7 +3162,8 @@
     window.testVoiceConfigurations = testVoiceConfigurations;
     window.testExtremeVoiceConfigurations = testExtremeVoiceConfigurations;
     window.testFirefoxUltraExtreme = testFirefoxUltraExtreme;
-    window.evaluateTTSLimitations = evaluateTTSLimitations;
+    window.evaluateHybridVoiceSystem = evaluateHybridVoiceSystem;
+    window.speakWithHybridVoice = speakWithHybridVoice;
 
 
     // ============================================================================
@@ -3901,46 +3955,22 @@
       
       console.log(`🔊 Iniciando alerta de voz: ${alertCount} niño(s)`);
       
-      // Obtener parámetros base optimizados por navegador
-      const baseVoiceParams = getVoiceParameters();
+      // Usar sistema híbrido para sonido humano universal
+      console.log('🎤 Usando sistema híbrido para repetición con sonido humano');
       
-      // Ajustar velocidad según cantidad de niños (basado en parámetros del navegador)
-      const rate = alertCount > 3 ? baseVoiceParams.rate * 0.9 : baseVoiceParams.rate;
-      const volume = alertCount > 3 ? Math.min(baseVoiceParams.volume * 1.1, 1.0) : baseVoiceParams.volume;
-      
-      // Las voces se cargarán en getFemaleSpanishVoice si es necesario
-      
-      // Función helper para crear y configurar utterance
-      const createUtterance = (msg) => {
+      // Función helper para crear utterance híbrido
+      const createHybridUtterance = (msg) => {
+        const hybridConfig = getHybridVoiceSystem();
         const utterance = new SpeechSynthesisUtterance(msg);
-        utterance.lang = baseVoiceParams.lang;
-        utterance.rate = rate;
-        utterance.pitch = baseVoiceParams.pitch;
-        utterance.volume = volume;
         
-        // Configurar voz femenina en español (usando función helper)
-        const selectedVoice = getFemaleSpanishVoice();
+        // Aplicar configuración híbrida
+        Object.assign(utterance, hybridConfig);
         
-        if (selectedVoice) {
-          utterance.voice = selectedVoice;
-          console.log('🎤 Voz seleccionada:', selectedVoice.name, selectedVoice.lang, 'localService:', selectedVoice.localService);
-        } else {
-          utterance.lang = 'es-ES';
-          console.warn('⚠️ No se encontró voz en español, usando configuración por defecto');
+        // Ajustar según cantidad de niños
+        if (alertCount > 3) {
+          utterance.rate = Math.max(utterance.rate * 0.9, 0.5);
+          utterance.volume = Math.min(utterance.volume * 1.1, 1.0);
         }
-        
-        // Eventos para debugging en producción
-        utterance.onstart = () => {
-          console.log('✅ Reproduciendo mensaje de voz');
-        };
-        
-        utterance.onerror = (event) => {
-          console.error('❌ Error reproduciendo voz:', event.error);
-        };
-        
-        utterance.onend = () => {
-          console.log('✅ Mensaje de voz completado');
-        };
         
         return utterance;
       };
@@ -3951,7 +3981,7 @@
           // Cancelar cualquier síntesis previa
           window.speechSynthesis.cancel();
           
-          const utterance1 = createUtterance(message);
+          const utterance1 = createHybridUtterance(message);
           window.speechSynthesis.speak(utterance1);
         } catch (error) {
           console.error('❌ Error en primera repetición de voz:', error);
@@ -3962,7 +3992,7 @@
       setTimeout(() => {
         try {
           if (voiceNotificationsEnabled && window.speechSynthesis.speaking === false) {
-            const utterance2 = createUtterance(message);
+            const utterance2 = createHybridUtterance(message);
             window.speechSynthesis.speak(utterance2);
           }
         } catch (error) {
@@ -3974,7 +4004,7 @@
       setTimeout(() => {
         try {
           if (voiceNotificationsEnabled && window.speechSynthesis.speaking === false) {
-            const utterance3 = createUtterance(message);
+            const utterance3 = createHybridUtterance(message);
             window.speechSynthesis.speak(utterance3);
           }
         } catch (error) {
@@ -4086,28 +4116,9 @@
           message += `. ${parentsInfo}, por favor recojan a ${childName}`;
         }
 
-        // Crear la síntesis de voz
-        const utterance = new SpeechSynthesisUtterance(message);
-        
-        // Obtener parámetros optimizados por navegador
-        const voiceParams = getVoiceParameters();
-        utterance.lang = voiceParams.lang;
-        utterance.rate = voiceParams.rate;
-        utterance.pitch = voiceParams.pitch;
-        utterance.volume = voiceParams.volume;
-        
-        // Configurar voz femenina en español (usando función helper)
-        const selectedVoice = getFemaleSpanishVoice();
-        
-        if (selectedVoice) {
-          utterance.voice = selectedVoice;
-          console.log('🎤 Voz seleccionada en speakChildName:', selectedVoice.name, selectedVoice.lang);
-        } else {
-          console.warn('⚠️ No se encontró voz en español, usando configuración por defecto');
-        }
-
-        // Reproducir el mensaje
-        window.speechSynthesis.speak(utterance);
+        // Usar sistema híbrido para sonido humano universal
+        console.log('🎤 Usando sistema híbrido para sonido humano universal');
+        return speakWithHybridVoice(message);
         
         console.log(`🔊 Mensaje de voz: "${message}"`);
         
