@@ -2783,10 +2783,34 @@
     window.voicePermissionsGranted = voicePermissionsGranted;
     window.voiceSystemActivated = voiceSystemActivated;
 
-    // Función para detectar género por nombre - USAR FUNCIÓN CORREGIDA
+    // Función para detectar género por nombre - FUNCIÓN SIMPLE Y ESTABLE
     function detectGenderByName(name) {
-      console.log(`🔍 detectGenderByName: usando función corregida`);
-      return detectGenderByNameFixed(name);
+      if (!name || typeof name !== 'string') {
+        return 'unknown';
+      }
+      
+      const normalizedName = name.toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+      
+      const femaleNames = [
+        'sofia', 'maria', 'ana', 'lucia', 'carla', 'laura', 'isabella', 'valentina',
+        'camila', 'natalia', 'andrea', 'paula', 'fernanda', 'alejandra', 'diana'
+      ];
+      
+      const maleNames = [
+        'david', 'mathias', 'cristian', 'ramon', 'santiago', 'carlos', 'juan', 'pedro',
+        'miguel', 'antonio', 'jose', 'manuel', 'francisco', 'alejandro', 'daniel'
+      ];
+      
+      if (femaleNames.includes(normalizedName)) {
+        return 'female';
+      }
+      if (maleNames.includes(normalizedName)) {
+        return 'male';
+      }
+      
+      return 'unknown';
       
       const maleNames = [
         'david', 'carlos', 'luis', 'pedro', 'miguel', 'jorge', 'andrés', 'roberto', 'fernando', 'eduardo',
@@ -3976,10 +4000,15 @@
       }, 2000); // Esperar 2 segundos para consolidar
     }
     
-    // Extraer nombre del niño de la alerta - USAR FUNCIÓN CORREGIDA
+    // Extraer nombre del niño de la alerta - FUNCIÓN SIMPLE Y ESTABLE
     function extractChildNameFromAlert(text) {
-      console.log(`🔍 extractChildNameFromAlert: usando función corregida`);
-      return extractChildNameFromAlertFixed(text);
+      if (!text || typeof text !== 'string') {
+        console.log(`⚠️ extractChildNameFromAlert: texto inválido`);
+        return null;
+      }
+      
+      const match = text.match(/A\s+(\w+)\s+le\s+quedan/);
+      return match ? match[1] : null;
     }
     
     // Extraer tiempo restante de la alerta
@@ -6766,8 +6795,10 @@
             }
           }
           
-          // Mostrar alerta de 30 segundos SOLO VISUAL (naranja)
-          showStatusMessage(`¡Atención! A ${childDisplayName}${parentsText} le quedan solo ${remainingSeconds} segundos`, 'warning', sessionId, { voiceOnly: false });
+          // SOLO ALERTAR UNA VEZ A LOS 30 SEGUNDOS - NO CADA SEGUNDO
+          if (remainingSeconds === 30) {
+            showStatusMessage(`¡Atención! A ${childDisplayName}${parentsText} le quedan solo 30 segundos`, 'warning', sessionId, { voiceOnly: false });
+          }
         }
       } else {
         timerSpan.innerHTML = '<strong>Restante:</strong> ' + sanitizeHTML(h) + ':' + sanitizeHTML(m) + ':' + sanitizeHTML(s) + '<br><small>Transcurrido: ' + sanitizeHTML(String(elapsedMinutes)) + ':' + sanitizeHTML(String(elapsedSecs).padStart(2, '0')) + '</small>';
