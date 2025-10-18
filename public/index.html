@@ -4091,11 +4091,19 @@
           // Crear utterance con configuración URGENTE
           const utterance = new SpeechSynthesisUtterance(message);
           
-          // CONFIGURACIÓN URGENTE - FORZAR AUDIO
-          utterance.volume = 1.0; // Volumen máximo
-          utterance.rate = 0.7;  // Velocidad más lenta para asegurar audibilidad
-          utterance.pitch = 1.0; // Pitch normal
+          // CONFIGURACIÓN NATURAL Y INTELIGENTE
+          utterance.volume = 0.9; // Volumen alto pero no máximo
+          utterance.rate = 0.8;   // Velocidad natural y clara
+          utterance.pitch = 1.1;  // Pitch ligeramente más alto para claridad
           utterance.lang = 'es-ES';
+          
+          // AGREGAR PAUSAS NATURALES AL MENSAJE
+          const messageWithPauses = message
+            .replace(/\./g, '. ')  // Pausa después de puntos
+            .replace(/,/g, ', ')    // Pausa después de comas
+            .replace(/:/g, ': ');   // Pausa después de dos puntos
+          
+          utterance.text = messageWithPauses;
           
           // Configurar voz con fallback URGENTE
           const voice = getFemaleSpanishVoice();
@@ -4202,22 +4210,15 @@
       return { repetitions, delay };
     }
     
-    // FUNCIÓN DE VOZ CON REPETICIONES ADAPTATIVAS
+    // SISTEMA DE VOZ INTELIGENTE Y NATURAL - BASADO EN MEJORES PRÁCTICAS
     async function speakAlertWithRepetition(pendingAlerts, alertCount) {
       if (!voiceNotificationsEnabled) {
         console.log(`🔇 Voz deshabilitada, saltando speakAlertWithRepetition`);
         return;
       }
       
-      console.log(`🧠 SISTEMA ADAPTATIVO: Procesando ${alertCount} alertas`);
+      console.log(`🧠 SISTEMA INTELIGENTE: Procesando ${alertCount} alertas`);
       console.log(`📊 pendingAlerts:`, pendingAlerts);
-      
-      // DIAGNÓSTICO DE VOZ - Verificar estado del sistema
-      console.log(`🔍 DIAGNÓSTICO DE VOZ:`);
-      console.log(`  - voiceNotificationsEnabled: ${voiceNotificationsEnabled}`);
-      console.log(`  - voiceSystemActivated: ${voiceSystemActivated}`);
-      console.log(`  - speechSynthesis disponible: ${typeof speechSynthesis !== 'undefined'}`);
-      console.log(`  - voces disponibles: ${speechSynthesis.getVoices().length}`);
       
       // VALIDAR DATOS DE ENTRADA
       if (!pendingAlerts || pendingAlerts.length === 0) {
@@ -4225,40 +4226,12 @@
         return;
       }
       
+      // GENERAR MENSAJE NATURAL Y PERSONALIZADO
+      const message = generateNaturalVoiceMessage(pendingAlerts, alertCount);
+      console.log(`🔊 MENSAJE NATURAL GENERADO: "${message}"`);
+      
       // Calcular repeticiones adaptativas
       const { repetitions, delay } = calculateAdaptiveRepetitions('', alertCount);
-      
-      // GENERAR MENSAJE CON LÓGICA DE ESCENARIOS CORRECTA
-      let message;
-      
-      if (alertCount === 1) {
-        // ESCENARIO 1: Un solo niño
-        const childName = extractChildNameFromAlert(pendingAlerts[0].text);
-        const gender = detectGenderByName(childName);
-        const relationship = gender === 'female' ? 'hija' : (gender === 'male' ? 'hijo' : 'niño');
-        message = `Atención, ${childName} terminó su tiempo de juego`;
-        console.log(`🎯 ESCENARIO 1: Un niño (${childName}, ${relationship})`);
-        
-      } else if (alertCount === 2) {
-        // ESCENARIO 2: Dos niños
-        const child1 = extractChildNameFromAlert(pendingAlerts[0].text);
-        const child2 = extractChildNameFromAlert(pendingAlerts[1].text);
-        message = `Atención, ${child1} y ${child2} terminaron su tiempo de juego`;
-        console.log(`🎯 ESCENARIO 2: Dos niños (${child1}, ${child2})`);
-        
-      } else if (alertCount <= 5) {
-        // ESCENARIO 3: 3-5 niños - mostrar lista
-        const children = pendingAlerts.map(alert => extractChildNameFromAlert(alert.text)).filter(name => name);
-        message = `Atención, ${children.join(', ')} terminaron su tiempo de juego`;
-        console.log(`🎯 ESCENARIO 3: 3-5 niños (${children.join(', ')})`);
-        
-      } else {
-        // ESCENARIO 4: 6+ niños - mensaje consolidado
-        message = `Atención, ${alertCount} niños terminaron su tiempo de juego`;
-        console.log(`🎯 ESCENARIO 4: 6+ niños (${alertCount})`);
-      }
-      
-      console.log(`🔊 MENSAJE GENERADO: "${message}"`);
       
       // Agregar repeticiones a la cola
       for (let i = 0; i < repetitions; i++) {
@@ -4266,6 +4239,48 @@
           priority: 'high',
           delay: i > 0 ? delay : 0 
         });
+      }
+    }
+    
+    // GENERADOR DE MENSAJES NATURALES Y PERSONALIZADOS
+    function generateNaturalVoiceMessage(pendingAlerts, alertCount) {
+      console.log(`🎯 GENERANDO MENSAJE NATURAL PARA ${alertCount} NIÑOS`);
+      
+      // Extraer información de los niños
+      const childrenInfo = pendingAlerts.map(alert => {
+        const childName = extractChildNameFromAlert(alert.text);
+        const gender = detectGenderByName(childName);
+        return {
+          name: childName,
+          gender: gender,
+          relationship: gender === 'female' ? 'hija' : (gender === 'male' ? 'hijo' : 'niño')
+        };
+      }).filter(child => child.name);
+      
+      console.log(`👶 INFORMACIÓN DE NIÑOS:`, childrenInfo);
+      
+      // GENERAR MENSAJE SEGÚN ESCENARIOS NATURALES
+      if (alertCount === 1) {
+        // ESCENARIO 1: Un niño - Mensaje personalizado
+        const child = childrenInfo[0];
+        return `Hola, ${child.name} ha terminado su tiempo de juego. Por favor, recógelo.`;
+        
+      } else if (alertCount === 2) {
+        // ESCENARIO 2: Dos niños - Mensaje natural
+        const child1 = childrenInfo[0];
+        const child2 = childrenInfo[1];
+        return `Hola, ${child1.name} y ${child2.name} han terminado su tiempo de juego. Por favor, recógelos.`;
+        
+      } else if (alertCount <= 5) {
+        // ESCENARIO 3: 3-5 niños - Lista natural
+        const names = childrenInfo.map(child => child.name);
+        const lastChild = names.pop();
+        const otherChildren = names.join(', ');
+        return `Hola, ${otherChildren} y ${lastChild} han terminado su tiempo de juego. Por favor, recógelos.`;
+        
+      } else {
+        // ESCENARIO 4: 6+ niños - Mensaje consolidado
+        return `Hola, ${alertCount} niños han terminado su tiempo de juego. Por favor, recógelos.`;
       }
     }
     
