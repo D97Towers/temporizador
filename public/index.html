@@ -1739,24 +1739,6 @@
       animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
-    /* Indicador de nuevas alertas */
-    .alert-indicator {
-      position: fixed;
-      top: 70px;
-      right: 20px;
-      background: #ff4757;
-      color: white;
-      border-radius: 50%;
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: bold;
-      z-index: 10001;
-      animation: pulse 1.5s infinite;
-    }
     
     @keyframes pulse {
       0% { transform: scale(1); }
@@ -4844,30 +4826,11 @@
         setTimeout(() => {
           if (alert.parentNode) {
           alert.remove();
-            updateAlertIndicator();
           }
         }, 300);
       }
     }
     
-    // Función para actualizar el indicador de alertas
-    function updateAlertIndicator() {
-      let indicator = document.getElementById('alertIndicator');
-      const container = document.getElementById('alertContainer') || createAlertContainer();
-      const activeAlerts = container.children.length;
-      
-      if (activeAlerts > 0 && !indicator) {
-        indicator = document.createElement('div');
-        indicator.id = 'alertIndicator';
-        indicator.className = 'alert-indicator';
-        indicator.textContent = activeAlerts > 9 ? '9+' : activeAlerts;
-        document.body.appendChild(indicator);
-      } else if (indicator && activeAlerts === 0) {
-        indicator.remove();
-      } else if (indicator) {
-        indicator.textContent = activeAlerts > 9 ? '9+' : activeAlerts;
-      }
-    }
     
     // Función para mostrar alertas elegantes
     function showElegantAlert(msg, type = 'info', sessionId = null) {
@@ -4897,8 +4860,6 @@
         closeAlert(alertId);
       }, 8000);
       
-      // Actualizar indicador de alertas
-      updateAlertIndicator();
     }
 
     // Función para limpiar todas las alertas persistentes
