@@ -1354,6 +1354,25 @@
       }
     }
 
+    /* FIX CRÍTICO: FORZAR POSICIONAMIENTO RELATIVO EN MÓVIL */
+    @media (max-width: 768px) {
+      * {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        bottom: auto !important;
+        transform: none !important;
+      }
+      
+      /* Excepciones para elementos que necesitan ser absolutos */
+      .sidebar-overlay,
+      .modal-overlay,
+      .status-message {
+        position: fixed !important;
+      }
+    }
+
     .history-toggle:hover {
       transform: translateY(-2px);
       box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
@@ -1850,10 +1869,10 @@
       
       .mobile-menu-toggle {
         display: block !important;
-        position: fixed !important;
-        top: 20px !important;
-        left: 20px !important;
-        z-index: 1001 !important;
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        z-index: 1 !important;
         transform: none !important;
         transition: none !important;
       }
@@ -2074,7 +2093,7 @@
 </head>
 <body>
     <!-- Menú móvil - Posicionado fuera del flujo normal -->
-    <div style="position: fixed; top: 20px; left: 20px; z-index: 1001;">
+    <div style="position: relative; z-index: 1;">
       <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
         <div class="hamburger-lines">
           <span></span>
