@@ -4044,9 +4044,18 @@
     function hideStatusMessage() {
       const msg = document.getElementById('statusMessage');
       if (msg) {
+        console.log(`🔔 hideStatusMessage LLAMADA: ocultando "${msg.textContent}"`);
         msg.style.display = 'none';
         msg.style.opacity = '0';
         msg.style.transform = 'translateX(400px)';
+        
+        // REMOVER COMPLETAMENTE DEL DOM DESPUÉS DE LA ANIMACIÓN
+        setTimeout(() => {
+          if (msg && msg.parentNode) {
+            console.log(`🔔 REMOVIENDO ALERTA DEL DOM: "${msg.textContent}"`);
+            msg.remove();
+          }
+        }, 300); // Esperar 300ms para la animación
       }
     }
 
