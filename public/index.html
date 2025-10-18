@@ -4779,6 +4779,149 @@
     // Hacer función global para prueba de 3 sesiones
     window.test3ActiveSessions = test3ActiveSessions;
     
+    // 🚨 SISTEMA DE PRUEBAS ROBUSTO - ESCUCHAR AUDIO REAL
+    function testVoiceSystemRobust() {
+      console.log(`🚨 INICIANDO PRUEBAS ROBUSTAS DEL SISTEMA DE VOZ`);
+      console.log(`================================================`);
+      
+      // Verificar estado del sistema
+      console.log(`\n📊 ESTADO DEL SISTEMA:`);
+      console.log(`  - voiceNotificationsEnabled: ${voiceNotificationsEnabled}`);
+      console.log(`  - voiceSystemActivated: ${voiceSystemActivated}`);
+      console.log(`  - speechSynthesis disponible: ${typeof speechSynthesis !== 'undefined'}`);
+      console.log(`  - voces disponibles: ${speechSynthesis.getVoices().length}`);
+      
+      // PRUEBA 1: Audio básico
+      console.log(`\n🧪 PRUEBA 1: AUDIO BÁSICO`);
+      console.log(`📢 Reproduciendo: "Prueba de audio básico"`);
+      speakChildName("Prueba de audio básico");
+      
+      setTimeout(() => {
+        // PRUEBA 2: Un niño
+        console.log(`\n🧪 PRUEBA 2: UN NIÑO`);
+        const scenario1 = [{
+          text: "¡Atención! A sofia le quedan solo 5 segundos",
+          sessionId: 1,
+          timeLeft: 0,
+          timestamp: Date.now()
+        }];
+        console.log(`📢 Escenario: 1 niño (sofia)`);
+        speakAlertWithRepetition(scenario1, 1);
+      }, 3000);
+      
+      setTimeout(() => {
+        // PRUEBA 3: Dos niños
+        console.log(`\n🧪 PRUEBA 3: DOS NIÑOS`);
+        const scenario2 = [
+          { text: "¡Atención! A sofia le quedan solo 5 segundos", sessionId: 1, timeLeft: 0, timestamp: Date.now() },
+          { text: "¡Atención! A david le quedan solo 3 segundos", sessionId: 2, timeLeft: 0, timestamp: Date.now() }
+        ];
+        console.log(`📢 Escenario: 2 niños (sofia, david)`);
+        speakAlertWithRepetition(scenario2, 2);
+      }, 6000);
+      
+      setTimeout(() => {
+        // PRUEBA 4: Tres niños
+        console.log(`\n🧪 PRUEBA 4: TRES NIÑOS`);
+        const scenario3 = [
+          { text: "¡Atención! A sofia le quedan solo 5 segundos", sessionId: 1, timeLeft: 0, timestamp: Date.now() },
+          { text: "¡Atención! A david le quedan solo 3 segundos", sessionId: 2, timeLeft: 0, timestamp: Date.now() },
+          { text: "¡Atención! A mathias le quedan solo 2 segundos", sessionId: 3, timeLeft: 0, timestamp: Date.now() }
+        ];
+        console.log(`📢 Escenario: 3 niños (sofia, david, mathias)`);
+        speakAlertWithRepetition(scenario3, 3);
+      }, 9000);
+      
+      setTimeout(() => {
+        // PRUEBA 5: Cinco niños
+        console.log(`\n🧪 PRUEBA 5: CINCO NIÑOS`);
+        const scenario4 = [
+          { text: "¡Atención! A sofia le quedan solo 5 segundos", sessionId: 1, timeLeft: 0, timestamp: Date.now() },
+          { text: "¡Atención! A david le quedan solo 3 segundos", sessionId: 2, timeLeft: 0, timestamp: Date.now() },
+          { text: "¡Atención! A mathias le quedan solo 2 segundos", sessionId: 3, timeLeft: 0, timestamp: Date.now() },
+          { text: "¡Atención! A cristian le quedan solo 1 segundo", sessionId: 4, timeLeft: 0, timestamp: Date.now() },
+          { text: "¡Atención! A ramon le quedan solo 1 segundo", sessionId: 5, timeLeft: 0, timestamp: Date.now() }
+        ];
+        console.log(`📢 Escenario: 5 niños (sofia, david, mathias, cristian, ramon)`);
+        speakAlertWithRepetition(scenario4, 5);
+      }, 12000);
+      
+      setTimeout(() => {
+        // PRUEBA 6: Seis niños
+        console.log(`\n🧪 PRUEBA 6: SEIS NIÑOS`);
+        const scenario5 = [
+          { text: "¡Atención! A sofia le quedan solo 5 segundos", sessionId: 1, timeLeft: 0, timestamp: Date.now() },
+          { text: "¡Atención! A david le quedan solo 3 segundos", sessionId: 2, timeLeft: 0, timestamp: Date.now() },
+          { text: "¡Atención! A mathias le quedan solo 2 segundos", sessionId: 3, timeLeft: 0, timestamp: Date.now() },
+          { text: "¡Atención! A cristian le quedan solo 1 segundo", sessionId: 4, timeLeft: 0, timestamp: Date.now() },
+          { text: "¡Atención! A ramon le quedan solo 1 segundo", sessionId: 5, timeLeft: 0, timestamp: Date.now() },
+          { text: "¡Atención! A santiago le quedan solo 1 segundo", sessionId: 6, timeLeft: 0, timestamp: Date.now() }
+        ];
+        console.log(`📢 Escenario: 6 niños (sofia, david, mathias, cristian, ramon, santiago)`);
+        speakAlertWithRepetition(scenario5, 6);
+      }, 15000);
+      
+      setTimeout(() => {
+        // PRUEBA 7: Nombres con acentos
+        console.log(`\n🧪 PRUEBA 7: NOMBRES CON ACENTOS`);
+        const scenario6 = [
+          { text: "¡Atención! A josé le quedan solo 5 segundos", sessionId: 1, timeLeft: 0, timestamp: Date.now() },
+          { text: "¡Atención! A maría le quedan solo 3 segundos", sessionId: 2, timeLeft: 0, timestamp: Date.now() }
+        ];
+        console.log(`📢 Escenario: Nombres con acentos (josé, maría)`);
+        speakAlertWithRepetition(scenario6, 2);
+      }, 18000);
+      
+      setTimeout(() => {
+        // PRUEBA 8: Nombres complejos
+        console.log(`\n🧪 PRUEBA 8: NOMBRES COMPLEJOS`);
+        const scenario7 = [
+          { text: "¡Atención! A alejandro le quedan solo 5 segundos", sessionId: 1, timeLeft: 0, timestamp: Date.now() },
+          { text: "¡Atención! A valentina le quedan solo 3 segundos", sessionId: 2, timeLeft: 0, timestamp: Date.now() }
+        ];
+        console.log(`📢 Escenario: Nombres complejos (alejandro, valentina)`);
+        speakAlertWithRepetition(scenario7, 2);
+      }, 21000);
+      
+      setTimeout(() => {
+        // PRUEBA 9: Casos edge
+        console.log(`\n🧪 PRUEBA 9: CASOS EDGE`);
+        const scenario8 = [
+          { text: "¡Atención! A niño le quedan solo 5 segundos", sessionId: 1, timeLeft: 0, timestamp: Date.now() }
+        ];
+        console.log(`📢 Escenario: Casos edge (niño genérico)`);
+        speakAlertWithRepetition(scenario8, 1);
+      }, 24000);
+      
+      setTimeout(() => {
+        // PRUEBA 10: Datos inválidos
+        console.log(`\n🧪 PRUEBA 10: DATOS INVÁLIDOS`);
+        const scenario9 = [
+          { text: "¡Atención! A  le quedan solo 5 segundos", sessionId: 1, timeLeft: 0, timestamp: Date.now() }
+        ];
+        console.log(`📢 Escenario: Datos inválidos (nombre vacío)`);
+        speakAlertWithRepetition(scenario9, 1);
+      }, 27000);
+      
+      console.log(`\n✅ PRUEBAS INICIADAS - ESCUCHAR AUDIO EN SECUENCIA`);
+      console.log(`📋 INSTRUCCIONES:`);
+      console.log(`  1. ESCUCHA cada mensaje de voz`);
+      console.log(`  2. VERIFICA que los nombres se pronuncian correctamente`);
+      console.log(`  3. CONFIRMA que los mensajes son naturales`);
+      console.log(`  4. IDENTIFICA cualquier problema`);
+      console.log(`  5. REVISA los logs en consola`);
+      
+      return {
+        success: true,
+        message: "Pruebas robustas iniciadas",
+        tests: 10,
+        duration: "30 segundos"
+      };
+    }
+    
+    // Hacer función global para pruebas robustas
+    window.testVoiceSystemRobust = testVoiceSystemRobust;
+    
     // SISTEMA ADAPTATIVO DE REPETICIONES
     function calculateAdaptiveRepetitions(message, alertCount) {
       if (!adaptiveAlertSystem.enabled) {
@@ -4810,14 +4953,14 @@
       return { repetitions, delay };
     }
     
-    // SISTEMA DE VOZ INTELIGENTE Y NATURAL - BASADO EN MEJORES PRÁCTICAS
+    // SISTEMA DE VOZ RESTAURADO - ESTABLE COMO AYER
     async function speakAlertWithRepetition(pendingAlerts, alertCount) {
       if (!voiceNotificationsEnabled) {
         console.log(`🔇 Voz deshabilitada, saltando speakAlertWithRepetition`);
         return;
       }
       
-      console.log(`🧠 SISTEMA INTELIGENTE: Procesando ${alertCount} alertas`);
+      console.log(`🧠 SISTEMA ESTABLE: Procesando ${alertCount} alertas`);
       console.log(`📊 pendingAlerts:`, pendingAlerts);
       
       // VALIDAR DATOS DE ENTRADA
@@ -4826,20 +4969,23 @@
         return;
       }
       
-      // USAR FUNCIONES CORREGIDAS
-      const message = generateNaturalVoiceMessageFixed(pendingAlerts, alertCount);
-      console.log(`🔊 MENSAJE NATURAL GENERADO: "${message}"`);
-      
-      // Calcular repeticiones adaptativas con función corregida
-      const { repetitions, delay } = calculateAdaptiveRepetitionsFixed('', alertCount);
-      
-      // Agregar repeticiones a la cola con función corregida
-      for (let i = 0; i < repetitions; i++) {
-        addToVoiceQueueFixed(message, { 
-          priority: 'high',
-          delay: i > 0 ? delay : 0 
-        });
+      // GENERAR MENSAJE SIMPLE Y ESTABLE
+      let message;
+      if (alertCount === 1) {
+        const childName = extractChildNameFromAlert(pendingAlerts[0].text);
+        message = `Hola, ${childName} ha terminado su tiempo de juego. Por favor, recógelo.`;
+      } else if (alertCount === 2) {
+        const child1 = extractChildNameFromAlert(pendingAlerts[0].text);
+        const child2 = extractChildNameFromAlert(pendingAlerts[1].text);
+        message = `Hola, ${child1} y ${child2} han terminado su tiempo de juego. Por favor, recógelos.`;
+      } else {
+        message = `Hola, ${alertCount} niños han terminado su tiempo de juego. Por favor, recógelos.`;
       }
+      
+      console.log(`🔊 MENSAJE GENERADO: "${message}"`);
+      
+      // REPRODUCIR DIRECTAMENTE SIN COLA COMPLEJA
+      speakChildName(message);
     }
     
     // GENERADOR DE MENSAJES NATURALES Y PERSONALIZADOS - USAR FUNCIONES CORREGIDAS
