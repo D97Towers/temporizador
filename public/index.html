@@ -2656,6 +2656,58 @@
     let timerIntervals = new Map();
     let currentExtendSession = null;
     let currentEditChild = null; // Para almacenar el ID del niño que se está editando
+    // FUNCIONES DE COMPATIBILIDAD CRÍTICAS - DEBEN ESTAR PRIMERO
+    function showStatusMessage(text, type = 'success', sessionId = null) {
+      console.log(`🔔 showStatusMessage (compatibilidad): ${text} [${type}]`);
+      
+      // Usar showSmartAlert como función principal
+      if (typeof showSmartAlert === 'function') {
+        showSmartAlert(text, type, sessionId);
+      } else {
+        // Fallback básico si showSmartAlert no está disponible
+        console.warn('⚠️ showSmartAlert no disponible, usando fallback básico');
+        
+        // Crear elemento de alerta básico
+        let msg = document.getElementById('statusMessage');
+        if (!msg) {
+          msg = document.createElement('div');
+          msg.id = 'statusMessage';
+          msg.className = 'status-message';
+          msg.innerHTML = `
+            <span class="status-text"></span>
+            <button class="status-close" onclick="hideStatusMessage()" title="Cerrar">
+              <i class="fas fa-times"></i>
+            </button>
+          `;
+          document.body.appendChild(msg);
+        }
+        
+        // Mostrar mensaje
+        const textSpan = msg.querySelector('.status-text');
+        if (textSpan) {
+          textSpan.textContent = text;
+        }
+        
+        // Aplicar estilos según tipo
+        msg.className = `status-message ${type}`;
+        msg.style.display = 'block';
+        
+        // Auto-ocultar después de 5 segundos
+        setTimeout(() => {
+          if (msg) {
+            msg.style.display = 'none';
+          }
+        }, 5000);
+      }
+    }
+    
+    function hideStatusMessage() {
+      const msg = document.getElementById('statusMessage');
+      if (msg) {
+        msg.style.display = 'none';
+      }
+    }
+
     // Variables globales críticas para el sistema de voz
     let voiceNotificationsEnabled = true; // Control de notificaciones de voz
     let browserNotificationsEnabled = false; // Control de notificaciones del navegador
@@ -3556,6 +3608,7 @@
       console.log('🔧 Sistema adaptativo actualizado:', adaptiveAlertSystem);
     }
     
+
     // Función de diagnóstico para problemas de inicio de sesión
     function diagnoseSessionStart() {
       console.log('🔍 DIAGNÓSTICO DE INICIO DE SESIÓN');
