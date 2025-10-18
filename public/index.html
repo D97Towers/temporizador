@@ -3556,6 +3556,73 @@
       console.log('🔧 Sistema adaptativo actualizado:', adaptiveAlertSystem);
     }
     
+    // Función de diagnóstico para problemas de inicio de sesión
+    function diagnoseSessionStart() {
+      console.log('🔍 DIAGNÓSTICO DE INICIO DE SESIÓN');
+      console.log('=====================================');
+      
+      // Verificar estado de la aplicación
+      console.log('📊 Estado de la aplicación:');
+      console.log('- AppState:', AppState);
+      console.log('- isStartingSession:', AppState?.isStartingSession);
+      
+      // Verificar datos de niños
+      console.log('👶 Datos de niños:');
+      console.log('- childrenCache.length:', childrenCache.length);
+      console.log('- childrenCache:', childrenCache);
+      
+      // Verificar datos de juegos
+      console.log('🎮 Datos de juegos:');
+      console.log('- gamesCache.length:', gamesCache.length);
+      console.log('- gamesCache:', gamesCache);
+      
+      // Verificar elementos del formulario
+      console.log('📝 Elementos del formulario:');
+      const selectedChildId = document.getElementById('selectedChildId');
+      const gameSelect = document.getElementById('gameSelect');
+      const durationInput = document.getElementById('durationInput');
+      
+      console.log('- selectedChildId:', selectedChildId?.value || 'NO ENCONTRADO');
+      console.log('- gameSelect:', gameSelect?.value || 'NO ENCONTRADO');
+      console.log('- durationInput:', durationInput?.value || 'NO ENCONTRADO');
+      
+      // Verificar opciones disponibles
+      if (selectedChildId) {
+        console.log('- Opciones de niños disponibles:', selectedChildId.options.length);
+        for (let i = 0; i < selectedChildId.options.length; i++) {
+          console.log(`  ${i}: ${selectedChildId.options[i].value} - ${selectedChildId.options[i].text}`);
+        }
+      }
+      
+      if (gameSelect) {
+        console.log('- Opciones de juegos disponibles:', gameSelect.options.length);
+        for (let i = 0; i < gameSelect.options.length; i++) {
+          console.log(`  ${i}: ${gameSelect.options[i].value} - ${gameSelect.options[i].text}`);
+        }
+      }
+      
+      // Verificar conectividad
+      console.log('🌐 Conectividad:');
+      console.log('- API URL:', api);
+      console.log('- fetchWithRetry disponible:', typeof fetchWithRetry);
+      
+      // Verificar errores en consola
+      console.log('❌ Errores recientes:');
+      console.log('- Revisar consola para errores de red o JavaScript');
+      
+      console.log('=====================================');
+      console.log('🔍 DIAGNÓSTICO COMPLETADO');
+      
+      return {
+        appState: AppState,
+        childrenCount: childrenCache.length,
+        gamesCount: gamesCache.length,
+        selectedChild: selectedChildId?.value,
+        selectedGame: gameSelect?.value,
+        duration: durationInput?.value
+      };
+    }
+    
     // Hacer funciones disponibles globalmente para pruebas
     window.testAllBrowsersVoiceQuality = testAllBrowsersVoiceQuality;
     window.testVoiceConfigurations = testVoiceConfigurations;
@@ -3570,6 +3637,7 @@
     window.configureAlertPreferences = configureAlertPreferences;
     window.testAdaptiveAlertSystem = testAdaptiveAlertSystem;
     window.configureAdaptiveSystem = configureAdaptiveSystem;
+    window.diagnoseSessionStart = diagnoseSessionStart;
 
 
     // ============================================================================
@@ -5968,37 +6036,51 @@
 
 
     async function startSession() {
+      console.log('🚀 INICIANDO SESIÓN - DIAGNÓSTICO COMPLETO');
+      console.log('==========================================');
+      
       // Prevenir doble-clic
       if (AppState?.isStartingSession) {
+        console.log('⚠️ Sesión ya en progreso, bloqueando doble-clic');
         showStatusMessage('⏳ Iniciando sesión, por favor espera...', 'warning');
         return;
       }
       
       try {
         AppState.isStartingSession = true;
+        console.log('✅ Estado de sesión bloqueado');
         
         const durationInput = document.getElementById('durationInput').value;
+        console.log('⏱️ Duración ingresada:', durationInput);
         
         // Validar duración primero
         if (!durationInput || durationInput.trim() === '') {
+          console.log('❌ Duración vacía o inválida');
           showStatusMessage('Por favor ingrese un tiempo válido', 'error');
+          AppState.isStartingSession = false;
           return;
         }
         
         const duration = validateDuration(durationInput);
+        console.log('✅ Duración validada:', duration);
         
         // OBTENER VALORES INMEDIATAMENTE - NO ESPERAR
         const selectedChildId = document.getElementById('selectedChildId').value;
         const gameId = document.getElementById('gameSelect').value;
         
+        console.log('👶 Niño seleccionado:', selectedChildId);
+        console.log('🎮 Juego seleccionado:', gameId);
+        
         // VALIDAR INMEDIATAMENTE - NO HACER NADA MÁS SI FALTA ALGO
         if (!selectedChildId) {
+          console.log('❌ No se seleccionó niño');
           showStatusMessage('Por favor seleccione un niño', 'error');
           AppState.isStartingSession = false;
           return;
         }
         
         if (!gameId) {
+          console.log('❌ No se seleccionó juego');
           showStatusMessage('Por favor seleccione un juego', 'error');
           AppState.isStartingSession = false;
           return;
@@ -6006,28 +6088,42 @@
       
         console.log('Starting session:', { selectedChildId, gameId, duration, originalInput: durationInput });
         
+        console.log('🔍 Validando sesión...');
         if (!validateSession(selectedChildId, gameId, duration)) {
+          console.log('❌ Validación de sesión falló');
+          AppState.isStartingSession = false;
+          return;
+        }
+        console.log('✅ Validación de sesión exitosa');
+        
+        // Verificar que el niño y juego existen en el caché
+        console.log('🔍 Verificando datos en caché...');
+        console.log('- childrenCache.length:', childrenCache.length);
+        console.log('- gamesCache.length:', gamesCache.length);
+        
+        const child = childrenCache.find(c => c.id == selectedChildId);
+        const game = gamesCache.find(g => g.id == gameId);
+        
+        console.log('👶 Niño encontrado en caché:', child ? 'SÍ' : 'NO');
+        console.log('🎮 Juego encontrado en caché:', game ? 'SÍ' : 'NO');
+        
+        if (!child) {
+          console.error('❌ Niño no encontrado en caché:', selectedChildId);
+          console.error('👶 Niños disponibles:', childrenCache.map(c => `${c.id}:${c.name}`));
+          showStatusMessage('Error: Niño no encontrado. Por favor selecciona un niño válido.', 'error');
+          document.getElementById('selectedChildId').value = '';
           AppState.isStartingSession = false;
           return;
         }
         
-        // Verificar que el niño y juego existen en el caché
-        const child = childrenCache.find(c => c.id == selectedChildId);
-      const game = gamesCache.find(g => g.id == gameId);
-      
-      if (!child) {
-          console.error('Child not found:', selectedChildId, 'Available children:', childrenCache.map(c => `${c.id}:${c.name}`));
-          showStatusMessage('Error: Niño no encontrado. Por favor selecciona un niño válido.', 'error');
-          document.getElementById('selectedChildId').value = '';
-        return;
-      }
-      
-      if (!game) {
-          console.error('Game not found:', gameId, 'Available games:', gamesCache.map(g => `${g.id}:${g.name}`));
+        if (!game) {
+          console.error('❌ Juego no encontrado en caché:', gameId);
+          console.error('🎮 Juegos disponibles:', gamesCache.map(g => `${g.id}:${g.name}`));
           showStatusMessage('Error: Juego no encontrado. Por favor selecciona un juego válido.', 'error');
           document.getElementById('gameSelect').value = '';
-        return;
-      }
+          AppState.isStartingSession = false;
+          return;
+        }
         
         console.log('Validación exitosa - Iniciando sesión:', {
           childId: selectedChildId,
