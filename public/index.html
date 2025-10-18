@@ -3965,21 +3965,26 @@
     
     function showVisualAlert(text, type, sessionId) {
       console.log(`🔔 showVisualAlert LLAMADA: "${text}" [${type}] sessionId: ${sessionId}`);
-      let msg = document.getElementById('statusMessage');
       
-      // Si no existe el elemento, crearlo
-      if (!msg) {
-        msg = document.createElement('div');
-        msg.id = 'statusMessage';
-        msg.className = 'status-message';
-        msg.innerHTML = `
-          <span class="status-text"></span>
-          <button class="status-close" onclick="hideStatusMessage()" title="Cerrar">
-            <i class="fas fa-times"></i>
-          </button>
-        `;
-        document.body.appendChild(msg);
+      // CANCELAR ALERTA ANTERIOR SI EXISTE
+      const existingMsg = document.getElementById('statusMessage');
+      if (existingMsg && existingMsg.timeoutId) {
+        console.log(`🔔 CANCELANDO ALERTA ANTERIOR: "${existingMsg.textContent}"`);
+        clearTimeout(existingMsg.timeoutId);
+        existingMsg.remove();
       }
+      
+      // CREAR NUEVA ALERTA
+      let msg = document.createElement('div');
+      msg.id = 'statusMessage';
+      msg.className = 'status-message';
+      msg.innerHTML = `
+        <span class="status-text"></span>
+        <button class="status-close" onclick="hideStatusMessage()" title="Cerrar">
+          <i class="fas fa-times"></i>
+        </button>
+      `;
+      document.body.appendChild(msg);
       
       // Reproducir sonido según el tipo
       if (type === 'warning' || type === 'danger') {
