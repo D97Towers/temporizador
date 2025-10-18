@@ -2785,6 +2785,12 @@
 
     // Función para detectar género por nombre (mejores prácticas)
     function detectGenderByName(name) {
+      // VALIDACIÓN CRÍTICA: Manejar casos donde name es undefined, null o vacío
+      if (!name || typeof name !== 'string' || name.trim() === '') {
+        console.log(`⚠️ detectGenderByName: nombre inválido recibido:`, name);
+        return 'unknown'; // Retornar 'unknown' para nombres inválidos
+      }
+      
       const maleNames = [
         'david', 'carlos', 'luis', 'pedro', 'miguel', 'jorge', 'andrés', 'roberto', 'fernando', 'eduardo',
         'juan', 'antonio', 'francisco', 'manuel', 'josé', 'rafael', 'daniel', 'alejandro', 'sergio', 'pablo',
@@ -4679,6 +4685,12 @@
       
       // Crear mensajes diferenciando por padres y género
       const parentChildMessages = children.map(child => {
+        // VALIDACIÓN CRÍTICA: Verificar que child y child.name existan
+        if (!child || !child.name) {
+          console.log(`⚠️ speakAlertWithRepetition: child o child.name inválido:`, child);
+          return `niño terminó su tiempo de juego`;
+        }
+        
         // Detectar género del niño/niña
         const gender = detectGenderByName(child.name);
         // NUNCA mostrar "hijo/a" - siempre usar uno específico o "niño" como genérico
