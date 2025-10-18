@@ -3258,11 +3258,19 @@
     function addToVoiceQueue(message, options = {}) {
       console.log(`📝 Agregando a cola de voz: "${message}"`);
       
+      // Validar que no se agreguen mensajes duplicados muy seguidos
+      const now = Date.now();
+      const lastMessage = voiceQueue[voiceQueue.length - 1];
+      if (lastMessage && lastMessage.message === message && (now - lastMessage.timestamp) < 2000) {
+        console.log(`⚠️ Mensaje duplicado detectado, saltando: "${message}"`);
+        return;
+      }
+      
       // Agregar mensaje a la cola
       voiceQueue.push({
         message: message,
         options: options,
-        timestamp: Date.now()
+        timestamp: now
       });
       
       // Procesar cola si no está en proceso
@@ -3302,9 +3310,15 @@
         
         utterance.onerror = (e) => {
           console.error(`❌ Error en mensaje: "${voiceItem.message}"`, e);
+          console.log(`🔍 Tipo de error: ${e.error}, CharIndex: ${e.charIndex}`);
+          
           isVoicePlaying = false;
-          // Continuar con el siguiente mensaje
-          setTimeout(playNextInQueue, 100);
+          
+          // Si es error de interrupción, esperar un poco más antes de continuar
+          const delay = e.error === 'interrupted' ? 1000 : 100;
+          console.log(`⏳ Esperando ${delay}ms antes de continuar...`);
+          
+          setTimeout(playNextInQueue, delay);
         };
         
         speechSynthesis.speak(utterance);
@@ -5745,8 +5759,8 @@
           return;
         }
 
-        // Cancelar cualquier síntesis anterior
-        window.speechSynthesis.cancel();
+        // NO cancelar aquí - puede interrumpir audio en curso
+        // window.speechSynthesis.cancel();
 
         // Las voces se cargarán en getFemaleSpanishVoice si es necesario
 
