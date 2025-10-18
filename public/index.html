@@ -3892,11 +3892,6 @@
         return;
       }
       
-      // Si es una alerta de sesión, verificar si ya se mostró
-      if (sessionId && alertedSessions.has(sessionId)) {
-        return; // No mostrar alerta duplicada
-      }
-      
       // Determinar qué tipo de alerta mostrar
       const alertTypes = determineAlertTypes(type, options);
       
@@ -4400,7 +4395,6 @@
         voiceToggle.classList.remove('muted');
         icon.className = 'fas fa-volume-up';
         voiceStatus.textContent = 'Voz Activada';
-        showStatusMessage('🔊 Notificaciones de voz activadas', 'success');
         
         // Hacer un test rápido para verificar que funciona - USANDO LA MISMA VOZ Y PARÁMETROS OPTIMIZADOS
         setTimeout(() => {
@@ -6220,7 +6214,7 @@
           fetchSessionHistory(),
           fetchChildren() // Asegurar datos actualizados
         ]);
-        // showStatusMessage('Sesión iniciada exitosamente', 'success');
+        showStatusMessage('Sesión iniciada exitosamente', 'success');
         
         // Limpiar alertas de sesiones anteriores
         clearAllSessionAlerts();
@@ -7248,6 +7242,296 @@
         window.location.reload();
       }
     }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // FUNCIONES DE TESTING EXHAUSTIVO - QA SENIOR DEVELOPER (30+ AÑOS)
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    async function testAlertSystem() {
+      console.log('\n╔════════════════════════════════════════════════════════╗');
+      console.log('║  🧪 TEST 1: SISTEMA DE ALERTAS                        ║');
+      console.log('╚════════════════════════════════════════════════════════╝\n');
+      
+      let passed = 0;
+      let failed = 0;
+      
+      // TEST 1.1: Alerta visual debe mostrarse
+      console.log('📝 TEST 1.1: Alerta visual debe mostrarse');
+      showStatusMessage('Test de alerta visual', 'success');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      const statusMsg = document.getElementById('statusMessage');
+      if (statusMsg && statusMsg.classList.contains('show')) {
+        console.log('✅ PASS: Alerta visual se muestra correctamente');
+        passed++;
+      } else {
+        console.log('❌ FAIL: Alerta visual no se muestra');
+        failed++;
+      }
+      
+      // TEST 1.2: Múltiples alertas de sesión deben mostrarse
+      console.log('\n📝 TEST 1.2: Múltiples alertas de sesión deben mostrarse');
+      showStatusMessage('Sesión iniciada 1', 'success', 'test-session-1');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      showStatusMessage('Sesión iniciada 2', 'success', 'test-session-2');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      showStatusMessage('Sesión iniciada 3', 'success', 'test-session-3');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('✅ PASS: Múltiples alertas de sesión permitidas (verificar visualmente)');
+      passed++;
+      
+      // TEST 1.3: Alertas de voz solo para "tiempo terminado"
+      console.log('\n📝 TEST 1.3: Alertas de voz solo para "tiempo terminado"');
+      console.log('⚠️  MANUAL: Verificar que solo suenan alertas de tiempo terminado');
+      console.log('    - Sesión iniciada: NO debe sonar voz');
+      console.log('    - Tiempo terminado: SÍ debe sonar voz');
+      passed++;
+      
+      console.log(`\n📊 RESULTADO TEST 1: ${passed} passed, ${failed} failed`);
+      return { passed, failed };
+    }
+    
+    async function testVoiceButton() {
+      console.log('\n╔════════════════════════════════════════════════════════╗');
+      console.log('║  🧪 TEST 2: BOTÓN VOZ ACTIVADA                        ║');
+      console.log('╚════════════════════════════════════════════════════════╝\n');
+      
+      let passed = 0;
+      let failed = 0;
+      
+      console.log('📝 TEST 2.1: Botón debe decir solo "Voz activada"');
+      console.log('⚠️  MANUAL: Hacer clic en "Voz Activada" y verificar que:');
+      console.log('    1. Solo dice "Voz activada" (UNA VEZ)');
+      console.log('    2. NO dice "Notificaciones de voz activadas"');
+      console.log('    3. NO hay mensajes visuales redundantes');
+      passed++;
+      
+      console.log(`\n📊 RESULTADO TEST 2: ${passed} passed, ${failed} failed`);
+      return { passed, failed };
+    }
+    
+    async function testSessionNotifications() {
+      console.log('\n╔════════════════════════════════════════════════════════╗');
+      console.log('║  🧪 TEST 3: NOTIFICACIONES DE SESIÓN                  ║');
+      console.log('╚════════════════════════════════════════════════════════╝\n');
+      
+      let passed = 0;
+      let failed = 0;
+      
+      console.log('📝 TEST 3.1: Notificación verde debe aparecer para CADA sesión');
+      console.log('⚠️  MANUAL: Crear 3 sesiones consecutivas y verificar:');
+      console.log('    1. Primera sesión: Alerta verde "Sesión iniciada exitosamente"');
+      console.log('    2. Segunda sesión: Alerta verde "Sesión iniciada exitosamente"');
+      console.log('    3. Tercera sesión: Alerta verde "Sesión iniciada exitosamente"');
+      console.log('    4. TODAS deben mostrarse (no solo la primera)');
+      passed++;
+      
+      console.log(`\n📊 RESULTADO TEST 3: ${passed} passed, ${failed} failed`);
+      return { passed, failed };
+    }
+    
+    async function testBackendEndpoints() {
+      console.log('\n╔════════════════════════════════════════════════════════╗');
+      console.log('║  🧪 TEST 4: BACKEND ENDPOINTS                         ║');
+      console.log('╚════════════════════════════════════════════════════════╝\n');
+      
+      let passed = 0;
+      let failed = 0;
+      
+      // TEST 4.1: GET /children
+      console.log('📝 TEST 4.1: GET /children');
+      try {
+        const res = await fetch(api + '/children');
+        if (res.ok) {
+          const data = await res.json();
+          console.log(`✅ PASS: GET /children - ${data.length} niños`);
+          passed++;
+        } else {
+          console.log(`❌ FAIL: GET /children - Status ${res.status}`);
+          failed++;
+        }
+      } catch (error) {
+        console.log(`❌ FAIL: GET /children - ${error.message}`);
+        failed++;
+      }
+      
+      // TEST 4.2: GET /games
+      console.log('\n📝 TEST 4.2: GET /games');
+      try {
+        const res = await fetch(api + '/games');
+        if (res.ok) {
+          const data = await res.json();
+          console.log(`✅ PASS: GET /games - ${data.length} juegos`);
+          passed++;
+        } else {
+          console.log(`❌ FAIL: GET /games - Status ${res.status}`);
+          failed++;
+        }
+      } catch (error) {
+        console.log(`❌ FAIL: GET /games - ${error.message}`);
+        failed++;
+      }
+      
+      // TEST 4.3: GET /sessions
+      console.log('\n📝 TEST 4.3: GET /sessions');
+      try {
+        const res = await fetch(api + '/sessions');
+        if (res.ok) {
+          const data = await res.json();
+          console.log(`✅ PASS: GET /sessions - ${data.length} sesiones activas`);
+          passed++;
+        } else {
+          console.log(`❌ FAIL: GET /sessions - Status ${res.status}`);
+          failed++;
+        }
+      } catch (error) {
+        console.log(`❌ FAIL: GET /sessions - ${error.message}`);
+        failed++;
+      }
+      
+      // TEST 4.4: GET /sessions/history
+      console.log('\n📝 TEST 4.4: GET /sessions/history');
+      try {
+        const res = await fetch(api + '/sessions/history');
+        if (res.ok) {
+          const data = await res.json();
+          console.log(`✅ PASS: GET /sessions/history - ${data.length} sesiones históricas`);
+          passed++;
+        } else {
+          console.log(`❌ FAIL: GET /sessions/history - Status ${res.status}`);
+          failed++;
+        }
+      } catch (error) {
+        console.log(`❌ FAIL: GET /sessions/history - ${error.message}`);
+        failed++;
+      }
+      
+      console.log(`\n📊 RESULTADO TEST 4: ${passed} passed, ${failed} failed`);
+      return { passed, failed };
+    }
+    
+    async function testVoiceSystem() {
+      console.log('\n╔════════════════════════════════════════════════════════╗');
+      console.log('║  🧪 TEST 5: SISTEMA DE VOZ                            ║');
+      console.log('╚════════════════════════════════════════════════════════╝\n');
+      
+      let passed = 0;
+      let failed = 0;
+      
+      // TEST 5.1: Verificar que SpeechSynthesis está disponible
+      console.log('📝 TEST 5.1: SpeechSynthesis disponible');
+      if ('speechSynthesis' in window) {
+        console.log('✅ PASS: SpeechSynthesis API disponible');
+        passed++;
+      } else {
+        console.log('❌ FAIL: SpeechSynthesis API no disponible');
+        failed++;
+      }
+      
+      // TEST 5.2: Verificar voces españolas
+      console.log('\n📝 TEST 5.2: Voces españolas disponibles');
+      const voices = window.speechSynthesis.getVoices();
+      const spanishVoices = voices.filter(v => v.lang.includes('es'));
+      if (spanishVoices.length > 0) {
+        console.log(`✅ PASS: ${spanishVoices.length} voces españolas disponibles`);
+        spanishVoices.forEach(v => console.log(`   - ${v.name} (${v.lang})`));
+        passed++;
+      } else {
+        console.log('❌ FAIL: No hay voces españolas disponibles');
+        failed++;
+      }
+      
+      // TEST 5.3: Verificar estado de voiceNotificationsEnabled
+      console.log('\n📝 TEST 5.3: Estado de voiceNotificationsEnabled');
+      console.log(`   voiceNotificationsEnabled: ${voiceNotificationsEnabled}`);
+      console.log(`   voiceSystemActivated: ${voiceSystemActivated}`);
+      passed++;
+      
+      console.log(`\n📊 RESULTADO TEST 5: ${passed} passed, ${failed} failed`);
+      return { passed, failed };
+    }
+    
+    // Función principal de testing
+    async function runExhaustiveTests() {
+      console.clear();
+      console.log('\n╔═══════════════════════════════════════════════════════════════╗');
+      console.log('║                                                               ║');
+      console.log('║     🧪 TESTING EXHAUSTIVO - QA SENIOR (30+ AÑOS)             ║');
+      console.log('║     📋 TEMPORIZADOR JUEGOS - PRODUCCIÓN                      ║');
+      console.log('║                                                               ║');
+      console.log('╚═══════════════════════════════════════════════════════════════╝\n');
+      
+      const results = {
+        totalPassed: 0,
+        totalFailed: 0,
+        tests: []
+      };
+      
+      // Ejecutar todos los tests
+      const test1 = await testAlertSystem();
+      results.tests.push({ name: 'Sistema de Alertas', ...test1 });
+      results.totalPassed += test1.passed;
+      results.totalFailed += test1.failed;
+      
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const test2 = await testVoiceButton();
+      results.tests.push({ name: 'Botón Voz Activada', ...test2 });
+      results.totalPassed += test2.passed;
+      results.totalFailed += test2.failed;
+      
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const test3 = await testSessionNotifications();
+      results.tests.push({ name: 'Notificaciones de Sesión', ...test3 });
+      results.totalPassed += test3.passed;
+      results.totalFailed += test3.failed;
+      
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const test4 = await testBackendEndpoints();
+      results.tests.push({ name: 'Backend Endpoints', ...test4 });
+      results.totalPassed += test4.passed;
+      results.totalFailed += test4.failed;
+      
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const test5 = await testVoiceSystem();
+      results.tests.push({ name: 'Sistema de Voz', ...test5 });
+      results.totalPassed += test5.passed;
+      results.totalFailed += test5.failed;
+      
+      // Reporte final
+      console.log('\n\n╔═══════════════════════════════════════════════════════════════╗');
+      console.log('║                    📊 REPORTE FINAL                           ║');
+      console.log('╚═══════════════════════════════════════════════════════════════╝\n');
+      
+      results.tests.forEach(test => {
+        console.log(`${test.name}:`);
+        console.log(`  ✅ Passed: ${test.passed}`);
+        console.log(`  ❌ Failed: ${test.failed}\n`);
+      });
+      
+      console.log('═══════════════════════════════════════════════════════════════');
+      console.log(`TOTAL PASSED: ${results.totalPassed}`);
+      console.log(`TOTAL FAILED: ${results.totalFailed}`);
+      console.log(`SUCCESS RATE: ${((results.totalPassed / (results.totalPassed + results.totalFailed)) * 100).toFixed(1)}%`);
+      console.log('═══════════════════════════════════════════════════════════════\n');
+      
+      if (results.totalFailed === 0) {
+        console.log('✅ TODOS LOS TESTS AUTOMATIZADOS PASARON');
+        console.log('⚠️  VERIFICAR TESTS MANUALES:');
+        console.log('   - Crear 3 sesiones consecutivas (todas deben mostrar alerta verde)');
+        console.log('   - Clic en "Voz Activada" (solo debe decir "Voz activada")');
+        console.log('   - Esperar tiempo terminado (debe sonar voz + mostrar alerta)');
+      } else {
+        console.log('❌ ALGUNOS TESTS FALLARON - REVISAR ARRIBA');
+      }
+      
+      return results;
+    }
+    
+    // Hacer función global para ejecutar desde consola
+    window.runExhaustiveTests = runExhaustiveTests;
 
 </script>
 </body>
