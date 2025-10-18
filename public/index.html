@@ -2811,31 +2811,6 @@
       }
       
       return 'unknown';
-      
-      const maleNames = [
-        'david', 'carlos', 'luis', 'pedro', 'miguel', 'jorge', 'andrés', 'roberto', 'fernando', 'eduardo',
-        'juan', 'antonio', 'francisco', 'manuel', 'josé', 'rafael', 'daniel', 'alejandro', 'sergio', 'pablo',
-        'mario', 'ricardo', 'alberto', 'enrique', 'ramon', 'ramón', 'javier', 'diego', 'mateo', 'sebastián', 'adrián',
-        'nicolás', 'leonardo', 'emilio', 'arturo', 'gustavo', 'rodrigo', 'gerardo', 'hugo', 'oscar', 'rubén'
-      ];
-      
-      const femaleNames = [
-        'sofia', 'ana', 'maría', 'carmen', 'elena', 'rosa', 'patricia', 'cristina', 'mónica', 'laura',
-        'isabella', 'valentina', 'camila', 'valeria', 'natalia', 'andrea', 'paula', 'alejandra', 'carolina', 'daniela',
-        'fernanda', 'gabriela', 'samanta', 'vanessa', 'claudia', 'jessica', 'paola', 'monica', 'lucia', 'estefanía',
-        'jimena', 'regina', 'ximena', 'antonella', 'abigail', 'emilia', 'martina', 'emma', 'victoria', 'maya'
-      ];
-      
-      const normalizedName = name.toLowerCase().trim();
-      
-      if (maleNames.includes(normalizedName)) {
-        return 'male';
-      } else if (femaleNames.includes(normalizedName)) {
-        return 'female';
-      } else {
-        // Si no se puede determinar, usar genérico
-        return 'unknown';
-      }
     }
 
     // Función para detectar el navegador
