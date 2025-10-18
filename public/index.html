@@ -2662,6 +2662,11 @@
     let voicePermissionsGranted = false; // Estado de permisos de voz
     let voiceSystemActivated = false; // Estado de activación del sistema de voz
     
+    // Sistema de cola de voz para evitar interrupciones
+    let voiceQueue = []; // Cola de mensajes de voz pendientes
+    let isVoicePlaying = false; // Estado de reproducción actual
+    let voiceQueueProcessing = false; // Estado de procesamiento de cola
+    
     // Asegurar que las variables estén disponibles globalmente
     window.voiceNotificationsEnabled = voiceNotificationsEnabled;
     window.browserNotificationsEnabled = browserNotificationsEnabled;
@@ -3103,42 +3108,79 @@
       return hybridConfig;
     }
     
-    // Función de voz híbrida mejorada
-    function speakWithHybridVoice(message, options = {}) {
-      const hybridConfig = getHybridVoiceSystem();
-      const browser = detectBrowser();
+    // Sistema de cola de voz para evitar interrupciones
+    function addToVoiceQueue(message, options = {}) {
+      console.log(`📝 Agregando a cola de voz: "${message}"`);
       
-      console.log(`🎤 SISTEMA DE VOZ HÍBRIDA ACTIVADO PARA ${browser.toUpperCase()}`);
-      console.log(`📊 Configuración híbrida:`, hybridConfig);
+      // Agregar mensaje a la cola
+      voiceQueue.push({
+        message: message,
+        options: options,
+        timestamp: Date.now()
+      });
       
-      // Crear utterance con configuración híbrida
-      const utterance = new SpeechSynthesisUtterance(message);
-      
-      // Aplicar configuración híbrida
-      Object.assign(utterance, hybridConfig);
-      
-      // Estrategia adicional: Modulación de voz para sonido humano
-      if (browser === 'firefox') {
-        // Firefox: Modulación más agresiva
-        utterance.rate = Math.max(utterance.rate * 0.8, 0.4);
-        utterance.pitch = Math.min(utterance.pitch * 1.2, 1.5);
-        utterance.volume = Math.min(utterance.volume * 1.15, 1.0);
-      } else if (browser === 'chrome' || browser === 'edge') {
-        // Chrome/Edge: Modulación balanceada
-        utterance.rate = Math.max(utterance.rate * 0.9, 0.6);
-        utterance.pitch = Math.min(utterance.pitch * 1.1, 1.4);
-        utterance.volume = Math.min(utterance.volume * 1.05, 1.0);
+      // Procesar cola si no está en proceso
+      if (!voiceQueueProcessing) {
+        processVoiceQueue();
+      }
+    }
+    
+    function processVoiceQueue() {
+      if (voiceQueueProcessing || voiceQueue.length === 0) {
+        return;
       }
       
-      // Eventos para monitoreo
-      utterance.onstart = () => console.log(`🎤 Iniciando voz híbrida: ${message}`);
-      utterance.onend = () => console.log(`✅ Voz híbrida completada`);
-      utterance.onerror = (e) => console.error(`❌ Error en voz híbrida:`, e);
+      voiceQueueProcessing = true;
+      console.log(`🔄 Procesando cola de voz (${voiceQueue.length} mensajes pendientes)`);
       
-      // Reproducir
-      speechSynthesis.speak(utterance);
+      function playNextInQueue() {
+        if (voiceQueue.length === 0) {
+          voiceQueueProcessing = false;
+          isVoicePlaying = false;
+          console.log(`✅ Cola de voz completada`);
+          return;
+        }
+        
+        const voiceItem = voiceQueue.shift();
+        console.log(`🎤 Reproduciendo: "${voiceItem.message}"`);
+        
+        isVoicePlaying = true;
+        const utterance = createHybridUtterance(voiceItem.message, voiceItem.options.alertCount || 1);
+        
+        utterance.onend = () => {
+          console.log(`✅ Mensaje completado: "${voiceItem.message}"`);
+          isVoicePlaying = false;
+          // Pequeña pausa antes del siguiente mensaje
+          setTimeout(playNextInQueue, 500);
+        };
+        
+        utterance.onerror = (e) => {
+          console.error(`❌ Error en mensaje: "${voiceItem.message}"`, e);
+          isVoicePlaying = false;
+          // Continuar con el siguiente mensaje
+          setTimeout(playNextInQueue, 100);
+        };
+        
+        speechSynthesis.speak(utterance);
+      }
       
-      return utterance;
+      playNextInQueue();
+    }
+    
+    // Función de voz híbrida mejorada con sistema de cola
+    function speakWithHybridVoice(message, options = {}) {
+      console.log(`🎤 SISTEMA DE VOZ HÍBRIDA CON COLA ACTIVADO`);
+      console.log(`📊 Mensaje: "${message}"`);
+      console.log(`📊 Estado actual: isVoicePlaying=${isVoicePlaying}, queueLength=${voiceQueue.length}`);
+      
+      // Agregar a cola en lugar de reproducir inmediatamente
+      addToVoiceQueue(message, options);
+      
+      return {
+        message: message,
+        queued: true,
+        queuePosition: voiceQueue.length
+      };
     }
     
     // Función de evaluación del sistema híbrido
@@ -3375,6 +3417,34 @@
       return results;
     }
     
+    // Función de prueba del sistema de cola de voz
+    function testVoiceQueue() {
+      console.log(`🧪 PRUEBA DEL SISTEMA DE COLA DE VOZ`);
+      console.log(`📊 Estado inicial: isVoicePlaying=${isVoicePlaying}, queueLength=${voiceQueue.length}`);
+      
+      // Limpiar cola existente
+      voiceQueue = [];
+      isVoicePlaying = false;
+      voiceQueueProcessing = false;
+      
+      // Simular escenario de múltiples niños terminando tiempo
+      console.log(`🎯 Simulando escenario: Niño A termina tiempo`);
+      speakWithHybridVoice("Niño A terminó su tiempo de juego");
+      
+      setTimeout(() => {
+        console.log(`🎯 Simulando escenario: Niño B termina tiempo (debería ir a cola)`);
+        speakWithHybridVoice("Niño B terminó su tiempo de juego");
+      }, 2000);
+      
+      setTimeout(() => {
+        console.log(`🎯 Simulando escenario: Niño C termina tiempo (debería ir a cola)`);
+        speakWithHybridVoice("Niño C terminó su tiempo de juego");
+      }, 4000);
+      
+      console.log(`📝 Prueba iniciada - observa que NO hay interrupciones`);
+      console.log(`📊 Estado final: isVoicePlaying=${isVoicePlaying}, queueLength=${voiceQueue.length}`);
+    }
+    
     // Hacer funciones disponibles globalmente para pruebas
     window.testAllBrowsersVoiceQuality = testAllBrowsersVoiceQuality;
     window.testVoiceConfigurations = testVoiceConfigurations;
@@ -3384,6 +3454,7 @@
     window.speakWithHybridVoice = speakWithHybridVoice;
     window.testHybridSystemExhaustive = testHybridSystemExhaustive;
     window.testProductionCritical = testProductionCritical;
+    window.testVoiceQueue = testVoiceQueue;
 
 
     // ============================================================================
@@ -4195,45 +4266,29 @@
       
       console.log(`🔊 Iniciando alerta de voz: ${alertCount} niño(s)`);
       
-      // Usar sistema híbrido para sonido humano universal
-      console.log('🎤 Usando sistema híbrido para repetición con sonido humano');
+      // Usar sistema de cola para evitar interrupciones
+      console.log('🎤 Usando sistema de COLA para repetición sin interrupciones');
       
-      // Primera repetición (inmediata)
-      setTimeout(() => {
-        try {
-          // Cancelar cualquier síntesis previa
-          window.speechSynthesis.cancel();
-          
-          const utterance1 = createHybridUtterance(message, alertCount);
-          window.speechSynthesis.speak(utterance1);
-        } catch (error) {
-          console.error('❌ Error en primera repetición de voz:', error);
-        }
-      }, 100);
+      // Agregar las 3 repeticiones a la cola con diferentes opciones
+      const repetitions = [
+        { message: message, options: { alertCount, repetition: 1, immediate: true } },
+        { message: message, options: { alertCount, repetition: 2, delay: 15000 } },
+        { message: message, options: { alertCount, repetition: 3, delay: 30000 } }
+      ];
       
-      // Segunda repetición (después de 15 segundos)
-      setTimeout(() => {
-        try {
-          if (voiceNotificationsEnabled && window.speechSynthesis.speaking === false) {
-            const utterance2 = createHybridUtterance(message, alertCount);
-            window.speechSynthesis.speak(utterance2);
-          }
-        } catch (error) {
-          console.error('❌ Error en segunda repetición de voz:', error);
+      repetitions.forEach((rep, index) => {
+        if (rep.options.immediate) {
+          // Primera repetición inmediata
+          addToVoiceQueue(rep.message, rep.options);
+        } else {
+          // Repeticiones con delay
+          setTimeout(() => {
+            addToVoiceQueue(rep.message, rep.options);
+          }, rep.options.delay);
         }
-      }, 15000);
+      });
       
-      // Tercera repetición (después de 30 segundos)
-      setTimeout(() => {
-        try {
-          if (voiceNotificationsEnabled && window.speechSynthesis.speaking === false) {
-            const utterance3 = createHybridUtterance(message, alertCount);
-            window.speechSynthesis.speak(utterance3);
-          }
-        } catch (error) {
-          console.error('❌ Error en tercera repetición de voz:', error);
-        }
-      }, 30000);
+      console.log(`📝 Agregadas ${repetitions.length} repeticiones a la cola de voz`);
       
       console.log(`🔊 Alerta repetitiva programada: ${alertCount} niño(s) - 3 repeticiones`);
     }
