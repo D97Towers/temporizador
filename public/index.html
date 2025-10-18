@@ -615,9 +615,11 @@
         font-size: 13px;
       }
       
-      /* FIX CRÍTICO: OCULTAR history-toggle en tablet para evitar flotación */
+      /* FIX CRÍTICO: AJUSTAR history-toggle en tablet */
       .history-toggle {
-        display: none !important;
+        position: relative !important;
+        z-index: 1 !important;
+        margin: 10px 0;
       }
     }
 
@@ -645,9 +647,13 @@
         font-size: 16px;
       }
       
-      /* FIX CRÍTICO: OCULTAR history-toggle en móvil para evitar flotación */
+      /* FIX CRÍTICO: AJUSTAR history-toggle en móvil */
       .history-toggle {
-        display: none !important;
+        position: relative !important;
+        z-index: 1 !important;
+        margin: 10px 0;
+        font-size: 12px;
+        padding: 10px 12px;
       }
     }
 
@@ -1341,10 +1347,12 @@
       z-index: 1 !important;
     }
 
-    /* OCULTAR history-toggle en móvil y tablet para evitar flotación */
+    /* AJUSTAR history-toggle en móvil y tablet */
     @media (max-width: 1024px) {
       .history-toggle {
-        display: none !important;
+        position: relative !important;
+        z-index: 1 !important;
+        margin: 10px 0;
       }
     }
 
@@ -4229,7 +4237,7 @@
         if (!hasSpeechSynthesis) {
           console.warn('⚠️ Speech Synthesis no soportado en este navegador');
           voiceNotificationsEnabled = false;
-          showStatusMessage('⚠️ Navegador no soporta síntesis de voz', 'warning');
+          // NO mostrar alerta durante inicialización para evitar errores
           return;
         }
         
@@ -4292,8 +4300,14 @@
           window.browserNotificationsEnabled = browserNotificationsEnabled; // Actualizar variable global
         }
         
-        // PRUEBA CRÍTICA: Hacer un test de voz para activar el sistema
-        await testVoiceSystem();
+        // PRUEBA CRÍTICA: Hacer un test de voz para activar el sistema (SILENCIOSO)
+        try {
+          await testVoiceSystem();
+        } catch (error) {
+          console.warn('⚠️ Test de voz falló (continuando):', error);
+          voiceNotificationsEnabled = false;
+          voiceSystemActivated = false;
+        }
         
         voicePermissionsGranted = true;
         console.log('✅ Sistema de notificaciones inicializado correctamente');
@@ -4317,21 +4331,13 @@
         // Cancelar cualquier síntesis previa
         window.speechSynthesis.cancel();
         
-        // Crear un test básico
-        const testUtterance = new SpeechSynthesisUtterance('Prueba');
-        testUtterance.volume = 0.01; // Muy bajo para no molestar
-        testUtterance.rate = 2;
+        // Crear un test básico SILENCIOSO
+        const testUtterance = new SpeechSynthesisUtterance('');
+        testUtterance.volume = 0; // COMPLETAMENTE SILENCIOSO
+        testUtterance.rate = 1;
         
-        // Configurar voz femenina en español (usando función helper)
-        const selectedVoice = getFemaleSpanishVoice();
-        
-        if (selectedVoice) {
-          testUtterance.voice = selectedVoice;
-          console.log('✅ Voz femenina configurada para test:', selectedVoice.name);
-        } else {
-          testUtterance.lang = 'es-ES';
-          console.log('⚠️ Usando fallback de idioma español');
-        }
+        // Configurar idioma básico
+        testUtterance.lang = 'es-ES';
         
         // Configurar eventos para detectar problemas
         testUtterance.onstart = () => {
@@ -4356,7 +4362,7 @@
           const timeout = setTimeout(() => {
             console.log('⏰ Timeout en test de voz - continuando');
             resolve(true);
-          }, 1000); // 1 segundo máximo
+          }, 500); // 500ms máximo
           
           // Si hay error, se resuelve en onerror
           testUtterance.onend = () => {
@@ -7178,8 +7184,8 @@
     // Inicialización de la aplicación
     document.addEventListener('DOMContentLoaded', async () => {
       try {
-        // 🚀 Mostrar indicador de carga durante inicialización
-        showStatusMessage('⏳ Cargando aplicación...', 'info');
+        // 🚀 Mostrar indicador de carga durante inicialización (SIN VOZ)
+        showStatusMessage('⏳ Cargando aplicación...', 'info', null, { voiceOnly: false });
         
         const startTime = Date.now();
         await initializeApp();
