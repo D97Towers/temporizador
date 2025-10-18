@@ -4075,56 +4075,101 @@
       console.log(`🎵 Cola de voz procesada completamente`);
     }
     
-    // FUNCIÓN PARA REPRODUCIR MENSAJE DE VOZ DIRECTAMENTE
+    // FUNCIÓN PARA REPRODUCIR MENSAJE DE VOZ DIRECTAMENTE - URGENTE
     async function playVoiceMessage(message, options = {}) {
       console.log(`🔊 playVoiceMessage: "${message}"`);
       
       return new Promise((resolve) => {
+        // FORZAR ACTIVACIÓN DE AUDIO - URGENTE
+        console.log(`🚨 FORZANDO ACTIVACIÓN DE AUDIO URGENTE`);
+        
         // Cancelar cualquier voz anterior
         speechSynthesis.cancel();
         
-        // Crear utterance
-        const utterance = new SpeechSynthesisUtterance(message);
-        
-        // Configurar voz
-        const voice = getFemaleSpanishVoice();
-        if (voice) {
-          utterance.voice = voice;
-          console.log(`🔊 Voz seleccionada: ${voice.name} (${voice.lang})`);
-        }
-        
-        // Configurar parámetros
-        utterance.rate = 0.8;
-        utterance.pitch = 1.0;
-        utterance.volume = 1.0;
-        utterance.lang = 'es-ES';
-        
-        // Eventos
-        utterance.onstart = () => {
-          console.log(`🔊 AUDIO INICIADO: "${message}"`);
-        };
-        
-        utterance.onend = () => {
-          console.log(`🔊 AUDIO TERMINADO: "${message}"`);
-          resolve();
-        };
-        
-        utterance.onerror = (event) => {
-          console.error(`❌ ERROR DE AUDIO:`, event.error);
-          console.log(`🔍 Diagnóstico de error:`, {
-            error: event.error,
-            message: message,
-            voicesAvailable: speechSynthesis.getVoices().length,
-            voiceSystemActivated: voiceSystemActivated
-          });
-          resolve();
-        };
-        
-        // Reproducir
-        console.log(`🔊 INICIANDO REPRODUCCIÓN: "${message}"`);
-        speechSynthesis.speak(utterance);
+        // Esperar un momento para asegurar cancelación
+        setTimeout(() => {
+          // Crear utterance con configuración URGENTE
+          const utterance = new SpeechSynthesisUtterance(message);
+          
+          // CONFIGURACIÓN URGENTE - FORZAR AUDIO
+          utterance.volume = 1.0; // Volumen máximo
+          utterance.rate = 0.7;  // Velocidad más lenta para asegurar audibilidad
+          utterance.pitch = 1.0; // Pitch normal
+          utterance.lang = 'es-ES';
+          
+          // Configurar voz con fallback URGENTE
+          const voice = getFemaleSpanishVoice();
+          if (voice) {
+            utterance.voice = voice;
+            console.log(`🔊 Voz seleccionada: ${voice.name} (${voice.lang})`);
+          } else {
+            // FALLBACK URGENTE - usar cualquier voz disponible
+            const voices = speechSynthesis.getVoices();
+            if (voices.length > 0) {
+              utterance.voice = voices[0];
+              console.log(`🚨 FALLBACK URGENTE: Usando voz ${voices[0].name}`);
+            }
+          }
+          
+          // Eventos con diagnóstico URGENTE
+          utterance.onstart = () => {
+            console.log(`🔊 AUDIO INICIADO: "${message}"`);
+            console.log(`🚨 VERIFICAR VOLUMEN DEL NAVEGADOR Y SISTEMA`);
+          };
+          
+          utterance.onend = () => {
+            console.log(`🔊 AUDIO TERMINADO: "${message}"`);
+            console.log(`🚨 SI NO SE ESCUCHA: Verificar volumen del navegador`);
+            resolve();
+          };
+          
+          utterance.onerror = (event) => {
+            console.error(`❌ ERROR DE AUDIO URGENTE:`, event.error);
+            console.log(`🚨 DIAGNÓSTICO URGENTE:`, {
+              error: event.error,
+              message: message,
+              voicesAvailable: speechSynthesis.getVoices().length,
+              voiceSystemActivated: voiceSystemActivated,
+              browserMuted: document.muted || false
+            });
+            resolve();
+          };
+          
+          // FORZAR REPRODUCCIÓN URGENTE
+          console.log(`🚨 INICIANDO REPRODUCCIÓN URGENTE: "${message}"`);
+          console.log(`🚨 INSTRUCCIONES URGENTES:`);
+          console.log(`   1. Verificar que el volumen del navegador esté activado`);
+          console.log(`   2. Verificar que el volumen del sistema esté activado`);
+          console.log(`   3. Verificar que la pestaña no esté silenciada`);
+          
+          speechSynthesis.speak(utterance);
+          
+          // TIMEOUT URGENTE - forzar resolución si no hay respuesta
+          setTimeout(() => {
+            console.log(`🚨 TIMEOUT URGENTE: Forzando resolución`);
+            resolve();
+          }, 10000); // 10 segundos timeout
+          
+        }, 100); // Pequeño delay para asegurar cancelación
       });
     }
+    
+    // FUNCIÓN DE PRUEBA URGENTE DE AUDIO
+    function testAudioUrgent() {
+      console.log(`🚨 PRUEBA URGENTE DE AUDIO`);
+      console.log(`🚨 INSTRUCCIONES URGENTES:`);
+      console.log(`   1. Hacer clic en la pestaña del navegador`);
+      console.log(`   2. Verificar que no esté silenciada (icono de altavoz)`);
+      console.log(`   3. Verificar volumen del sistema`);
+      console.log(`   4. Hacer clic en "VOZ ACTIVADA" para probar`);
+      
+      // Probar audio inmediatamente
+      const testMessage = "PRUEBA URGENTE DE AUDIO - Si escuchas esto, el sistema funciona";
+      playVoiceMessage(testMessage);
+    }
+    
+    // Hacer función global para pruebas urgentes
+    window.testAudioUrgent = testAudioUrgent;
     
     // SISTEMA ADAPTATIVO DE REPETICIONES
     function calculateAdaptiveRepetitions(message, alertCount) {
