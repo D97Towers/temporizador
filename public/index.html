@@ -4053,27 +4053,9 @@
         
         console.log(`📊 ALERTAS A CONSOLIDAR:`, alerts);
         
-        // Generar mensaje consolidado
-        let consolidatedMessage;
-        if (alertCount === 1) {
-          const alert = alerts[0];
-          consolidatedMessage = `¡Atención! ${alert.name} ha terminado su tiempo de juego`;
-        } else if (alertCount === 2) {
-          const names = alerts.map(a => a.name).join(' y ');
-          consolidatedMessage = `¡Atención! ${names} han terminado su tiempo de juego`;
-        } else if (alertCount <= 5) {
-          const names = alerts.map(a => a.name);
-          const lastChild = names.pop();
-          const otherChildren = names.join(', ');
-          consolidatedMessage = `¡Atención! ${otherChildren} y ${lastChild} han terminado su tiempo de juego`;
-        } else {
-          consolidatedMessage = `¡Atención! ${alertCount} niños han terminado su tiempo de juego`;
-        }
-        
-        console.log(`🔊 MENSAJE CONSOLIDADO: "${consolidatedMessage}"`);
-        
-        // Mostrar alerta visual
-        showStatusMessage(consolidatedMessage, 'warning');
+        // NO generar mensaje consolidado visual aquí
+        // El mensaje de voz es suficiente y más detallado
+        // Si queremos alerta visual, ya se mostró en updateTimer con la alerta visual individual
         
         // Activar notificaciones de voz si están habilitadas
         if (voiceNotificationsEnabled) {
@@ -5051,20 +5033,50 @@
         const child = childrenWithParents[0];
         const gender = detectGenderByName(child.name);
         const relationship = gender === 'female' ? 'hija' : (gender === 'male' ? 'hijo' : 'niño');
-        message = `Hola, ${child.name}${child.parents} ha terminado su tiempo de juego. Por favor, recoge a tu ${relationship}.`;
+        
+        // Formatear padres para que se escuche natural
+        let parentsPhrase = '';
+        if (child.parents) {
+          // child.parents viene como " (Papá: luis & Mamá: ana)" o " (Papá: luis)" o " (Mamá: ana)"
+          // Necesitamos convertirlo a algo natural para escuchar
+          const parentsClean = child.parents.replace(/[()]/g, '').trim();
+          if (parentsClean) {
+            parentsPhrase = `. ${parentsClean}, por favor recoge a tu ${relationship}`;
+          } else {
+            parentsPhrase = `. Por favor, recoge a tu ${relationship}`;
+          }
+        } else {
+          parentsPhrase = `. Por favor, recoge a tu ${relationship}`;
+        }
+        
+        message = `Hola, ${child.name} ha terminado su tiempo de juego${parentsPhrase}`;
       } else if (alertCount === 2 && childrenWithParents.length === 2) {
         const child1 = childrenWithParents[0];
         const child2 = childrenWithParents[1];
-        message = `Hola, ${child1.name}${child1.parents} y ${child2.name}${child2.parents} han terminado su tiempo de juego. Por favor, recógelos.`;
+        
+        // Formatear para 2 niños
+        const parents1 = child1.parents ? child1.parents.replace(/[()]/g, '').trim() : '';
+        const parents2 = child2.parents ? child2.parents.replace(/[()]/g, '').trim() : '';
+        
+        let fullMessage = `Hola, ${child1.name}`;
+        if (parents1) fullMessage += ` (${parents1})`;
+        fullMessage += ` y ${child2.name}`;
+        if (parents2) fullMessage += ` (${parents2})`;
+        fullMessage += ` han terminado su tiempo de juego. Por favor, recógelos`;
+        
+        message = fullMessage;
       } else if (alertCount <= 5 && childrenWithParents.length > 0) {
         // LISTAR NOMBRES ESPECÍFICOS HASTA 5 CON PADRES
-        const names = childrenWithParents.slice(0, 5).map(child => `${child.name}${child.parents}`);
+        const names = childrenWithParents.slice(0, 5).map(child => {
+          const parentsClean = child.parents ? child.parents.replace(/[()]/g, '').trim() : '';
+          return parentsClean ? `${child.name} (${parentsClean})` : child.name;
+        });
         const lastChild = names.pop();
         const otherChildren = names.join(', ');
-        message = `Hola, ${otherChildren} y ${lastChild} han terminado su tiempo de juego. Por favor, recógelos.`;
+        message = `Hola, ${otherChildren} y ${lastChild} han terminado su tiempo de juego. Por favor, recógelos`;
       } else {
         // MENSAJE CONSOLIDADO PARA 6+ NIÑOS
-        message = `Hola, ${alertCount} niños han terminado su tiempo de juego. Por favor, recógelos.`;
+        message = `Hola, ${alertCount} niños han terminado su tiempo de juego. Por favor, recógelos`;
       }
       
       console.log(`🔊 MENSAJE GENERADO: "${message}"`);
