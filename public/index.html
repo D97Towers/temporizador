@@ -5014,6 +5014,72 @@
     // Hacer función global
     window.testRealScenario = testRealScenario;
     
+    // PRUEBA URGENTE: Detectar EXACTAMENTE dónde se cancela
+    function testDetectCancellations() {
+      console.log('🚨 PRUEBA URGENTE: Detectar EXACTAMENTE dónde se cancela');
+      console.log('='.repeat(60));
+      
+      // Interceptar TODAS las llamadas a speechSynthesis.cancel
+      const originalCancel = window.speechSynthesis.cancel;
+      let cancelCount = 0;
+      const cancelDetails = [];
+      
+      window.speechSynthesis.cancel = function() {
+        cancelCount++;
+        const stack = new Error().stack;
+        const timestamp = new Date().toISOString();
+        
+        cancelDetails.push({
+          count: cancelCount,
+          timestamp: timestamp,
+          stack: stack
+        });
+        
+        console.log(`🚨 CANCELACIÓN #${cancelCount} DETECTADA:`, {
+          timestamp: timestamp,
+          stack: stack.split('\n').slice(0, 5).join('\n')
+        });
+        
+        // Llamar a la función original
+        return originalCancel.call(this);
+      };
+      
+      // Ejecutar prueba de voz
+      console.log('🧪 Ejecutando prueba de voz...');
+      addToVoiceQueue('Prueba de detección de cancelaciones: Este mensaje no debería ser cancelado');
+      
+      setTimeout(() => {
+        addToVoiceQueue('Segundo mensaje: Verificando que no hay cancelaciones');
+      }, 2000);
+      
+      setTimeout(() => {
+        addToVoiceQueue('Tercer mensaje: Sistema debe ser estable');
+      }, 4000);
+      
+      // Reportar resultados después de 15 segundos
+      setTimeout(() => {
+        window.speechSynthesis.cancel = originalCancel;
+        
+        console.log('\n📊 REPORTE FINAL DE CANCELACIONES:');
+        console.log(`- Total de cancelaciones detectadas: ${cancelCount}`);
+        console.log('- Detalles completos:', cancelDetails);
+        
+        if (cancelCount === 0) {
+          console.log('✅ ÉXITO: No se detectaron cancelaciones innecesarias');
+        } else {
+          console.log('❌ PROBLEMA: Se detectaron cancelaciones que causan interrupciones');
+          console.log('🔍 ANALIZAR STACK TRACE para identificar la fuente');
+        }
+        
+        console.log('='.repeat(60));
+      }, 15000);
+      
+      return 'Prueba de detección iniciada - revisar consola en 15 segundos';
+    }
+    
+    // Hacer función global
+    window.testDetectCancellations = testDetectCancellations;
+    
     // SISTEMA ADAPTATIVO DE REPETICIONES
     function calculateAdaptiveRepetitions(message, alertCount) {
       if (!adaptiveAlertSystem.enabled) {
