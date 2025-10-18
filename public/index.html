@@ -615,18 +615,9 @@
         font-size: 13px;
       }
       
-      /* FIX CRÍTICO: Evitar que history-toggle aparezca flotante en tablet */
+      /* FIX CRÍTICO: OCULTAR history-toggle en tablet para evitar flotación */
       .history-toggle {
-        position: relative !important;
-        z-index: 1 !important;
-        margin: 10px 0 !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        left: 0 !important;
-        right: 0 !important;
-        top: auto !important;
-        bottom: auto !important;
-        transform: none !important;
+        display: none !important;
       }
     }
 
@@ -646,18 +637,9 @@
         font-size: 16px;
       }
       
-      /* FIX CRÍTICO: Evitar que history-toggle aparezca flotante en móvil */
+      /* FIX CRÍTICO: OCULTAR history-toggle en móvil para evitar flotación */
       .history-toggle {
-        position: relative !important;
-        z-index: 1 !important;
-        margin: 10px 0 !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        left: 0 !important;
-        right: 0 !important;
-        top: auto !important;
-        bottom: auto !important;
-        transform: none !important;
+        display: none !important;
       }
     }
 
@@ -1349,6 +1331,13 @@
       gap: 8px;
       position: relative !important;
       z-index: 1 !important;
+    }
+
+    /* OCULTAR history-toggle en móvil y tablet para evitar flotación */
+    @media (max-width: 1024px) {
+      .history-toggle {
+        display: none !important;
+      }
     }
 
     .history-toggle:hover {
