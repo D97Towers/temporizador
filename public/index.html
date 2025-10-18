@@ -3984,10 +3984,7 @@
       msg.style.display = 'flex'; // Asegurar que se muestre
       msg.style.transform = 'translateX(0)'; // Asegurar que esté en posición visible
       
-      // Marcar sesión como alertada si es una alerta de sesión
-      if (sessionId) {
-        alertedSessions.add(sessionId);
-      }
+      // NO marcar sesión como alertada - permitir todas las notificaciones
       
       // Auto-ocultar después de tiempo apropiado según el tipo
       let timeoutDuration;
@@ -4013,12 +4010,7 @@
         // Usar la función de ocultar que remueve completamente del DOM
         hideStatusMessage();
         
-        // Limpiar alerta de sesión después de mostrar
-        if (sessionId) {
-          setTimeout(() => {
-            alertedSessions.delete(sessionId);
-          }, 1000);
-        }
+        // NO limpiar alertas de sesión - permitir todas las notificaciones
       }, timeoutDuration);
     }
 
@@ -5640,13 +5632,8 @@
             }
           }
           
-          // Mostrar alerta de 30 segundos sin sonido (configuración de preferencias)
-          if (alertPreferences.show30SecondAlerts) {
-          showStatusMessage(`¡Atención! A ${childDisplayName}${parentsText} le quedan solo ${remainingSeconds} segundos`, 'warning', sessionId);
-          } else {
-            // Solo mostrar visualmente sin sonido
-            showStatusMessage(`¡Atención! A ${childDisplayName}${parentsText} le quedan solo ${remainingSeconds} segundos`, 'info', sessionId);
-          }
+          // Mostrar alerta de 30 segundos SOLO VISUAL (naranja)
+          showStatusMessage(`¡Atención! A ${childDisplayName}${parentsText} le quedan solo ${remainingSeconds} segundos`, 'warning', sessionId, { voiceOnly: false });
         }
       } else {
         timerSpan.innerHTML = '<strong>Restante:</strong> ' + sanitizeHTML(h) + ':' + sanitizeHTML(m) + ':' + sanitizeHTML(s) + '<br><small>Transcurrido: ' + sanitizeHTML(String(elapsedMinutes)) + ':' + sanitizeHTML(String(elapsedSecs).padStart(2, '0')) + '</small>';
@@ -6220,7 +6207,7 @@
           fetchSessionHistory(),
           fetchChildren() // Asegurar datos actualizados
         ]);
-        showStatusMessage('Sesión iniciada exitosamente', 'success');
+        showStatusMessage('Sesión iniciada exitosamente', 'success', null, { voiceOnly: false });
         
         // Limpiar alertas de sesiones anteriores
         clearAllSessionAlerts();
@@ -7165,7 +7152,7 @@
           ]);
           
           clearAllSessionAlerts();
-          showStatusMessage(`✅ Sesión iniciada: ${result.child.name} - ${result.game.name}`, 'success');
+          showStatusMessage(`✅ Sesión iniciada: ${result.child.name} - ${result.game.name}`, 'success', null, { voiceOnly: false });
         } else {
           // 4. Manejo de errores
           showStatusMessage(`❌ Error: ${result.error}`, 'error');
