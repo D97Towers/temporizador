@@ -2783,13 +2783,10 @@
     window.voicePermissionsGranted = voicePermissionsGranted;
     window.voiceSystemActivated = voiceSystemActivated;
 
-    // Función para detectar género por nombre (mejores prácticas)
+    // Función para detectar género por nombre - USAR FUNCIÓN CORREGIDA
     function detectGenderByName(name) {
-      // VALIDACIÓN CRÍTICA: Manejar casos donde name es undefined, null o vacío
-      if (!name || typeof name !== 'string' || name.trim() === '') {
-        console.log(`⚠️ detectGenderByName: nombre inválido recibido:`, name);
-        return 'unknown'; // Retornar 'unknown' para nombres inválidos
-      }
+      console.log(`🔍 detectGenderByName: usando función corregida`);
+      return detectGenderByNameFixed(name);
       
       const maleNames = [
         'david', 'carlos', 'luis', 'pedro', 'miguel', 'jorge', 'andrés', 'roberto', 'fernando', 'eduardo',
@@ -3979,10 +3976,10 @@
       }, 2000); // Esperar 2 segundos para consolidar
     }
     
-    // Extraer nombre del niño de la alerta
+    // Extraer nombre del niño de la alerta - USAR FUNCIÓN CORREGIDA
     function extractChildNameFromAlert(text) {
-      const match = text.match(/A\s+(\w+)\s+le\s+quedan/);
-      return match ? match[1] : null;
+      console.log(`🔍 extractChildNameFromAlert: usando función corregida`);
+      return extractChildNameFromAlertFixed(text);
     }
     
     // Extraer tiempo restante de la alerta
@@ -4829,62 +4826,28 @@
         return;
       }
       
-      // GENERAR MENSAJE NATURAL Y PERSONALIZADO
-      const message = generateNaturalVoiceMessage(pendingAlerts, alertCount);
+      // USAR FUNCIONES CORREGIDAS
+      const message = generateNaturalVoiceMessageFixed(pendingAlerts, alertCount);
       console.log(`🔊 MENSAJE NATURAL GENERADO: "${message}"`);
       
-      // Calcular repeticiones adaptativas
-      const { repetitions, delay } = calculateAdaptiveRepetitions('', alertCount);
+      // Calcular repeticiones adaptativas con función corregida
+      const { repetitions, delay } = calculateAdaptiveRepetitionsFixed('', alertCount);
       
-      // Agregar repeticiones a la cola
+      // Agregar repeticiones a la cola con función corregida
       for (let i = 0; i < repetitions; i++) {
-        addToVoiceQueue(message, { 
+        addToVoiceQueueFixed(message, { 
           priority: 'high',
           delay: i > 0 ? delay : 0 
         });
       }
     }
     
-    // GENERADOR DE MENSAJES NATURALES Y PERSONALIZADOS
+    // GENERADOR DE MENSAJES NATURALES Y PERSONALIZADOS - USAR FUNCIONES CORREGIDAS
     function generateNaturalVoiceMessage(pendingAlerts, alertCount) {
-      console.log(`🎯 GENERANDO MENSAJE NATURAL PARA ${alertCount} NIÑOS`);
+      console.log(`🎯 GENERANDO MENSAJE NATURAL PARA ${alertCount} NIÑOS (USANDO FUNCIONES CORREGIDAS)`);
       
-      // Extraer información de los niños
-      const childrenInfo = pendingAlerts.map(alert => {
-        const childName = extractChildNameFromAlert(alert.text);
-        const gender = detectGenderByName(childName);
-        return {
-          name: childName,
-          gender: gender,
-          relationship: gender === 'female' ? 'hija' : (gender === 'male' ? 'hijo' : 'niño')
-        };
-      }).filter(child => child.name);
-      
-      console.log(`👶 INFORMACIÓN DE NIÑOS:`, childrenInfo);
-      
-      // GENERAR MENSAJE SEGÚN ESCENARIOS NATURALES
-      if (alertCount === 1) {
-        // ESCENARIO 1: Un niño - Mensaje personalizado
-        const child = childrenInfo[0];
-        return `Hola, ${child.name} ha terminado su tiempo de juego. Por favor, recógelo.`;
-        
-      } else if (alertCount === 2) {
-        // ESCENARIO 2: Dos niños - Mensaje natural
-        const child1 = childrenInfo[0];
-        const child2 = childrenInfo[1];
-        return `Hola, ${child1.name} y ${child2.name} han terminado su tiempo de juego. Por favor, recógelos.`;
-        
-      } else if (alertCount <= 5) {
-        // ESCENARIO 3: 3-5 niños - Lista natural
-        const names = childrenInfo.map(child => child.name);
-        const lastChild = names.pop();
-        const otherChildren = names.join(', ');
-        return `Hola, ${otherChildren} y ${lastChild} han terminado su tiempo de juego. Por favor, recógelos.`;
-        
-      } else {
-        // ESCENARIO 4: 6+ niños - Mensaje consolidado
-        return `Hola, ${alertCount} niños han terminado su tiempo de juego. Por favor, recógelos.`;
-      }
+      // USAR FUNCIONES CORREGIDAS
+      return generateNaturalVoiceMessageFixed(pendingAlerts, alertCount);
     }
     
     function shouldShowAlert(type, options) {
