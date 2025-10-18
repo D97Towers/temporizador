@@ -558,12 +558,12 @@
 
     /* Control de notificaciones de voz */
     .voice-control {
-      position: relative;
+      position: absolute;
+      top: 20px;
+      right: 20px;
       display: flex;
       gap: 10px;
-      justify-content: flex-end;
-      margin: 15px 0;
-      z-index: 1;
+      z-index: 10;
     }
 
     .voice-toggle-btn {
@@ -602,14 +602,11 @@
     /* Responsive para botón de voz */
     @media (max-width: 768px) {
       .voice-control {
-        position: relative !important;
-        top: auto !important;
-        right: auto !important;
-        left: auto !important;
-        bottom: auto !important;
+        position: absolute;
+        top: 20px;
+        right: 20px;
         justify-content: center;
-        margin: 15px 0;
-        z-index: 1 !important;
+        z-index: 10;
       }
       
       .voice-toggle-btn {
@@ -626,14 +623,11 @@
 
     @media (max-width: 480px) {
       .voice-control {
-        position: relative !important;
-        top: auto !important;
-        right: auto !important;
-        left: auto !important;
-        bottom: auto !important;
+        position: absolute;
+        top: 20px;
+        right: 20px;
         justify-content: center;
-        margin: 15px 0;
-        z-index: 1 !important;
+        z-index: 10;
       }
       
       .voice-toggle-btn {
@@ -1354,24 +1348,6 @@
       }
     }
 
-    /* FIX CRÍTICO: FORZAR POSICIONAMIENTO RELATIVO EN MÓVIL */
-    @media (max-width: 768px) {
-      * {
-        position: relative !important;
-        top: auto !important;
-        left: auto !important;
-        right: auto !important;
-        bottom: auto !important;
-        transform: none !important;
-      }
-      
-      /* Excepciones para elementos que necesitan ser absolutos */
-      .sidebar-overlay,
-      .modal-overlay,
-      .status-message {
-        position: fixed !important;
-      }
-    }
 
     .history-toggle:hover {
       transform: translateY(-2px);
@@ -1869,10 +1845,10 @@
       
       .mobile-menu-toggle {
         display: block !important;
-        position: relative !important;
-        top: auto !important;
-        left: auto !important;
-        z-index: 1 !important;
+        position: fixed !important;
+        top: 20px !important;
+        left: 20px !important;
+        z-index: 1001 !important;
         transform: none !important;
         transition: none !important;
       }
@@ -2093,7 +2069,7 @@
 </head>
 <body>
     <!-- Menú móvil - Posicionado fuera del flujo normal -->
-    <div style="position: relative; z-index: 1;">
+    <div style="position: fixed; top: 20px; left: 20px; z-index: 1001;">
       <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
         <div class="hamburger-lines">
           <span></span>
