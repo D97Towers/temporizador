@@ -3529,11 +3529,15 @@
     
     // Funciones auxiliares para sistema de alertas inteligente
     function showVoiceAlert(text, type, options) {
+      console.log('🔊 showVoiceAlert llamado con:', { text, type, options });
+      
       if (options.consolidated && options.pendingAlerts) {
         // Para alertas consolidadas, usar el sistema de repetición
+        console.log('🔊 Usando speakAlertWithRepetition para alertas consolidadas');
         speakAlertWithRepetition(options.pendingAlerts, options.alertCount);
       } else {
         // Para alertas simples, usar voz híbrida
+        console.log('🔊 Usando speakWithHybridVoice para alerta simple:', text);
         speakWithHybridVoice(text);
       }
     }
@@ -3939,11 +3943,18 @@
     }
     
     function determineAlertTypes(type, options) {
-      return {
+      const result = {
         visual: alertPreferences.showVisualAlerts && !options.voiceOnly,
         voice: alertPreferences.showVoiceAlerts && !options.voiceOnly && !options.visualOnly,
         browser: alertPreferences.showBrowserNotifications && !options.visualOnly
       };
+      
+      // Debug: Log para verificar por qué se activa la voz
+      if (options.voiceOnly === false) {
+        console.log('🔇 VOZ DESACTIVADA - options.voiceOnly:', options.voiceOnly, 'result.voice:', result.voice);
+      }
+      
+      return result;
     }
     
     function showVisualAlert(text, type, sessionId) {
