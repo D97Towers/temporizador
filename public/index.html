@@ -3892,8 +3892,8 @@
         return;
       }
       
-      // Si es una alerta de sesión, verificar si ya se mostró
-      if (sessionId && alertedSessions.has(sessionId)) {
+      // Si es una alerta de sesión, verificar si ya se mostró (excepto para notificaciones de inicio)
+      if (sessionId && alertedSessions.has(sessionId) && !text.includes('Sesión iniciada')) {
         return; // No mostrar alerta duplicada
       }
       
@@ -4400,7 +4400,6 @@
         voiceToggle.classList.remove('muted');
         icon.className = 'fas fa-volume-up';
         voiceStatus.textContent = 'Voz Activada';
-        showStatusMessage('🔊 Notificaciones de voz activadas', 'success');
         
         // Hacer un test rápido para verificar que funciona - USANDO LA MISMA VOZ Y PARÁMETROS OPTIMIZADOS
         setTimeout(() => {
