@@ -3157,6 +3157,216 @@
       console.log(`   speakWithHybridVoice("Prueba del sistema híbrido")`);
     }
     
+    // Función de prueba exhaustiva del sistema híbrido en producción
+    function testHybridSystemExhaustive() {
+      console.log(`🔥 PRUEBA EXHAUSTIVA DEL SISTEMA HÍBRIDO EN PRODUCCIÓN`);
+      console.log(`📅 Fecha: ${new Date().toLocaleString()}`);
+      
+      const browser = detectBrowser();
+      console.log(`🌐 Navegador detectado: ${browser}`);
+      
+      // Test 1: Verificar funciones híbridas
+      console.log(`\n🧪 TEST 1: VERIFICACIÓN DE FUNCIONES HÍBRIDAS`);
+      try {
+        const hybridConfig = getHybridVoiceSystem();
+        console.log(`✅ getHybridVoiceSystem(): OK`);
+        console.log(`   Configuración:`, hybridConfig);
+        
+        if (typeof speakWithHybridVoice === 'function') {
+          console.log(`✅ speakWithHybridVoice(): OK`);
+        } else {
+          console.error(`❌ speakWithHybridVoice(): NO DISPONIBLE`);
+        }
+        
+        if (typeof evaluateHybridVoiceSystem === 'function') {
+          console.log(`✅ evaluateHybridVoiceSystem(): OK`);
+        } else {
+          console.error(`❌ evaluateHybridVoiceSystem(): NO DISPONIBLE`);
+        }
+      } catch (error) {
+        console.error(`❌ ERROR en funciones híbridas:`, error);
+      }
+      
+      // Test 2: Verificar integración con funciones existentes
+      console.log(`\n🧪 TEST 2: INTEGRACIÓN CON FUNCIONES EXISTENTES`);
+      try {
+        if (typeof speakChildName === 'function') {
+          console.log(`✅ speakChildName(): DISPONIBLE`);
+        } else {
+          console.error(`❌ speakChildName(): NO DISPONIBLE`);
+        }
+        
+        if (typeof speakWithRepetition === 'function') {
+          console.log(`✅ speakWithRepetition(): DISPONIBLE`);
+        } else {
+          console.error(`❌ speakWithRepetition(): NO DISPONIBLE`);
+        }
+        
+        if (typeof speakAlertWithRepetition === 'function') {
+          console.log(`✅ speakAlertWithRepetition(): DISPONIBLE`);
+        } else {
+          console.error(`❌ speakAlertWithRepetition(): NO DISPONIBLE`);
+        }
+      } catch (error) {
+        console.error(`❌ ERROR en integración:`, error);
+      }
+      
+      // Test 3: Verificar sistema de voz
+      console.log(`\n🧪 TEST 3: SISTEMA DE VOZ`);
+      try {
+        if ('speechSynthesis' in window) {
+          console.log(`✅ Speech Synthesis: DISPONIBLE`);
+          console.log(`   Voces disponibles: ${speechSynthesis.getVoices().length}`);
+          
+          const spanishVoices = speechSynthesis.getVoices().filter(v => v.lang.startsWith('es'));
+          console.log(`   Voces en español: ${spanishVoices.length}`);
+          
+          if (spanishVoices.length > 0) {
+            console.log(`   Primera voz ES: ${spanishVoices[0].name} (${spanishVoices[0].lang})`);
+          }
+        } else {
+          console.error(`❌ Speech Synthesis: NO DISPONIBLE`);
+        }
+      } catch (error) {
+        console.error(`❌ ERROR en sistema de voz:`, error);
+      }
+      
+      // Test 4: Verificar variables globales
+      console.log(`\n🧪 TEST 4: VARIABLES GLOBALES`);
+      try {
+        console.log(`   voiceNotificationsEnabled: ${voiceNotificationsEnabled}`);
+        console.log(`   voiceSystemActivated: ${voiceSystemActivated}`);
+        console.log(`   browserNotificationsEnabled: ${browserNotificationsEnabled}`);
+        console.log(`   voicePermissionsGranted: ${voicePermissionsGranted}`);
+      } catch (error) {
+        console.error(`❌ ERROR en variables globales:`, error);
+      }
+      
+      // Test 5: Prueba de voz híbrida
+      console.log(`\n🧪 TEST 5: PRUEBA DE VOZ HÍBRIDA`);
+      try {
+        console.log(`🎤 Iniciando prueba de voz híbrida...`);
+        speakWithHybridVoice("Prueba del sistema híbrido en producción");
+        console.log(`✅ Prueba de voz híbrida iniciada`);
+      } catch (error) {
+        console.error(`❌ ERROR en prueba de voz:`, error);
+      }
+      
+      console.log(`\n🎯 RESUMEN DE PRUEBA EXHAUSTIVA:`);
+      console.log(`   Sistema híbrido: ${typeof getHybridVoiceSystem === 'function' ? 'OK' : 'ERROR'}`);
+      console.log(`   Voz híbrida: ${typeof speakWithHybridVoice === 'function' ? 'OK' : 'ERROR'}`);
+      console.log(`   Integración: ${typeof speakChildName === 'function' ? 'OK' : 'ERROR'}`);
+      console.log(`   Speech Synthesis: ${'speechSynthesis' in window ? 'OK' : 'ERROR'}`);
+      
+      return {
+        hybridSystem: typeof getHybridVoiceSystem === 'function',
+        hybridVoice: typeof speakWithHybridVoice === 'function',
+        integration: typeof speakChildName === 'function',
+        speechSynthesis: 'speechSynthesis' in window,
+        browser: browser
+      };
+    }
+    
+    // Función de prueba crítica para producción
+    function testProductionCritical() {
+      console.log(`🚨 PRUEBA CRÍTICA DE PRODUCCIÓN - SISTEMA HÍBRIDO`);
+      console.log(`⏰ ${new Date().toLocaleString()}`);
+      
+      const results = {
+        critical: true,
+        timestamp: new Date().toISOString(),
+        tests: {}
+      };
+      
+      // Test crítico 1: Verificar que todas las funciones existen
+      console.log(`\n🔍 TEST CRÍTICO 1: EXISTENCIA DE FUNCIONES`);
+      const criticalFunctions = [
+        'getHybridVoiceSystem',
+        'speakWithHybridVoice', 
+        'createHybridUtterance',
+        'speakChildName',
+        'speakWithRepetition',
+        'speakAlertWithRepetition'
+      ];
+      
+      criticalFunctions.forEach(funcName => {
+        const exists = typeof window[funcName] === 'function';
+        results.tests[funcName] = exists;
+        console.log(`${exists ? '✅' : '❌'} ${funcName}: ${exists ? 'OK' : 'ERROR'}`);
+      });
+      
+      // Test crítico 2: Verificar configuración híbrida
+      console.log(`\n🔍 TEST CRÍTICO 2: CONFIGURACIÓN HÍBRIDA`);
+      try {
+        const config = getHybridVoiceSystem();
+        const hasRequiredProps = config.rate && config.pitch && config.volume && config.lang;
+        results.tests.hybridConfig = hasRequiredProps;
+        console.log(`${hasRequiredProps ? '✅' : '❌'} Configuración híbrida: ${hasRequiredProps ? 'OK' : 'ERROR'}`);
+        console.log(`   Rate: ${config.rate}, Pitch: ${config.pitch}, Volume: ${config.volume}, Lang: ${config.lang}`);
+      } catch (error) {
+        results.tests.hybridConfig = false;
+        console.error(`❌ ERROR en configuración híbrida:`, error);
+      }
+      
+      // Test crítico 3: Verificar Speech Synthesis
+      console.log(`\n🔍 TEST CRÍTICO 3: SPEECH SYNTHESIS`);
+      const hasSpeechSynthesis = 'speechSynthesis' in window;
+      results.tests.speechSynthesis = hasSpeechSynthesis;
+      console.log(`${hasSpeechSynthesis ? '✅' : '❌'} Speech Synthesis: ${hasSpeechSynthesis ? 'OK' : 'ERROR'}`);
+      
+      if (hasSpeechSynthesis) {
+        const voices = speechSynthesis.getVoices();
+        const spanishVoices = voices.filter(v => v.lang.startsWith('es'));
+        console.log(`   Voces totales: ${voices.length}`);
+        console.log(`   Voces en español: ${spanishVoices.length}`);
+      }
+      
+      // Test crítico 4: Verificar variables globales críticas
+      console.log(`\n🔍 TEST CRÍTICO 4: VARIABLES GLOBALES`);
+      const globalVars = [
+        'voiceNotificationsEnabled',
+        'voiceSystemActivated', 
+        'browserNotificationsEnabled'
+      ];
+      
+      globalVars.forEach(varName => {
+        const exists = typeof window[varName] !== 'undefined';
+        results.tests[varName] = exists;
+        console.log(`${exists ? '✅' : '❌'} ${varName}: ${exists ? 'OK' : 'ERROR'}`);
+      });
+      
+      // Test crítico 5: Prueba de voz real
+      console.log(`\n🔍 TEST CRÍTICO 5: PRUEBA DE VOZ REAL`);
+      try {
+        console.log(`🎤 Ejecutando prueba de voz híbrida...`);
+        speakWithHybridVoice("Prueba crítica del sistema híbrido en producción");
+        results.tests.voiceTest = true;
+        console.log(`✅ Prueba de voz ejecutada`);
+      } catch (error) {
+        results.tests.voiceTest = false;
+        console.error(`❌ ERROR en prueba de voz:`, error);
+      }
+      
+      // Resumen crítico
+      const allTestsPassed = Object.values(results.tests).every(test => test === true);
+      results.allTestsPassed = allTestsPassed;
+      
+      console.log(`\n🚨 RESUMEN CRÍTICO:`);
+      console.log(`   Estado general: ${allTestsPassed ? '✅ SISTEMA OK' : '❌ ERRORES DETECTADOS'}`);
+      console.log(`   Tests pasados: ${Object.values(results.tests).filter(t => t).length}/${Object.keys(results.tests).length}`);
+      
+      if (!allTestsPassed) {
+        console.error(`🚨 ERRORES CRÍTICOS DETECTADOS EN PRODUCCIÓN:`);
+        Object.entries(results.tests).forEach(([test, passed]) => {
+          if (!passed) {
+            console.error(`   ❌ ${test}: FALLO`);
+          }
+        });
+      }
+      
+      return results;
+    }
+    
     // Hacer funciones disponibles globalmente para pruebas
     window.testAllBrowsersVoiceQuality = testAllBrowsersVoiceQuality;
     window.testVoiceConfigurations = testVoiceConfigurations;
@@ -3164,6 +3374,8 @@
     window.testFirefoxUltraExtreme = testFirefoxUltraExtreme;
     window.evaluateHybridVoiceSystem = evaluateHybridVoiceSystem;
     window.speakWithHybridVoice = speakWithHybridVoice;
+    window.testHybridSystemExhaustive = testHybridSystemExhaustive;
+    window.testProductionCritical = testProductionCritical;
 
 
     // ============================================================================
@@ -3938,6 +4150,23 @@
       }
     }
 
+    // Función helper global para crear utterance híbrido
+    function createHybridUtterance(msg, alertCount = 1) {
+      const hybridConfig = getHybridVoiceSystem();
+      const utterance = new SpeechSynthesisUtterance(msg);
+      
+      // Aplicar configuración híbrida
+      Object.assign(utterance, hybridConfig);
+      
+      // Ajustar según cantidad de niños
+      if (alertCount > 3) {
+        utterance.rate = Math.max(utterance.rate * 0.9, 0.5);
+        utterance.volume = Math.min(utterance.volume * 1.1, 1.0);
+      }
+      
+      return utterance;
+    }
+
     // Función para repetir mensajes 3 veces (mejorada para producción)
     function speakWithRepetition(message, alertCount) {
       console.log(`🔊 speakWithRepetition llamado con mensaje:`, message);
@@ -3958,30 +4187,13 @@
       // Usar sistema híbrido para sonido humano universal
       console.log('🎤 Usando sistema híbrido para repetición con sonido humano');
       
-      // Función helper para crear utterance híbrido
-      const createHybridUtterance = (msg) => {
-        const hybridConfig = getHybridVoiceSystem();
-        const utterance = new SpeechSynthesisUtterance(msg);
-        
-        // Aplicar configuración híbrida
-        Object.assign(utterance, hybridConfig);
-        
-        // Ajustar según cantidad de niños
-        if (alertCount > 3) {
-          utterance.rate = Math.max(utterance.rate * 0.9, 0.5);
-          utterance.volume = Math.min(utterance.volume * 1.1, 1.0);
-        }
-        
-        return utterance;
-      };
-      
       // Primera repetición (inmediata)
       setTimeout(() => {
         try {
           // Cancelar cualquier síntesis previa
           window.speechSynthesis.cancel();
           
-          const utterance1 = createHybridUtterance(message);
+          const utterance1 = createHybridUtterance(message, alertCount);
           window.speechSynthesis.speak(utterance1);
         } catch (error) {
           console.error('❌ Error en primera repetición de voz:', error);
@@ -3992,7 +4204,7 @@
       setTimeout(() => {
         try {
           if (voiceNotificationsEnabled && window.speechSynthesis.speaking === false) {
-            const utterance2 = createHybridUtterance(message);
+            const utterance2 = createHybridUtterance(message, alertCount);
             window.speechSynthesis.speak(utterance2);
           }
         } catch (error) {
@@ -4004,7 +4216,7 @@
       setTimeout(() => {
         try {
           if (voiceNotificationsEnabled && window.speechSynthesis.speaking === false) {
-            const utterance3 = createHybridUtterance(message);
+            const utterance3 = createHybridUtterance(message, alertCount);
             window.speechSynthesis.speak(utterance3);
           }
         } catch (error) {
