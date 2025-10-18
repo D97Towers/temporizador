@@ -4179,6 +4179,75 @@
     // Hacer función global para pruebas urgentes
     window.testAudioUrgent = testAudioUrgent;
     
+    // PRUEBA DE ESTRÉS COMPLETA - TODOS LOS ESCENARIOS
+    function runStressTest() {
+      console.log(`🚨 INICIANDO PRUEBA DE ESTRÉS COMPLETA`);
+      console.log(`🚨 PROBANDO TODOS LOS ESCENARIOS DE VOZ`);
+      
+      // ESCENARIO 1: Un niño
+      console.log(`\n📝 ESCENARIO 1: Un niño`);
+      const scenario1 = [{
+        text: "¡Atención! A sofia le quedan solo 5 segundos",
+        sessionId: 1,
+        timeLeft: 5,
+        timestamp: Date.now()
+      }];
+      speakAlertWithRepetition(scenario1, 1);
+      
+      setTimeout(() => {
+        // ESCENARIO 2: Dos niños
+        console.log(`\n📝 ESCENARIO 2: Dos niños`);
+        const scenario2 = [
+          { text: "¡Atención! A sofia le quedan solo 5 segundos", sessionId: 1, timeLeft: 5, timestamp: Date.now() },
+          { text: "¡Atención! A david le quedan solo 3 segundos", sessionId: 2, timeLeft: 3, timestamp: Date.now() }
+        ];
+        speakAlertWithRepetition(scenario2, 2);
+      }, 3000);
+      
+      setTimeout(() => {
+        // ESCENARIO 3: Tres niños
+        console.log(`\n📝 ESCENARIO 3: Tres niños`);
+        const scenario3 = [
+          { text: "¡Atención! A sofia le quedan solo 5 segundos", sessionId: 1, timeLeft: 5, timestamp: Date.now() },
+          { text: "¡Atención! A david le quedan solo 3 segundos", sessionId: 2, timeLeft: 3, timestamp: Date.now() },
+          { text: "¡Atención! A mathias le quedan solo 2 segundos", sessionId: 3, timeLeft: 2, timestamp: Date.now() }
+        ];
+        speakAlertWithRepetition(scenario3, 3);
+      }, 6000);
+      
+      setTimeout(() => {
+        // ESCENARIO 4: Cinco niños
+        console.log(`\n📝 ESCENARIO 4: Cinco niños`);
+        const scenario4 = [
+          { text: "¡Atención! A sofia le quedan solo 5 segundos", sessionId: 1, timeLeft: 5, timestamp: Date.now() },
+          { text: "¡Atención! A david le quedan solo 3 segundos", sessionId: 2, timeLeft: 3, timestamp: Date.now() },
+          { text: "¡Atención! A mathias le quedan solo 2 segundos", sessionId: 3, timeLeft: 2, timestamp: Date.now() },
+          { text: "¡Atención! A cristian le quedan solo 1 segundo", sessionId: 4, timeLeft: 1, timestamp: Date.now() },
+          { text: "¡Atención! A ramon le quedan solo 1 segundo", sessionId: 5, timeLeft: 1, timestamp: Date.now() }
+        ];
+        speakAlertWithRepetition(scenario4, 5);
+      }, 9000);
+      
+      setTimeout(() => {
+        // ESCENARIO 5: Seis niños (consolidado)
+        console.log(`\n📝 ESCENARIO 5: Seis niños (consolidado)`);
+        const scenario5 = [
+          { text: "¡Atención! A sofia le quedan solo 5 segundos", sessionId: 1, timeLeft: 5, timestamp: Date.now() },
+          { text: "¡Atención! A david le quedan solo 3 segundos", sessionId: 2, timeLeft: 3, timestamp: Date.now() },
+          { text: "¡Atención! A mathias le quedan solo 2 segundos", sessionId: 3, timeLeft: 2, timestamp: Date.now() },
+          { text: "¡Atención! A cristian le quedan solo 1 segundo", sessionId: 4, timeLeft: 1, timestamp: Date.now() },
+          { text: "¡Atención! A ramon le quedan solo 1 segundo", sessionId: 5, timeLeft: 1, timestamp: Date.now() },
+          { text: "¡Atención! A santiago le quedan solo 1 segundo", sessionId: 6, timeLeft: 1, timestamp: Date.now() }
+        ];
+        speakAlertWithRepetition(scenario5, 6);
+      }, 12000);
+      
+      console.log(`🚨 PRUEBA DE ESTRÉS INICIADA - VERIFICAR CONSOLA Y AUDIO`);
+    }
+    
+    // Hacer función global para prueba de estrés
+    window.runStressTest = runStressTest;
+    
     // SISTEMA ADAPTATIVO DE REPETICIONES
     function calculateAdaptiveRepetitions(message, alertCount) {
       if (!adaptiveAlertSystem.enabled) {
