@@ -4953,6 +4953,211 @@
     // Hacer función global para pruebas robustas
     window.testVoiceSystemRobust = testVoiceSystemRobust;
     
+    // PRUEBAS EXHAUSTIVAS DEL SISTEMA DE VOZ - POST FIX
+    function testVoiceSystemExhaustive() {
+      console.log('🧪 INICIANDO PRUEBAS EXHAUSTIVAS DEL SISTEMA DE VOZ');
+      console.log('='.repeat(60));
+      
+      // Verificar estado inicial
+      console.log('📊 ESTADO INICIAL:');
+      console.log('- voiceNotificationsEnabled:', voiceNotificationsEnabled);
+      console.log('- voiceQueueProcessing:', voiceQueueProcessing);
+      console.log('- isVoicePlaying:', isVoicePlaying);
+      console.log('- voiceQueue.length:', voiceQueue.length);
+      
+      // Prueba 1: Mensaje simple
+      console.log('\n🔬 PRUEBA 1: Mensaje simple');
+      addToVoiceQueue('Prueba 1: Mensaje simple de prueba');
+      
+      // Prueba 2: Múltiples mensajes rápidos (simular niños terminando seguidos)
+      console.log('\n🔬 PRUEBA 2: Múltiples mensajes rápidos');
+      setTimeout(() => {
+        addToVoiceQueue('Prueba 2A: Juan ha terminado su tiempo de juego. Papá: Carlos, por favor recoge a tu hijo');
+      }, 100);
+      
+      setTimeout(() => {
+        addToVoiceQueue('Prueba 2B: María ha terminado su tiempo de juego. Papá: Luis, Mamá: Ana, por favor recoge a tu hija');
+      }, 200);
+      
+      setTimeout(() => {
+        addToVoiceQueue('Prueba 2C: Pedro ha terminado su tiempo de juego. Papá: Roberto, por favor recoge a tu hijo');
+      }, 300);
+      
+      // Prueba 3: Mensaje largo (simular consolidado)
+      console.log('\n🔬 PRUEBA 3: Mensaje largo consolidado');
+      setTimeout(() => {
+        addToVoiceQueue('Prueba 3: Hola, Juan (Papá: Carlos), María (Papá: Luis, Mamá: Ana) y Pedro (Papá: Roberto) han terminado su tiempo de juego. Por favor, recógelos');
+      }, 2000);
+      
+      // Prueba 4: Mensajes con acentos
+      console.log('\n🔬 PRUEBA 4: Mensajes con acentos');
+      setTimeout(() => {
+        addToVoiceQueue('Prueba 4: José ha terminado su tiempo de juego. Papá: José, por favor recoge a tu hijo');
+      }, 4000);
+      
+      setTimeout(() => {
+        addToVoiceQueue('Prueba 4B: María José ha terminado su tiempo de juego. Papá: José, Mamá: María, por favor recoge a tu hija');
+      }, 5000);
+      
+      // Prueba 5: Simular error de interrupción
+      console.log('\n🔬 PRUEBA 5: Simular condiciones de error');
+      setTimeout(() => {
+        console.log('⚠️ Simulando condiciones que antes causaban interrupciones...');
+        addToVoiceQueue('Prueba 5: Este mensaje debería reproducirse sin interrupciones');
+      }, 6000);
+      
+      // Monitoreo continuo
+      let monitorCount = 0;
+      const monitor = setInterval(() => {
+        monitorCount++;
+        console.log(`📊 MONITOR ${monitorCount}: Cola=${voiceQueue.length}, Procesando=${voiceQueueProcessing}, Reproduciendo=${isVoicePlaying}`);
+        
+        if (monitorCount >= 20) {
+          clearInterval(monitor);
+          console.log('\n✅ PRUEBAS COMPLETADAS');
+          console.log('📊 ESTADO FINAL:');
+          console.log('- voiceQueue.length:', voiceQueue.length);
+          console.log('- voiceQueueProcessing:', voiceQueueProcessing);
+          console.log('- isVoicePlaying:', isVoicePlaying);
+          console.log('='.repeat(60));
+        }
+      }, 1000);
+      
+      return 'Pruebas exhaustivas iniciadas - revisar consola para resultados';
+    }
+    
+    // Hacer función global
+    window.testVoiceSystemExhaustive = testVoiceSystemExhaustive;
+    
+    // PRUEBA ESPECÍFICA: Verificar que NO hay cancelaciones
+    function testNoCancellations() {
+      console.log('🔍 PRUEBA ESPECÍFICA: Verificar que NO hay cancelaciones');
+      console.log('='.repeat(50));
+      
+      // Interceptar speechSynthesis.cancel para detectar llamadas
+      const originalCancel = window.speechSynthesis.cancel;
+      let cancelCallCount = 0;
+      const cancelCalls = [];
+      
+      window.speechSynthesis.cancel = function() {
+        cancelCallCount++;
+        const stack = new Error().stack;
+        cancelCalls.push({
+          count: cancelCallCount,
+          timestamp: Date.now(),
+          stack: stack
+        });
+        console.log(`🚨 DETECTADA CANCELACIÓN #${cancelCallCount}:`, stack);
+        return originalCancel.call(this);
+      };
+      
+      // Ejecutar pruebas
+      console.log('🧪 Ejecutando pruebas de voz...');
+      addToVoiceQueue('Prueba de cancelación 1: Este mensaje no debería ser cancelado');
+      
+      setTimeout(() => {
+        addToVoiceQueue('Prueba de cancelación 2: Segundo mensaje sin cancelación');
+      }, 1000);
+      
+      setTimeout(() => {
+        addToVoiceQueue('Prueba de cancelación 3: Tercer mensaje para verificar cola');
+      }, 2000);
+      
+      // Restaurar función original después de 10 segundos
+      setTimeout(() => {
+        window.speechSynthesis.cancel = originalCancel;
+        console.log('\n📊 RESULTADOS DE LA PRUEBA:');
+        console.log(`- Total de cancelaciones detectadas: ${cancelCallCount}`);
+        console.log('- Detalles de cancelaciones:', cancelCalls);
+        
+        if (cancelCallCount === 0) {
+          console.log('✅ ÉXITO: No se detectaron cancelaciones innecesarias');
+        } else {
+          console.log('❌ PROBLEMA: Se detectaron cancelaciones que no deberían existir');
+        }
+        console.log('='.repeat(50));
+      }, 10000);
+      
+      return 'Prueba de cancelaciones iniciada - revisar consola en 10 segundos';
+    }
+    
+    // Hacer función global
+    window.testNoCancellations = testNoCancellations;
+    
+    // PRUEBA REAL: Simular escenario de niños terminando
+    function testRealScenario() {
+      console.log('🎯 PRUEBA REAL: Simular escenario de niños terminando');
+      console.log('='.repeat(60));
+      
+      // Simular datos reales
+      const testChildren = [
+        { name: 'Sofia', fatherName: 'Fernando', motherName: null },
+        { name: 'Juan', fatherName: 'Carlos', motherName: 'María' },
+        { name: 'María', fatherName: 'Luis', motherName: 'Ana' },
+        { name: 'Pedro', fatherName: 'Roberto', motherName: null },
+        { name: 'José', fatherName: 'José', motherName: 'Carmen' }
+      ];
+      
+      console.log('👶 Simulando 5 niños terminando en secuencia...');
+      
+      // Niño 1 termina
+      setTimeout(() => {
+        console.log('🔔 Niño 1 (Sofia) termina');
+        const message = `Hola, Sofia ha terminado su tiempo de juego. Papá: Fernando, por favor recoge a tu hija`;
+        addToVoiceQueue(message);
+      }, 1000);
+      
+      // Niño 2 termina (mientras 1 se reproduce)
+      setTimeout(() => {
+        console.log('🔔 Niño 2 (Juan) termina');
+        const message = `Hola, Juan ha terminado su tiempo de juego. Papá: Carlos, Mamá: María, por favor recoge a tu hijo`;
+        addToVoiceQueue(message);
+      }, 2000);
+      
+      // Niño 3 termina (mientras 1 y 2 están en cola)
+      setTimeout(() => {
+        console.log('🔔 Niño 3 (María) termina');
+        const message = `Hola, María ha terminado su tiempo de juego. Papá: Luis, Mamá: Ana, por favor recoge a tu hija`;
+        addToVoiceQueue(message);
+      }, 3000);
+      
+      // Niño 4 termina
+      setTimeout(() => {
+        console.log('🔔 Niño 4 (Pedro) termina');
+        const message = `Hola, Pedro ha terminado su tiempo de juego. Papá: Roberto, por favor recoge a tu hijo`;
+        addToVoiceQueue(message);
+      }, 4000);
+      
+      // Niño 5 termina
+      setTimeout(() => {
+        console.log('🔔 Niño 5 (José) termina');
+        const message = `Hola, José ha terminado su tiempo de juego. Papá: José, Mamá: Carmen, por favor recoge a tu hijo`;
+        addToVoiceQueue(message);
+      }, 5000);
+      
+      // Monitoreo detallado
+      let monitorCount = 0;
+      const monitor = setInterval(() => {
+        monitorCount++;
+        console.log(`📊 MONITOR ${monitorCount}: Cola=${voiceQueue.length}, Procesando=${voiceQueueProcessing}, Reproduciendo=${isVoicePlaying}`);
+        
+        if (monitorCount >= 15) {
+          clearInterval(monitor);
+          console.log('\n✅ PRUEBA REAL COMPLETADA');
+          console.log('📊 ESTADO FINAL:');
+          console.log('- voiceQueue.length:', voiceQueue.length);
+          console.log('- voiceQueueProcessing:', voiceQueueProcessing);
+          console.log('- isVoicePlaying:', isVoicePlaying);
+          console.log('='.repeat(60));
+        }
+      }, 1000);
+      
+      return 'Prueba real iniciada - revisar consola para monitoreo';
+    }
+    
+    // Hacer función global
+    window.testRealScenario = testRealScenario;
+    
     // SISTEMA ADAPTATIVO DE REPETICIONES
     function calculateAdaptiveRepetitions(message, alertCount) {
       if (!adaptiveAlertSystem.enabled) {
