@@ -4248,6 +4248,77 @@
     // Hacer función global para prueba de estrés
     window.runStressTest = runStressTest;
     
+    // DIAGNÓSTICO COMPLETO DEL SISTEMA DE VOZ
+    function diagnoseVoiceSystem() {
+      console.log(`🔍 DIAGNÓSTICO COMPLETO DEL SISTEMA DE VOZ`);
+      console.log(`==========================================`);
+      
+      // 1. VERIFICAR ESTADO DEL SISTEMA
+      console.log(`\n📊 ESTADO DEL SISTEMA:`);
+      console.log(`  - voiceNotificationsEnabled: ${voiceNotificationsEnabled}`);
+      console.log(`  - voiceSystemActivated: ${voiceSystemActivated}`);
+      console.log(`  - speechSynthesis disponible: ${typeof speechSynthesis !== 'undefined'}`);
+      console.log(`  - voces disponibles: ${speechSynthesis.getVoices().length}`);
+      console.log(`  - adaptiveAlertSystem.enabled: ${adaptiveAlertSystem.enabled}`);
+      
+      // 2. PROBAR EXTRACCIÓN DE NOMBRES
+      console.log(`\n🧪 PROBANDO EXTRACCIÓN DE NOMBRES:`);
+      const testTexts = [
+        "¡Atención! A sofia le quedan solo 5 segundos",
+        "¡Atención! A david le quedan solo 3 segundos",
+        "¡Atención! A mathias le quedan solo 2 segundos"
+      ];
+      
+      testTexts.forEach((text, index) => {
+        const name = extractChildNameFromAlert(text);
+        const gender = detectGenderByName(name);
+        console.log(`  ${index + 1}. "${text}" → Nombre: "${name}", Género: "${gender}"`);
+      });
+      
+      // 3. PROBAR GENERACIÓN DE MENSAJES
+      console.log(`\n🎯 PROBANDO GENERACIÓN DE MENSAJES:`);
+      
+      // Escenario 1: Un niño
+      const scenario1 = [{ text: "¡Atención! A sofia le quedan solo 5 segundos", sessionId: 1, timeLeft: 5, timestamp: Date.now() }];
+      const message1 = generateNaturalVoiceMessage(scenario1, 1);
+      console.log(`  ESCENARIO 1: "${message1}"`);
+      
+      // Escenario 2: Dos niños
+      const scenario2 = [
+        { text: "¡Atención! A sofia le quedan solo 5 segundos", sessionId: 1, timeLeft: 5, timestamp: Date.now() },
+        { text: "¡Atención! A david le quedan solo 3 segundos", sessionId: 2, timeLeft: 3, timestamp: Date.now() }
+      ];
+      const message2 = generateNaturalVoiceMessage(scenario2, 2);
+      console.log(`  ESCENARIO 2: "${message2}"`);
+      
+      // Escenario 3: Tres niños
+      const scenario3 = [
+        { text: "¡Atención! A sofia le quedan solo 5 segundos", sessionId: 1, timeLeft: 5, timestamp: Date.now() },
+        { text: "¡Atención! A david le quedan solo 3 segundos", sessionId: 2, timeLeft: 3, timestamp: Date.now() },
+        { text: "¡Atención! A mathias le quedan solo 2 segundos", sessionId: 3, timeLeft: 2, timestamp: Date.now() }
+      ];
+      const message3 = generateNaturalVoiceMessage(scenario3, 3);
+      console.log(`  ESCENARIO 3: "${message3}"`);
+      
+      // 4. PROBAR REPETICIONES ADAPTATIVAS
+      console.log(`\n🔄 PROBANDO REPETICIONES ADAPTATIVAS:`);
+      for (let i = 1; i <= 6; i++) {
+        const { repetitions, delay } = calculateAdaptiveRepetitions('', i);
+        console.log(`  ${i} niño(s): ${repetitions} repeticiones, delay: ${delay}ms`);
+      }
+      
+      // 5. PROBAR AUDIO DIRECTO
+      console.log(`\n🔊 PROBANDO AUDIO DIRECTO:`);
+      console.log(`  - Ejecutando testAudioUrgent()...`);
+      testAudioUrgent();
+      
+      console.log(`\n✅ DIAGNÓSTICO COMPLETO FINALIZADO`);
+      console.log(`📋 REVISAR LOGS ANTERIORES PARA IDENTIFICAR PROBLEMAS`);
+    }
+    
+    // Hacer función global para diagnóstico
+    window.diagnoseVoiceSystem = diagnoseVoiceSystem;
+    
     // SISTEMA ADAPTATIVO DE REPETICIONES
     function calculateAdaptiveRepetitions(message, alertCount) {
       if (!adaptiveAlertSystem.enabled) {
