@@ -558,12 +558,12 @@
 
     /* Control de notificaciones de voz */
     .voice-control {
-      position: absolute;
-      top: 20px;
-      right: 20px;
+      position: relative;
       display: flex;
       gap: 10px;
-      z-index: 10;
+      justify-content: flex-end;
+      margin: 15px 0;
+      z-index: 1;
     }
 
     .voice-toggle-btn {
@@ -602,11 +602,14 @@
     /* Responsive para botón de voz */
     @media (max-width: 768px) {
       .voice-control {
-        position: relative;
-        top: auto;
-        right: auto;
+        position: relative !important;
+        top: auto !important;
+        right: auto !important;
+        left: auto !important;
+        bottom: auto !important;
         justify-content: center;
         margin: 15px 0;
+        z-index: 1 !important;
       }
       
       .voice-toggle-btn {
@@ -622,6 +625,17 @@
     }
 
     @media (max-width: 480px) {
+      .voice-control {
+        position: relative !important;
+        top: auto !important;
+        right: auto !important;
+        left: auto !important;
+        bottom: auto !important;
+        justify-content: center;
+        margin: 15px 0;
+        z-index: 1 !important;
+      }
+      
       .voice-toggle-btn {
         min-width: 100px;
         padding: 6px 10px;
