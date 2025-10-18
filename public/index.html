@@ -4634,6 +4634,154 @@
     // Hacer función global para correcciones
     window.fixAllVoiceProblems = fixAllVoiceProblems;
     
+    // 🧪 PRUEBA ESPECÍFICA: 3 SESIONES ACTIVAS TERMINANDO
+    function test3ActiveSessions() {
+      console.log(`🧪 INICIANDO PRUEBA: 3 SESIONES ACTIVAS TERMINANDO`);
+      console.log(`=================================================`);
+      
+      // Primero aplicar todas las correcciones
+      console.log(`🔧 APLICANDO CORRECCIONES...`);
+      fixAllVoiceProblems();
+      
+      // Simular 3 sesiones activas terminando
+      const activeSessions = [
+        {
+          childName: "sofia",
+          parents: "Luis & Ana",
+          game: "trampolin",
+          timeLeft: 5,
+          sessionId: 1
+        },
+        {
+          childName: "david", 
+          parents: "Carlos & Maria",
+          game: "trampolin",
+          timeLeft: 3,
+          sessionId: 2
+        },
+        {
+          childName: "mathias",
+          parents: "Pedro & Laura", 
+          game: "trampolin",
+          timeLeft: 2,
+          sessionId: 3
+        }
+      ];
+      
+      console.log(`\n📊 SESIONES ACTIVAS SIMULADAS:`);
+      activeSessions.forEach((session, index) => {
+        console.log(`  ${index + 1}. ${session.childName} (${session.parents}) - ${session.timeLeft}s restantes`);
+      });
+      
+      // Simular alertas de tiempo terminado
+      const timeOutAlerts = [
+        {
+          text: "¡Atención! A sofia le quedan solo 5 segundos",
+          sessionId: 1,
+          timeLeft: 0,
+          timestamp: Date.now()
+        },
+        {
+          text: "¡Atención! A david le quedan solo 3 segundos", 
+          sessionId: 2,
+          timeLeft: 0,
+          timestamp: Date.now()
+        },
+        {
+          text: "¡Atención! A mathias le quedan solo 2 segundos",
+          sessionId: 3, 
+          timeLeft: 0,
+          timestamp: Date.now()
+        }
+      ];
+      
+      console.log(`\n🎯 SIMULANDO TERMINACIÓN DE SESIONES...`);
+      console.log(`📝 Alertas generadas: ${timeOutAlerts.length}`);
+      
+      // Probar extracción de nombres
+      console.log(`\n🧪 PROBANDO EXTRACCIÓN DE NOMBRES:`);
+      timeOutAlerts.forEach((alert, index) => {
+        const name = extractChildNameFromAlertFixed(alert.text);
+        const gender = detectGenderByNameFixed(name);
+        console.log(`  ${index + 1}. "${alert.text}" → Nombre: "${name}", Género: "${gender}"`);
+      });
+      
+      // Probar generación de mensaje natural
+      console.log(`\n🎯 PROBANDO GENERACIÓN DE MENSAJE NATURAL:`);
+      const naturalMessage = generateNaturalVoiceMessageFixed(timeOutAlerts, 3);
+      console.log(`📢 MENSAJE GENERADO: "${naturalMessage}"`);
+      
+      // Probar repeticiones adaptativas
+      console.log(`\n🔄 PROBANDO REPETICIONES ADAPTATIVAS:`);
+      const { repetitions, delay } = calculateAdaptiveRepetitionsFixed('', 3);
+      console.log(`📊 3 niños → ${repetitions} repeticiones, delay: ${delay}ms`);
+      
+      // Probar cola de voz
+      console.log(`\n🎵 PROBANDO COLA DE VOZ:`);
+      console.log(`📝 Agregando mensaje a cola...`);
+      
+      // Agregar mensaje a la cola
+      const success = addToVoiceQueueFixed(naturalMessage, { 
+        priority: 'high',
+        sessionId: 'test-3-sessions'
+      });
+      
+      if (success) {
+        console.log(`✅ MENSAJE AGREGADO A COLA EXITOSAMENTE`);
+        console.log(`🔊 EL AUDIO DEBERÍA REPRODUCIRSE EN BREVE...`);
+        console.log(`📋 ESCUCHA ATENTAMENTE EL MENSAJE DE VOZ`);
+        console.log(`🎯 DEBERÍAS ESCUCHAR: "${naturalMessage}"`);
+      } else {
+        console.log(`❌ ERROR AL AGREGAR MENSAJE A COLA`);
+      }
+      
+      // Probar escenarios individuales
+      console.log(`\n🧪 PROBANDO ESCENARIOS INDIVIDUALES:`);
+      
+      // Escenario 1: Solo sofia
+      setTimeout(() => {
+        console.log(`\n📝 ESCENARIO 1: Solo sofia`);
+        const sofiaAlert = [timeOutAlerts[0]];
+        const sofiaMessage = generateNaturalVoiceMessageFixed(sofiaAlert, 1);
+        console.log(`📢 MENSAJE SOFIA: "${sofiaMessage}"`);
+        addToVoiceQueueFixed(sofiaMessage, { priority: 'high' });
+      }, 2000);
+      
+      // Escenario 2: sofia y david
+      setTimeout(() => {
+        console.log(`\n📝 ESCENARIO 2: sofia y david`);
+        const twoAlerts = [timeOutAlerts[0], timeOutAlerts[1]];
+        const twoMessage = generateNaturalVoiceMessageFixed(twoAlerts, 2);
+        console.log(`📢 MENSAJE DOS: "${twoMessage}"`);
+        addToVoiceQueueFixed(twoMessage, { priority: 'high' });
+      }, 4000);
+      
+      // Escenario 3: Los tres
+      setTimeout(() => {
+        console.log(`\n📝 ESCENARIO 3: Los tres (sofia, david, mathias)`);
+        const threeMessage = generateNaturalVoiceMessageFixed(timeOutAlerts, 3);
+        console.log(`📢 MENSAJE TRES: "${threeMessage}"`);
+        addToVoiceQueueFixed(threeMessage, { priority: 'high' });
+      }, 6000);
+      
+      console.log(`\n✅ PRUEBA INICIADA - VERIFICAR AUDIO Y LOGS`);
+      console.log(`📋 INSTRUCCIONES:`);
+      console.log(`  1. ESCUCHA el mensaje de voz`);
+      console.log(`  2. VERIFICA que dice los 3 nombres correctamente`);
+      console.log(`  3. CONFIRMA que el mensaje es natural y claro`);
+      console.log(`  4. REVISA los logs en consola`);
+      
+      return {
+        success: true,
+        message: naturalMessage,
+        sessions: activeSessions,
+        alerts: timeOutAlerts
+      };
+    }
+    
+    // Hacer función global para prueba de 3 sesiones
+    window.test3ActiveSessions = test3ActiveSessions;
+    
     // SISTEMA ADAPTATIVO DE REPETICIONES
     function calculateAdaptiveRepetitions(message, alertCount) {
       if (!adaptiveAlertSystem.enabled) {
