@@ -3898,11 +3898,14 @@
 
     // Sistema de alertas inteligente para evitar redundancias
     function showSmartAlert(text, type = 'success', sessionId = null, options = {}) {
+      console.log(`🔔 showSmartAlert LLAMADA: "${text}" [${type}] sessionId: ${sessionId}`, options);
+      
       // Verificar preferencias de alertas
       if (!shouldShowAlert(type, options)) {
         console.log(`🔇 Alerta suprimida por preferencias: ${text}`);
         return;
       }
+      console.log(`✅ Alerta aprobada por preferencias: ${text}`);
       
       // Determinar qué tipo de alerta mostrar
       const alertTypes = determineAlertTypes(type, options);
@@ -3961,6 +3964,7 @@
     }
     
     function showVisualAlert(text, type, sessionId) {
+      console.log(`🔔 showVisualAlert LLAMADA: "${text}" [${type}] sessionId: ${sessionId}`);
       let msg = document.getElementById('statusMessage');
       
       // Si no existe el elemento, crearlo
@@ -4021,11 +4025,14 @@
       }
       
       msg.timeoutId = setTimeout(() => {
+        console.log(`🔔 ALERTA OCULTÁNDOSE AUTOMÁTICAMENTE: "${text}" después de ${timeoutDuration}ms`);
         // Usar la función de ocultar que remueve completamente del DOM
         hideStatusMessage();
         
         // NO limpiar alertas de sesión - permitir todas las notificaciones
       }, timeoutDuration);
+      
+      console.log(`✅ ALERTA VISUAL CONFIGURADA: "${text}" se ocultará en ${timeoutDuration}ms`);
     }
 
     // Función para ocultar manualmente el mensaje de estado
