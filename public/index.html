@@ -2656,9 +2656,17 @@
     let timerIntervals = new Map();
     let currentExtendSession = null;
     let currentEditChild = null; // Para almacenar el ID del niño que se está editando
+    // Variables globales críticas para el sistema de voz
     let voiceNotificationsEnabled = true; // Control de notificaciones de voz
     let browserNotificationsEnabled = false; // Control de notificaciones del navegador
     let voicePermissionsGranted = false; // Estado de permisos de voz
+    let voiceSystemActivated = false; // Estado de activación del sistema de voz
+    
+    // Asegurar que las variables estén disponibles globalmente
+    window.voiceNotificationsEnabled = voiceNotificationsEnabled;
+    window.browserNotificationsEnabled = browserNotificationsEnabled;
+    window.voicePermissionsGranted = voicePermissionsGranted;
+    window.voiceSystemActivated = voiceSystemActivated;
 
     // Función para detectar género por nombre (mejores prácticas)
     function detectGenderByName(name) {
@@ -3921,6 +3929,7 @@
         if (hasNotifications && Notification.permission === 'default') {
           const permission = await Notification.requestPermission();
           browserNotificationsEnabled = permission === 'granted';
+          window.browserNotificationsEnabled = browserNotificationsEnabled; // Actualizar variable global
           
           if (browserNotificationsEnabled) {
             showStatusMessage('🔔 Notificaciones del navegador activadas', 'success');
@@ -3929,6 +3938,7 @@
           }
         } else if (hasNotifications) {
           browserNotificationsEnabled = Notification.permission === 'granted';
+          window.browserNotificationsEnabled = browserNotificationsEnabled; // Actualizar variable global
         }
         
         // PRUEBA CRÍTICA: Hacer un test de voz para activar el sistema
@@ -4008,6 +4018,7 @@
       activateVoiceSystemOnUserInteraction();
       
       voiceNotificationsEnabled = !voiceNotificationsEnabled;
+      window.voiceNotificationsEnabled = voiceNotificationsEnabled; // Actualizar variable global
       
       const voiceToggle = document.getElementById('voiceToggle');
       const voiceStatus = document.getElementById('voiceStatus');
@@ -6323,7 +6334,6 @@
     });
     
     // 🎤 CRÍTICO: Activar sistema de voz en primera interacción del usuario
-    let voiceSystemActivated = false;
     
     function activateVoiceSystemOnUserInteraction() {
       if (voiceSystemActivated) return;
@@ -6339,6 +6349,7 @@
         window.speechSynthesis.cancel();
         
         voiceSystemActivated = true;
+        window.voiceSystemActivated = true; // Actualizar variable global
         console.log('✅ Sistema de voz activado para producción');
       } catch (error) {
         console.error('❌ Error activando sistema de voz:', error);
