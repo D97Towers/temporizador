@@ -2783,6 +2783,49 @@
     window.voicePermissionsGranted = voicePermissionsGranted;
     window.voiceSystemActivated = voiceSystemActivated;
 
+    // FUNCIÓN HELPER PARA EVITAR DUPLICACIÓN DE CÓDIGO
+    function getParentsInfo(child, format = 'simple') {
+      if (!child) return '';
+      
+      const fatherName = child.fatherName || child.father_name;
+      const motherName = child.motherName || child.mother_name;
+      
+      if (!fatherName && !motherName) return '';
+      
+      let parentsInfo = '';
+      
+      if (format === 'html') {
+        // Formato HTML para listas y rankings
+        if (fatherName && motherName) {
+          parentsInfo = `<br><small class="parents-info"><i class="fas fa-users"></i> ${fatherName} & ${motherName}</small>`;
+        } else if (fatherName) {
+          parentsInfo = `<br><small class="parents-info"><i class="fas fa-users"></i> Papá: ${fatherName}</small>`;
+        } else if (motherName) {
+          parentsInfo = `<br><small class="parents-info"><i class="fas fa-users"></i> Mamá: ${motherName}</small>`;
+        }
+      } else if (format === 'history') {
+        // Formato para historial
+        if (fatherName && motherName) {
+          parentsInfo = `<div class="history-parents"><i class="fas fa-users"></i> ${fatherName} & ${motherName}</div>`;
+        } else if (fatherName) {
+          parentsInfo = `<div class="history-parents"><i class="fas fa-users"></i> Papá: ${fatherName}</div>`;
+        } else if (motherName) {
+          parentsInfo = `<div class="history-parents"><i class="fas fa-users"></i> Mamá: ${motherName}</div>`;
+        }
+      } else {
+        // Formato simple (default)
+        if (fatherName && motherName) {
+          parentsInfo = ` (${fatherName} & ${motherName})`;
+        } else if (fatherName) {
+          parentsInfo = ` (Papá: ${fatherName})`;
+        } else if (motherName) {
+          parentsInfo = ` (Mamá: ${motherName})`;
+        }
+      }
+      
+      return parentsInfo;
+    }
+
     // Función para detectar género por nombre - FUNCIÓN SIMPLE Y ESTABLE
     function detectGenderByName(name) {
       if (!name || typeof name !== 'string') {
@@ -4998,16 +5041,7 @@
           const child = childrenCache.find(c => c.name === childName);
           
           if (child) {
-            const fatherName = child.fatherName || child.father_name;
-            const motherName = child.motherName || child.mother_name;
-            
-            if (fatherName && motherName) {
-              parentsInfo = ` (${fatherName} & ${motherName})`;
-            } else if (fatherName) {
-              parentsInfo = ` (Papá: ${fatherName})`;
-            } else if (motherName) {
-              parentsInfo = ` (Mamá: ${motherName})`;
-            }
+            parentsInfo = getParentsInfo(child, 'simple');
           }
         }
         
