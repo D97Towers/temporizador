@@ -7172,7 +7172,9 @@
           ]);
           
           clearAllSessionAlerts();
+          console.log('🔔 MOSTRANDO ALERTA DE SESIÓN INICIADA:', `${result.child.name} - ${result.game.name}`);
           showStatusMessage(`✅ Sesión iniciada: ${result.child.name} - ${result.game.name}`, 'success', null, { voiceOnly: false });
+          console.log('🔔 ALERTA ENVIADA A showStatusMessage');
         } else {
           // 4. Manejo de errores
           showStatusMessage(`❌ Error: ${result.error}`, 'error');
