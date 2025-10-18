@@ -2667,6 +2667,17 @@
     let isVoicePlaying = false; // Estado de reproducción actual
     let voiceQueueProcessing = false; // Estado de procesamiento de cola
     
+    // Sistema de alertas inteligente para evitar redundancias
+    let alertPreferences = {
+      showVisualAlerts: true,        // Mostrar alertas visuales
+      showVoiceAlerts: true,         // Mostrar alertas de voz
+      showBrowserNotifications: true, // Mostrar notificaciones del navegador
+      showConfigAlerts: false,       // Mostrar alertas de configuración
+      showStatusAlerts: false,       // Mostrar alertas de estado (inicio/fin sesión)
+      showErrorAlerts: true,         // Mostrar alertas de error
+      showSuccessAlerts: false      // Mostrar alertas de éxito
+    };
+    
     // Asegurar que las variables estén disponibles globalmente
     window.voiceNotificationsEnabled = voiceNotificationsEnabled;
     window.browserNotificationsEnabled = browserNotificationsEnabled;
@@ -3417,6 +3428,33 @@
       return results;
     }
     
+    // Funciones auxiliares para sistema de alertas inteligente
+    function showVoiceAlert(text, type, options) {
+      if (options.consolidated && options.pendingAlerts) {
+        // Para alertas consolidadas, usar el sistema de repetición
+        speakAlertWithRepetition(options.pendingAlerts, options.alertCount);
+      } else {
+        // Para alertas simples, usar voz híbrida
+        speakWithHybridVoice(text);
+      }
+    }
+    
+    function getNotificationTitle(type) {
+      switch (type) {
+        case 'warning': return '⏰ Tiempo de Juego Terminado';
+        case 'error': return '❌ Error';
+        case 'success': return '✅ Éxito';
+        case 'info': return 'ℹ️ Información';
+        default: return '🔔 Notificación';
+      }
+    }
+    
+    // Función para configurar preferencias de alertas
+    function configureAlertPreferences(preferences) {
+      alertPreferences = { ...alertPreferences, ...preferences };
+      console.log('🔧 Preferencias de alertas actualizadas:', alertPreferences);
+    }
+    
     // Función de prueba del sistema de cola de voz
     function testVoiceQueue() {
       console.log(`🧪 PRUEBA DEL SISTEMA DE COLA DE VOZ`);
@@ -3445,6 +3483,31 @@
       console.log(`📊 Estado final: isVoicePlaying=${isVoicePlaying}, queueLength=${voiceQueue.length}`);
     }
     
+    // Función de prueba del sistema de alertas inteligente
+    function testSmartAlerts() {
+      console.log(`🧪 PRUEBA DEL SISTEMA DE ALERTAS INTELIGENTE`);
+      console.log(`📊 Preferencias actuales:`, alertPreferences);
+      
+      // Probar diferentes tipos de alertas
+      console.log(`\n🎯 Probando alertas con preferencias actuales:`);
+      
+      showSmartAlert("Esta es una alerta de éxito", 'success');
+      showSmartAlert("Esta es una alerta de información", 'info');
+      showSmartAlert("Esta es una alerta de advertencia", 'warning');
+      showSmartAlert("Esta es una alerta de error", 'error');
+      
+      console.log(`\n🔧 Cambiando preferencias para mostrar todas las alertas:`);
+      configureAlertPreferences({
+        showSuccessAlerts: true,
+        showStatusAlerts: true,
+        showConfigAlerts: true
+      });
+      
+      console.log(`\n🎯 Probando alertas con todas habilitadas:`);
+      showSmartAlert("Ahora deberías ver esta alerta de éxito", 'success');
+      showSmartAlert("Y esta alerta de información", 'info');
+    }
+    
     // Hacer funciones disponibles globalmente para pruebas
     window.testAllBrowsersVoiceQuality = testAllBrowsersVoiceQuality;
     window.testVoiceConfigurations = testVoiceConfigurations;
@@ -3455,6 +3518,8 @@
     window.testHybridSystemExhaustive = testHybridSystemExhaustive;
     window.testProductionCritical = testProductionCritical;
     window.testVoiceQueue = testVoiceQueue;
+    window.testSmartAlerts = testSmartAlerts;
+    window.configureAlertPreferences = configureAlertPreferences;
 
 
     // ============================================================================
@@ -3618,14 +3683,67 @@
     let pendingTimeAlerts = new Map(); // Para consolidar alertas de tiempo terminado
     let timeAlertTimeout = null; // Para agrupar alertas cercanas en tiempo
 
-    // Utilidades mejoradas
-    function showStatusMessage(text, type = 'success', sessionId = null) {
-      let msg = document.getElementById('statusMessage');
+    // Sistema de alertas inteligente para evitar redundancias
+    function showSmartAlert(text, type = 'success', sessionId = null, options = {}) {
+      // Verificar preferencias de alertas
+      if (!shouldShowAlert(type, options)) {
+        console.log(`🔇 Alerta suprimida por preferencias: ${text}`);
+        return;
+      }
       
       // Si es una alerta de sesión, verificar si ya se mostró
       if (sessionId && alertedSessions.has(sessionId)) {
         return; // No mostrar alerta duplicada
       }
+      
+      // Determinar qué tipo de alerta mostrar
+      const alertTypes = determineAlertTypes(type, options);
+      
+      // Mostrar alerta visual si está habilitada
+      if (alertTypes.visual) {
+        showVisualAlert(text, type, sessionId);
+      }
+      
+      // Mostrar alerta de voz si está habilitada
+      if (alertTypes.voice && voiceNotificationsEnabled) {
+        showVoiceAlert(text, type, options);
+      }
+      
+      // Mostrar notificación del navegador si está habilitada
+      if (alertTypes.browser && browserNotificationsEnabled) {
+        showBrowserNotification(getNotificationTitle(type), text);
+      }
+    }
+    
+    function shouldShowAlert(type, options) {
+      // Alertas críticas siempre se muestran
+      if (type === 'error' || type === 'danger') {
+        return true;
+      }
+      
+      // Verificar preferencias por tipo
+      switch (type) {
+        case 'success':
+          return alertPreferences.showSuccessAlerts;
+        case 'warning':
+          return alertPreferences.showVisualAlerts;
+        case 'info':
+          return alertPreferences.showStatusAlerts;
+        default:
+          return true;
+      }
+    }
+    
+    function determineAlertTypes(type, options) {
+      return {
+        visual: alertPreferences.showVisualAlerts && !options.voiceOnly,
+        voice: alertPreferences.showVoiceAlerts && !options.visualOnly,
+        browser: alertPreferences.showBrowserNotifications && !options.visualOnly
+      };
+    }
+    
+    function showVisualAlert(text, type, sessionId) {
+      let msg = document.getElementById('statusMessage');
       
       // Si no existe el elemento, crearlo
       if (!msg) {
@@ -3872,19 +3990,12 @@
           alertText = `⏰ Tiempo terminado para ${alertCount} niños:\n${childrenList.join('\n')}\n+ ${remaining} más (ver historial)`;
         }
         
-        // Mostrar alerta consolidada
-        showStatusMessage(alertText, 'warning');
-        
-        // Sistema de notificaciones mejorado (mejores prácticas)
-        if (voiceNotificationsEnabled) {
-          // TODOS los casos son repetitivos ahora
-          speakAlertWithRepetition(pendingTimeAlerts, alertCount);
-        }
-        
-        // Notificaciones del navegador (si están habilitadas)
-        if (browserNotificationsEnabled) {
-          showBrowserNotification('⏰ Tiempo de Juego Terminado', alertText);
-        }
+        // Usar sistema de alertas inteligente para evitar redundancias
+        showSmartAlert(alertText, 'warning', null, {
+          alertCount: alertCount,
+          pendingAlerts: pendingTimeAlerts,
+          consolidated: true
+        });
         
         // Limpiar lista de alertas pendientes
         pendingTimeAlerts.clear();
