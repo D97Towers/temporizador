@@ -5064,10 +5064,19 @@
       // REPRODUCIR CON REPETICIONES ADAPTATIVAS
       const { repetitions, delay } = calculateAdaptiveRepetitions('', alertCount);
       
+      console.log(`🔊 ACTIVANDO SISTEMA DE REPETICIONES: ${repetitions} repeticiones con ${delay}ms de delay`);
+      
+      // AGREGAR TODAS LAS REPETICIONES A LA COLA DE VOZ
       for (let i = 0; i < repetitions; i++) {
-        setTimeout(() => {
-          speakChildName(message);
-        }, i * delay);
+        if (i === 0) {
+          // Primera repetición inmediata
+          addToVoiceQueue(message, { immediate: true });
+        } else {
+          // Repeticiones subsecuentes con delay
+          setTimeout(() => {
+            addToVoiceQueue(message, { immediate: false });
+          }, i * delay);
+        }
       }
     }
     
