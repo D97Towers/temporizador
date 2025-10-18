@@ -3975,15 +3975,23 @@
       // }, 2000); // Esperar 2 segundos para consolidar
     }
     
-    // Extraer nombre del niño de la alerta - FUNCIÓN SIMPLE Y ESTABLE
+    // Extraer nombre del niño de la alerta - FUNCIÓN MEJORADA CON ACENTOS
     function extractChildNameFromAlert(text) {
       if (!text || typeof text !== 'string') {
         console.log(`⚠️ extractChildNameFromAlert: texto inválido`);
         return null;
       }
       
-      const match = text.match(/A\s+(\w+)\s+le\s+quedan/);
-      return match ? match[1] : null;
+      // Regex mejorada que maneja acentos y caracteres especiales
+      const match = text.match(/A\s+([a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+?)\s+le\s+quedan/);
+      if (match) {
+        const name = match[1].trim();
+        console.log(`✅ extractChildNameFromAlert: nombre extraído: "${name}"`);
+        return name;
+      }
+      
+      console.log(`❌ extractChildNameFromAlert: no se pudo extraer nombre de: "${text}"`);
+      return null;
     }
     
     // Extraer tiempo restante de la alerta
