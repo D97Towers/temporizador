@@ -2701,12 +2701,12 @@
     let currentExtendSession = null;
     let currentEditChild = null; // Para almacenar el ID del niño que se está editando
     // FUNCIONES DE COMPATIBILIDAD CRÍTICAS - DEBEN ESTAR PRIMERO
-    function showStatusMessage(text, type = 'success', sessionId = null) {
+    function showStatusMessage(text, type = 'success', sessionId = null, options = {}) {
       console.log(`🔔 showStatusMessage (compatibilidad): ${text} [${type}]`);
       
       // Usar showSmartAlert como función principal
       if (typeof showSmartAlert === 'function') {
-        showSmartAlert(text, type, sessionId);
+        showSmartAlert(text, type, sessionId, options);
       } else {
         // Fallback básico si showSmartAlert no está disponible
         console.warn('⚠️ showSmartAlert no disponible, usando fallback básico');
@@ -3941,7 +3941,7 @@
     function determineAlertTypes(type, options) {
       return {
         visual: alertPreferences.showVisualAlerts && !options.voiceOnly,
-        voice: alertPreferences.showVoiceAlerts && !options.visualOnly,
+        voice: alertPreferences.showVoiceAlerts && !options.voiceOnly && !options.visualOnly,
         browser: alertPreferences.showBrowserNotifications && !options.visualOnly
       };
     }
@@ -6272,6 +6272,12 @@
           clearInterval(timerIntervals.get(sessionId));
           timerIntervals.delete(sessionId);
         }
+        
+        // 🚨 CRÍTICO: Cancelar todas las alertas de voz pendientes
+        window.speechSynthesis.cancel();
+        voiceQueue.length = 0;
+        isVoicePlaying = false;
+        voiceQueueProcessing = false;
         
         // Actualizar datos inmediatamente después de finalizar sesión
         console.log('🔄 Refreshing data after ending session...');
