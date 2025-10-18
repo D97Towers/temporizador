@@ -4476,21 +4476,27 @@
         let repetitions;
         let delay;
         
+        // LÓGICA INTELIGENTE PARA EVITAR CONTAMINACIÓN DE AUDIO
         if (alertCount === 1) {
+          // 1 niño: 3 repeticiones con delays largos para dar tiempo
+          repetitions = 3;
+          delay = 45000; // 45 segundos entre cada llamado
+        } else if (alertCount === 2) {
+          // 2 niños: 2 repeticiones con delay moderado
           repetitions = 2;
-          delay = 15000;
-        } else if (alertCount <= 3) {
-          repetitions = 2;
-          delay = 20000;
+          delay = 60000; // 1 minuto entre llamados
         } else if (alertCount <= 5) {
-          repetitions = 1;
-          delay = 0;
+          // 3-5 niños: 2 repeticiones con delay largo
+          repetitions = 2;
+          delay = 90000; // 1.5 minutos entre llamados
         } else {
+          // 6+ niños: 1 mensaje consolidado inmediato
+          // En este caso, los padres deben estar atentos por la cantidad
           repetitions = 1;
           delay = 0;
         }
         
-        console.log(`🧠 ADAPTATIVO: ${alertCount} niños → ${repetitions} repeticiones, delay: ${delay}ms`);
+        console.log(`🧠 ADAPTATIVO INTELIGENTE: ${alertCount} niños → ${repetitions} repeticiones, delay: ${delay}ms (${delay/1000}s)`);
         return { repetitions, delay };
       }
       
@@ -4939,31 +4945,33 @@
     // SISTEMA ADAPTATIVO DE REPETICIONES
     function calculateAdaptiveRepetitions(message, alertCount) {
       if (!adaptiveAlertSystem.enabled) {
-        return 1; // Repetición única si está deshabilitado
+        return { repetitions: 1, delay: 0 }; // Repetición única si está deshabilitado
       }
       
       let repetitions;
       let delay;
       
+      // LÓGICA INTELIGENTE PARA EVITAR CONTAMINACIÓN DE AUDIO
       if (alertCount === 1) {
-        // 1 niño: 2 repeticiones (inmediata + 15s)
+        // 1 niño: 3 repeticiones con delays largos para dar tiempo
+        repetitions = 3;
+        delay = 45000; // 45 segundos entre cada llamado
+      } else if (alertCount === 2) {
+        // 2 niños: 2 repeticiones con delay moderado
         repetitions = 2;
-        delay = 15000;
-      } else if (alertCount <= 3) {
-        // 2-3 niños: 2 repeticiones (inmediata + 20s)
-        repetitions = 2;
-        delay = 20000;
+        delay = 60000; // 1 minuto entre llamados
       } else if (alertCount <= 5) {
-        // 4-5 niños: 1 repetición (inmediata)
-        repetitions = 1;
-        delay = 0;
+        // 3-5 niños: 2 repeticiones con delay largo
+        repetitions = 2;
+        delay = 90000; // 1.5 minutos entre llamados
       } else {
-        // 6+ niños: 1 mensaje consolidado (inmediata)
+        // 6+ niños: 1 mensaje consolidado inmediato
+        // En este caso, los padres deben estar atentos por la cantidad
         repetitions = 1;
         delay = 0;
       }
       
-      console.log(`🧠 ADAPTATIVO: ${alertCount} niños → ${repetitions} repeticiones, delay: ${delay}ms`);
+      console.log(`🧠 ADAPTATIVO INTELIGENTE: ${alertCount} niños → ${repetitions} repeticiones, delay: ${delay}ms (${delay/1000}s)`);
       return { repetitions, delay };
     }
     
