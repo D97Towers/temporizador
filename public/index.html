@@ -4950,8 +4950,17 @@
       }
       
       // EXTRAER NOMBRES CON VALIDACIÓN ROBUSTA
+      console.log(`🔍 DEBUG: Estructura de pendingAlerts:`, pendingAlerts.map(alert => ({
+        text: alert.text,
+        hasText: !!alert.text,
+        textType: typeof alert.text,
+        keys: Object.keys(alert)
+      })));
+      
       const childNames = pendingAlerts.map(alert => {
+        console.log(`🔍 DEBUG: Procesando alert:`, alert);
         const name = extractChildNameFromAlert(alert.text);
+        console.log(`🔍 DEBUG: Nombre extraído: "${name}"`);
         return name && name !== 'null' ? name : null;
       }).filter(name => name !== null);
       
