@@ -2675,7 +2675,16 @@
       showConfigAlerts: false,       // Mostrar alertas de configuración
       showStatusAlerts: false,       // Mostrar alertas de estado (inicio/fin sesión)
       showErrorAlerts: true,         // Mostrar alertas de error
-      showSuccessAlerts: false      // Mostrar alertas de éxito
+      showSuccessAlerts: false,      // Mostrar alertas de éxito
+      show30SecondAlerts: false     // Mostrar alertas de 30 segundos (SUPRIMIDAS)
+    };
+    
+    // Sistema de alertas adaptativo para evitar contaminación de audio
+    let adaptiveAlertSystem = {
+      maxConcurrentAlerts: 3,        // Máximo de alertas simultáneas
+      alertReductionThreshold: 5,    // Reducir alertas si hay 5+ niños
+      singleAlertMode: false,        // Modo de una sola alerta para muchos niños
+      audioContaminationPrevention: true // Prevenir contaminación de audio
     };
     
     // Asegurar que las variables estén disponibles globalmente
@@ -3508,6 +3517,45 @@
       showSmartAlert("Y esta alerta de información", 'info');
     }
     
+    // Función de prueba del sistema adaptativo de alertas
+    function testAdaptiveAlertSystem() {
+      console.log(`🧪 PRUEBA DEL SISTEMA ADAPTATIVO DE ALERTAS`);
+      console.log(`📊 Sistema adaptativo actual:`, adaptiveAlertSystem);
+      
+      // Probar diferentes escenarios de cantidad de niños
+      console.log(`\n🎯 Probando escenarios de contaminación de audio:`);
+      
+      // Escenario 1: 1 niño
+      console.log(`\n📝 ESCENARIO 1: 1 niño terminando tiempo`);
+      speakWithRepetition("Niño A terminó su tiempo de juego", 1);
+      
+      setTimeout(() => {
+        // Escenario 2: 3 niños
+        console.log(`\n📝 ESCENARIO 2: 3 niños terminando tiempo`);
+        speakWithRepetition("Niños A, B, C terminaron su tiempo de juego", 3);
+      }, 5000);
+      
+      setTimeout(() => {
+        // Escenario 3: 5 niños
+        console.log(`\n📝 ESCENARIO 3: 5 niños terminando tiempo`);
+        speakWithRepetition("5 niños terminaron su tiempo de juego", 5);
+      }, 10000);
+      
+      setTimeout(() => {
+        // Escenario 4: 8 niños (contaminación de audio)
+        console.log(`\n📝 ESCENARIO 4: 8 niños terminando tiempo (modo consolidado)`);
+        speakWithRepetition("8 niños terminaron su tiempo de juego", 8);
+      }, 15000);
+      
+      console.log(`📝 Prueba adaptativa iniciada - observa la reducción de repeticiones`);
+    }
+    
+    // Función para configurar el sistema adaptativo
+    function configureAdaptiveSystem(settings) {
+      adaptiveAlertSystem = { ...adaptiveAlertSystem, ...settings };
+      console.log('🔧 Sistema adaptativo actualizado:', adaptiveAlertSystem);
+    }
+    
     // Hacer funciones disponibles globalmente para pruebas
     window.testAllBrowsersVoiceQuality = testAllBrowsersVoiceQuality;
     window.testVoiceConfigurations = testVoiceConfigurations;
@@ -3520,6 +3568,8 @@
     window.testVoiceQueue = testVoiceQueue;
     window.testSmartAlerts = testSmartAlerts;
     window.configureAlertPreferences = configureAlertPreferences;
+    window.testAdaptiveAlertSystem = testAdaptiveAlertSystem;
+    window.configureAdaptiveSystem = configureAdaptiveSystem;
 
 
     // ============================================================================
@@ -4380,12 +4430,10 @@
       // Usar sistema de cola para evitar interrupciones
       console.log('🎤 Usando sistema de COLA para repetición sin interrupciones');
       
-      // Agregar las 3 repeticiones a la cola con diferentes opciones
-      const repetitions = [
-        { message: message, options: { alertCount, repetition: 1, immediate: true } },
-        { message: message, options: { alertCount, repetition: 2, delay: 15000 } },
-        { message: message, options: { alertCount, repetition: 3, delay: 30000 } }
-      ];
+      // LÓGICA ADAPTATIVA PARA EVITAR CONTAMINACIÓN DE AUDIO
+      const repetitions = calculateAdaptiveRepetitions(message, alertCount);
+      
+      console.log(`🎤 Usando sistema ADAPTATIVO: ${repetitions.length} repeticiones para ${alertCount} niño(s)`);
       
       repetitions.forEach((rep, index) => {
         if (rep.options.immediate) {
@@ -4399,9 +4447,45 @@
         }
       });
       
-      console.log(`📝 Agregadas ${repetitions.length} repeticiones a la cola de voz`);
+      console.log(`📝 Agregadas ${repetitions.length} repeticiones ADAPTATIVAS a la cola de voz`);
+      console.log(`🔊 Alerta adaptativa programada: ${alertCount} niño(s) - ${repetitions.length} repeticiones`);
+    }
+
+    // Función para calcular repeticiones adaptativas
+    function calculateAdaptiveRepetitions(message, alertCount) {
+      const repetitions = [];
       
-      console.log(`🔊 Alerta repetitiva programada: ${alertCount} niño(s) - 3 repeticiones`);
+      // LÓGICA ADAPTATIVA PARA EVITAR CONTAMINACIÓN DE AUDIO:
+      if (alertCount === 1) {
+        // 1 niño: 2 repeticiones (inmediata + 15s)
+        repetitions.push(
+          { message: message, options: { alertCount, repetition: 1, immediate: true } },
+          { message: message, options: { alertCount, repetition: 2, delay: 15000 } }
+        );
+        console.log(`🎯 1 niño: 2 repeticiones (inmediata + 15s)`);
+      } else if (alertCount <= 3) {
+        // 2-3 niños: 2 repeticiones (inmediata + 20s)
+        repetitions.push(
+          { message: message, options: { alertCount, repetition: 1, immediate: true } },
+          { message: message, options: { alertCount, repetition: 2, delay: 20000 } }
+        );
+        console.log(`🎯 2-3 niños: 2 repeticiones (inmediata + 20s)`);
+      } else if (alertCount <= 5) {
+        // 4-5 niños: 1 repetición (inmediata solamente)
+        repetitions.push(
+          { message: message, options: { alertCount, repetition: 1, immediate: true } }
+        );
+        console.log(`🎯 4-5 niños: 1 repetición (inmediata solamente)`);
+      } else {
+        // 6+ niños: 1 repetición con mensaje consolidado
+        const consolidatedMessage = `Atención: ${alertCount} niños han terminado su tiempo de juego. Por favor, padres, recojan a sus hijos inmediatamente`;
+        repetitions.push(
+          { message: consolidatedMessage, options: { alertCount, repetition: 1, immediate: true, consolidated: true } }
+        );
+        console.log(`🎯 6+ niños: 1 repetición consolidada`);
+      }
+      
+      return repetitions;
     }
 
     // Función para alertas de múltiples niños (más de 5) - DEPRECATED
@@ -5417,7 +5501,13 @@
             }
           }
           
-          showStatusMessage(`¡Atención! A ${childDisplayName}${parentsText} le quedan solo ${remainingSeconds} segundos`, 'warning', sessionId);
+          // Mostrar alerta de 30 segundos sin sonido (configuración de preferencias)
+          if (alertPreferences.show30SecondAlerts) {
+            showStatusMessage(`¡Atención! A ${childDisplayName}${parentsText} le quedan solo ${remainingSeconds} segundos`, 'warning', sessionId);
+          } else {
+            // Solo mostrar visualmente sin sonido
+            showStatusMessage(`¡Atención! A ${childDisplayName}${parentsText} le quedan solo ${remainingSeconds} segundos`, 'info', sessionId);
+          }
         }
       } else {
         timerSpan.innerHTML = '<strong>Restante:</strong> ' + sanitizeHTML(h) + ':' + sanitizeHTML(m) + ':' + sanitizeHTML(s) + '<br><small>Transcurrido: ' + sanitizeHTML(String(elapsedMinutes)) + ':' + sanitizeHTML(String(elapsedSecs).padStart(2, '0')) + '</small>';
