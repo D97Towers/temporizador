@@ -4953,14 +4953,14 @@
       return { repetitions, delay };
     }
     
-    // SISTEMA DE VOZ RESTAURADO - ESTABLE COMO AYER
+    // SISTEMA DE VOZ CORREGIDO - SOLUCIÓN A TODOS LOS PROBLEMAS
     async function speakAlertWithRepetition(pendingAlerts, alertCount) {
       if (!voiceNotificationsEnabled) {
         console.log(`🔇 Voz deshabilitada, saltando speakAlertWithRepetition`);
         return;
       }
       
-      console.log(`🧠 SISTEMA ESTABLE: Procesando ${alertCount} alertas`);
+      console.log(`🧠 SISTEMA CORREGIDO: Procesando ${alertCount} alertas`);
       console.log(`📊 pendingAlerts:`, pendingAlerts);
       
       // VALIDAR DATOS DE ENTRADA
@@ -4969,23 +4969,46 @@
         return;
       }
       
-      // GENERAR MENSAJE SIMPLE Y ESTABLE
+      // EXTRAER NOMBRES CON VALIDACIÓN ROBUSTA
+      const childNames = pendingAlerts.map(alert => {
+        const name = extractChildNameFromAlert(alert.text);
+        return name && name !== 'null' ? name : null;
+      }).filter(name => name !== null);
+      
+      console.log(`👶 NOMBRES EXTRAÍDOS:`, childNames);
+      
+      // GENERAR MENSAJE SEGÚN ESCENARIOS CORREGIDOS
       let message;
-      if (alertCount === 1) {
-        const childName = extractChildNameFromAlert(pendingAlerts[0].text);
-        message = `Hola, ${childName} ha terminado su tiempo de juego. Por favor, recógelo.`;
-      } else if (alertCount === 2) {
-        const child1 = extractChildNameFromAlert(pendingAlerts[0].text);
-        const child2 = extractChildNameFromAlert(pendingAlerts[1].text);
+      if (alertCount === 1 && childNames.length === 1) {
+        const childName = childNames[0];
+        const gender = detectGenderByName(childName);
+        const relationship = gender === 'female' ? 'hija' : (gender === 'male' ? 'hijo' : 'niño');
+        message = `Hola, ${childName} ha terminado su tiempo de juego. Por favor, recoge a tu ${relationship}.`;
+      } else if (alertCount === 2 && childNames.length === 2) {
+        const child1 = childNames[0];
+        const child2 = childNames[1];
         message = `Hola, ${child1} y ${child2} han terminado su tiempo de juego. Por favor, recógelos.`;
+      } else if (alertCount <= 5 && childNames.length > 0) {
+        // LISTAR NOMBRES ESPECÍFICOS HASTA 5
+        const names = childNames.slice(0, 5);
+        const lastChild = names.pop();
+        const otherChildren = names.join(', ');
+        message = `Hola, ${otherChildren} y ${lastChild} han terminado su tiempo de juego. Por favor, recógelos.`;
       } else {
+        // MENSAJE CONSOLIDADO PARA 6+ NIÑOS
         message = `Hola, ${alertCount} niños han terminado su tiempo de juego. Por favor, recógelos.`;
       }
       
       console.log(`🔊 MENSAJE GENERADO: "${message}"`);
       
-      // REPRODUCIR DIRECTAMENTE SIN COLA COMPLEJA
-      speakChildName(message);
+      // REPRODUCIR CON REPETICIONES ADAPTATIVAS
+      const { repetitions, delay } = calculateAdaptiveRepetitions('', alertCount);
+      
+      for (let i = 0; i < repetitions; i++) {
+        setTimeout(() => {
+          speakChildName(message);
+        }, i * delay);
+      }
     }
     
     // GENERADOR DE MENSAJES NATURALES Y PERSONALIZADOS - USAR FUNCIONES CORREGIDAS
