@@ -2754,11 +2754,11 @@
       showVisualAlerts: true,        // Mostrar alertas visuales
       showVoiceAlerts: true,         // Mostrar alertas de voz
       showBrowserNotifications: true, // Mostrar notificaciones del navegador
-      showConfigAlerts: false,       // Mostrar alertas de configuración
+      showConfigAlerts: true,        // Mostrar alertas de configuración
       showStatusAlerts: true,        // Mostrar alertas de estado (inicio/fin sesión)
       showErrorAlerts: true,         // Mostrar alertas de error
       showSuccessAlerts: true,       // Mostrar alertas de éxito
-      show30SecondAlerts: false     // Mostrar alertas de 30 segundos (SUPRIMIDAS)
+      show30SecondAlerts: true      // Mostrar alertas de 30 segundos
     };
     
     // Sistema de alertas adaptativo para evitar contaminación de audio
@@ -3892,8 +3892,8 @@
         return;
       }
       
-      // Si es una alerta de sesión, verificar si ya se mostró (excepto para notificaciones de inicio)
-      if (sessionId && alertedSessions.has(sessionId) && !text.includes('Sesión iniciada')) {
+      // Si es una alerta de sesión, verificar si ya se mostró
+      if (sessionId && alertedSessions.has(sessionId)) {
         return; // No mostrar alerta duplicada
       }
       
@@ -4400,6 +4400,7 @@
         voiceToggle.classList.remove('muted');
         icon.className = 'fas fa-volume-up';
         voiceStatus.textContent = 'Voz Activada';
+        showStatusMessage('🔊 Notificaciones de voz activadas', 'success');
         
         // Hacer un test rápido para verificar que funciona - USANDO LA MISMA VOZ Y PARÁMETROS OPTIMIZADOS
         setTimeout(() => {
@@ -4792,7 +4793,7 @@
         alert.style.transition = 'all 0.3s ease';
         setTimeout(() => {
           if (alert && alert.parentNode) {
-            alert.remove();
+          alert.remove();
           }
         }, 100);
       }
@@ -5641,7 +5642,7 @@
           
           // Mostrar alerta de 30 segundos sin sonido (configuración de preferencias)
           if (alertPreferences.show30SecondAlerts) {
-            showStatusMessage(`¡Atención! A ${childDisplayName}${parentsText} le quedan solo ${remainingSeconds} segundos`, 'warning', sessionId);
+          showStatusMessage(`¡Atención! A ${childDisplayName}${parentsText} le quedan solo ${remainingSeconds} segundos`, 'warning', sessionId);
           } else {
             // Solo mostrar visualmente sin sonido
             showStatusMessage(`¡Atención! A ${childDisplayName}${parentsText} le quedan solo ${remainingSeconds} segundos`, 'info', sessionId);
@@ -6156,28 +6157,28 @@
         console.log('- gamesCache.length:', gamesCache.length);
         
         const child = childrenCache.find(c => c.id == selectedChildId);
-        const game = gamesCache.find(g => g.id == gameId);
+      const game = gamesCache.find(g => g.id == gameId);
         
         console.log('👶 Niño encontrado en caché:', child ? 'SÍ' : 'NO');
         console.log('🎮 Juego encontrado en caché:', game ? 'SÍ' : 'NO');
-        
-        if (!child) {
+      
+      if (!child) {
           console.error('❌ Niño no encontrado en caché:', selectedChildId);
           console.error('👶 Niños disponibles:', childrenCache.map(c => `${c.id}:${c.name}`));
           showStatusMessage('Error: Niño no encontrado. Por favor selecciona un niño válido.', 'error');
           document.getElementById('selectedChildId').value = '';
           AppState.isStartingSession = false;
-          return;
-        }
-        
-        if (!game) {
+        return;
+      }
+      
+      if (!game) {
           console.error('❌ Juego no encontrado en caché:', gameId);
           console.error('🎮 Juegos disponibles:', gamesCache.map(g => `${g.id}:${g.name}`));
           showStatusMessage('Error: Juego no encontrado. Por favor selecciona un juego válido.', 'error');
           document.getElementById('gameSelect').value = '';
           AppState.isStartingSession = false;
-          return;
-        }
+        return;
+      }
         
         console.log('Validación exitosa - Iniciando sesión:', {
           childId: selectedChildId,
@@ -6294,6 +6295,7 @@
         ]);
         console.log('✅ Data refreshed after ending session');
         
+        showStatusMessage('Sesión finalizada correctamente', 'success');
         
         // Limpiar alertas de esta sesión
         clearSessionAlert(sessionId);
