@@ -2651,17 +2651,8 @@
       
       if (sortedChildren.length > 0) {
         childrenRanking.innerHTML = sortedChildren.slice(0, 5).map((child, index) => {
-          // Información de padres para diferenciación en el ranking
-          let parentsInfo = '';
-          if (child.fatherName || child.motherName) {
-            if (child.fatherName && child.motherName) {
-              parentsInfo = `<br><small style="color: #666; font-size: 11px;">${child.fatherName} & ${child.motherName}</small>`;
-            } else if (child.fatherName) {
-              parentsInfo = `<br><small style="color: #666; font-size: 11px;">Papá: ${child.fatherName}</small>`;
-            } else if (child.motherName) {
-              parentsInfo = `<br><small style="color: #666; font-size: 11px;">Mamá: ${child.motherName}</small>`;
-            }
-          }
+        // Información de padres para diferenciación en el ranking
+        let parentsInfo = getParentsInfo(child, 'html');
           
           return `
           <li class="ranking-item">
@@ -5880,16 +5871,11 @@
       const child = session ? childrenCache.find(c => c.id === session.childId) : null;
       
       let displayMessage = `¿Cuánto tiempo adicional quiere darle a ${childName}?`;
-      if (child && (child.fatherName || child.motherName)) {
-        let parentsText = '';
-        if (child.fatherName && child.motherName) {
-          parentsText = ` (${child.fatherName} & ${child.motherName})`;
-        } else if (child.fatherName) {
-          parentsText = ` (Papá: ${child.fatherName})`;
-        } else if (child.motherName) {
-          parentsText = ` (Mamá: ${child.motherName})`;
+      if (child) {
+        const parentsText = getParentsInfo(child, 'simple');
+        if (parentsText) {
+          displayMessage = `¿Cuánto tiempo adicional quiere darle a ${childName}${parentsText}?`;
         }
-        displayMessage = `¿Cuánto tiempo adicional quiere darle a ${childName}${parentsText}?`;
       }
       
       document.getElementById('extendMsg').textContent = displayMessage;
@@ -6351,13 +6337,7 @@
         const fatherName = child.father_name || child.fatherName;
         const motherName = child.mother_name || child.motherName;
         
-        if (fatherName && motherName) {
-          parentsInfo = '<br><small class="parents-info"><i class="fas fa-users"></i> ' + fatherName + ' & ' + motherName + '</small>';
-        } else if (fatherName) {
-          parentsInfo = '<br><small class="parents-info"><i class="fas fa-users"></i> Papá: ' + fatherName + '</small>';
-        } else if (motherName) {
-          parentsInfo = '<br><small class="parents-info"><i class="fas fa-users"></i> Mamá: ' + motherName + '</small>';
-        }
+        parentsInfo = getParentsInfo(child, 'html');
       }
       
       return '<li class="list-item active" data-session-id="' + s.id + '" id="session-' + s.id + '">' +
@@ -6400,16 +6380,7 @@
         const gameName = game ? game.name : 'Juego desconocido';
         
         // Información de padres para diferenciación
-        let parentsInfo = '';
-        if (child && (child.fatherName || child.motherName)) {
-          if (child.fatherName && child.motherName) {
-            parentsInfo = `<br><small class="parents-info"><i class="fas fa-users"></i> ${child.fatherName} & ${child.motherName}</small>`;
-          } else if (child.fatherName) {
-            parentsInfo = `<br><small class="parents-info"><i class="fas fa-users"></i> Papá: ${child.fatherName}</small>`;
-          } else if (child.motherName) {
-            parentsInfo = `<br><small class="parents-info"><i class="fas fa-users"></i> Mamá: ${child.motherName}</small>`;
-          }
-        }
+        let parentsInfo = getParentsInfo(child, 'html');
         
         return `<li class="list-item active" data-session-id="${s.id}" id="session-${s.id}">
           <div class="session-info">
@@ -6592,16 +6563,7 @@
             let parentsInfo = '';
             
             // Construir información de padres de manera compatible con la función
-            const fatherName = child.father_name || child.fatherName;
-            const motherName = child.mother_name || child.motherName;
-            
-            if (fatherName && motherName) {
-              parentsInfo = `${fatherName} & ${motherName}`;
-            } else if (fatherName) {
-              parentsInfo = `Papá: ${fatherName}`;
-            } else if (motherName) {
-              parentsInfo = `Mamá: ${motherName}`;
-            }
+            parentsInfo = getParentsInfo(child, 'simple');
             
             console.log('🔊 Disparando alerta de voz para:', childName, parentsInfo);
             showConsolidatedTimeAlert(childName, parentsInfo);
@@ -6620,16 +6582,7 @@
           const child = childrenCache.find(c => c.id === session.childId);
           
           let childDisplayName = child ? (child.displayName || child.name) : 'este niño';
-          let parentsText = '';
-          if (child && (child.fatherName || child.motherName)) {
-            if (child.fatherName && child.motherName) {
-              parentsText = ` (${child.fatherName} & ${child.motherName})`;
-            } else if (child.fatherName) {
-              parentsText = ` (Papá: ${child.fatherName})`;
-            } else if (child.motherName) {
-              parentsText = ` (Mamá: ${child.motherName})`;
-            }
-          }
+          let parentsText = getParentsInfo(child, 'simple');
           
           // SOLO ALERTAR UNA VEZ A LOS 30 SEGUNDOS - NO CADA SEGUNDO
           if (remainingSeconds === 30) {
@@ -6712,19 +6665,7 @@
         const gameName = game ? game.name : 'Juego desconocido';
         
         // Información de padres para diferenciación
-        let parentsInfo = '';
-        if (child && ((child.father_name || child.fatherName) || (child.mother_name || child.motherName))) {
-          const fatherName = child.father_name || child.fatherName;
-          const motherName = child.mother_name || child.motherName;
-          
-          if (fatherName && motherName) {
-            parentsInfo = `<div class="history-parents"><i class="fas fa-users"></i> ${fatherName} & ${motherName}</div>`;
-          } else if (fatherName) {
-            parentsInfo = `<div class="history-parents"><i class="fas fa-users"></i> Papá: ${fatherName}</div>`;
-          } else if (motherName) {
-            parentsInfo = `<div class="history-parents"><i class="fas fa-users"></i> Mamá: ${motherName}</div>`;
-          }
-        }
+        let parentsInfo = getParentsInfo(child, 'history');
         
         const startTimeValue = s.startTime || s.start || Date.now();
         const startTime = new Date(startTimeValue);
@@ -6822,19 +6763,7 @@
           const gameName = game ? game.name : 'Juego desconocido';
           
           // Información de padres para diferenciación
-          let parentsInfo = '';
-          if (child && ((child.father_name || child.fatherName) || (child.mother_name || child.motherName))) {
-            const fatherName = child.father_name || child.fatherName;
-            const motherName = child.mother_name || child.motherName;
-            
-            if (fatherName && motherName) {
-              parentsInfo = `<div class="history-parents"><i class="fas fa-users"></i> ${fatherName} & ${motherName}</div>`;
-            } else if (fatherName) {
-              parentsInfo = `<div class="history-parents"><i class="fas fa-users"></i> Papá: ${fatherName}</div>`;
-            } else if (motherName) {
-              parentsInfo = `<div class="history-parents"><i class="fas fa-users"></i> Mamá: ${motherName}</div>`;
-            }
-          }
+          let parentsInfo = getParentsInfo(child, 'history');
           
           const startTime = new Date(s.start);
           const timeStr = startTime.toLocaleTimeString('es-ES', {
