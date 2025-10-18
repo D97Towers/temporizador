@@ -4577,7 +4577,8 @@
         // TIMEOUT PARA AUDIO
         const timeoutId = setTimeout(() => {
           console.log(`⏰ TIMEOUT DE AUDIO: "${item.message}" (ID: ${item.id})`);
-          speechSynthesis.cancel();
+          // NO cancelar - puede interrumpir audio en curso
+          // speechSynthesis.cancel();
           isVoicePlayingFixed = false;
           voiceQueueProcessingFixed = false;
           
@@ -4638,7 +4639,8 @@
       // FUNCIÓN DE LIMPIEZA DE COLA
       function clearVoiceQueueFixed() {
         console.log(`🧹 LIMPIANDO COLA DE VOZ: ${voiceQueueFixed.length} mensajes`);
-        speechSynthesis.cancel();
+        // NO cancelar - puede interrumpir audio en curso
+        // speechSynthesis.cancel();
         voiceQueueFixed = [];
         isVoicePlayingFixed = false;
         voiceQueueProcessingFixed = false;
@@ -7760,7 +7762,8 @@
         const testUtterance = new SpeechSynthesisUtterance('');
         testUtterance.volume = 0.01;
         window.speechSynthesis.speak(testUtterance);
-        window.speechSynthesis.cancel();
+        // NO cancelar - puede interrumpir audio en curso
+        // window.speechSynthesis.cancel();
         
         voiceSystemActivated = true;
         window.voiceSystemActivated = true; // Actualizar variable global
