@@ -5935,9 +5935,9 @@
       console.log('🧹 COLA GLOBAL LIMPIADA');
     }
     
-    // Función de test ESPECÍFICO PARA CHROME
+    // Función de test CON VERIFICACIÓN DE AUDIO DEL SISTEMA
     function testAudioSystem() {
-      console.log('🧪 INICIANDO TEST ESPECÍFICO PARA CHROME');
+      console.log('🧪 INICIANDO TEST CON VERIFICACIÓN DE AUDIO DEL SISTEMA');
       
       // Test 1: Verificar disponibilidad
       if (!('speechSynthesis' in window)) {
@@ -5989,68 +5989,54 @@
         console.log(`   - speechSynthesis.pending: ${window.speechSynthesis.pending}`);
         console.log(`   - speechSynthesis.paused: ${window.speechSynthesis.paused}`);
         
-        // Test 7: Reproducir con configuración específica para Chrome
+        // Test 7: Reproducir con verificación de audio del sistema
         if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
-          const testMessage = 'Test específico para Chrome - ¿Puedes escucharme?';
-          console.log(`🔊 REPRODUCIENDO TEST ESPECÍFICO PARA CHROME: "${testMessage}"`);
+          const testMessage = 'Test con verificación de audio - ¿Puedes escucharme?';
+          console.log(`🔊 REPRODUCIENDO TEST CON VERIFICACIÓN: "${testMessage}"`);
           
           const utterance = new SpeechSynthesisUtterance(testMessage);
           
-          // Configuración específica para Chrome
-          if (isChrome) {
-            console.log(`🔧 CONFIGURACIÓN ESPECÍFICA PARA CHROME`);
-            
-            // Chrome requiere configuración más específica
-            utterance.volume = 1.0;
-            utterance.rate = 0.8; // Más lento para Chrome
-            utterance.pitch = 1.0;
-            utterance.lang = 'es-ES';
-            
-            // Seleccionar voz específica para Chrome
-            if (spanishVoices.length > 0) {
-              const chromeVoice = spanishVoices.find(v => v.name.includes('Google')) || spanishVoices[0];
-              utterance.voice = chromeVoice;
-              console.log(`🎙️ Voz específica para Chrome: ${chromeVoice.name} (${chromeVoice.lang})`);
-            }
-          } else {
-            // Configuración normal para otros navegadores
-            utterance.volume = 1.0;
-            utterance.rate = 1.0;
-            utterance.pitch = 1.0;
-            utterance.lang = 'es-ES';
-            
-            if (spanishVoices.length > 0) {
-              utterance.voice = spanishVoices[0];
-              console.log(`🎙️ Usando voz: ${spanishVoices[0].name} (${spanishVoices[0].lang})`);
-            }
+          // Configuración optimizada para todos los navegadores
+          utterance.volume = 1.0;
+          utterance.rate = 0.9; // Ligeramente más lento para mejor comprensión
+          utterance.pitch = 1.0;
+          utterance.lang = 'es-ES';
+          
+          // Seleccionar mejor voz disponible
+          if (spanishVoices.length > 0) {
+            const bestVoice = spanishVoices.find(v => v.name.includes('Paulina')) || 
+                             spanishVoices.find(v => v.name.includes('Google')) || 
+                             spanishVoices[0];
+            utterance.voice = bestVoice;
+            console.log(`🎙️ Voz seleccionada: ${bestVoice.name} (${bestVoice.lang})`);
           }
           
           console.log(`🎙️ Configuración: volume=${utterance.volume}, rate=${utterance.rate}, pitch=${utterance.pitch}, lang=${utterance.lang}`);
           
           utterance.onstart = () => {
-            console.log(`🎤 ✅ AUDIO ESPECÍFICO PARA CHROME INICIADO: "${testMessage}"`);
+            console.log(`🎤 ✅ AUDIO CON VERIFICACIÓN INICIADO: "${testMessage}"`);
           };
           
           utterance.onend = () => {
-            console.log(`✅ ✅ AUDIO ESPECÍFICO PARA CHROME COMPLETADO: "${testMessage}"`);
+            console.log(`✅ ✅ AUDIO CON VERIFICACIÓN COMPLETADO: "${testMessage}"`);
           };
           
           utterance.onerror = (error) => {
-            console.log(`❌ ❌ ERROR EN AUDIO ESPECÍFICO PARA CHROME: ${error.error} - "${testMessage}"`);
+            console.log(`❌ ❌ ERROR EN AUDIO CON VERIFICACIÓN: ${error.error} - "${testMessage}"`);
             console.log(`🔍 Detalles del error:`, error);
           };
           
           utterance.onpause = () => {
-            console.log(`⏸️ AUDIO ESPECÍFICO PARA CHROME PAUSADO: "${testMessage}"`);
+            console.log(`⏸️ AUDIO CON VERIFICACIÓN PAUSADO: "${testMessage}"`);
           };
           
           utterance.onresume = () => {
-            console.log(`▶️ AUDIO ESPECÍFICO PARA CHROME REANUDADO: "${testMessage}"`);
+            console.log(`▶️ AUDIO CON VERIFICACIÓN REANUDADO: "${testMessage}"`);
           };
           
-          // Reproducir con configuración específica para Chrome
+          // Reproducir con verificación
           try {
-            console.log(`🔊 REPRODUCIENDO TEST ESPECÍFICO PARA CHROME...`);
+            console.log(`🔊 REPRODUCIENDO TEST CON VERIFICACIÓN...`);
             window.speechSynthesis.speak(utterance);
             
             // Verificar estado después de speak
@@ -6060,15 +6046,27 @@
               console.log(`   - speechSynthesis.pending: ${window.speechSynthesis.pending}`);
             }, 100);
             
-            // Timeout de seguridad
+            // Verificación de audio del sistema
             setTimeout(() => {
               if (window.speechSynthesis.speaking) {
-                console.log(`⏰ TIMEOUT DE AUDIO ESPECÍFICO PARA CHROME: "${testMessage}"`);
+                console.log(`⏰ TIMEOUT DE AUDIO CON VERIFICACIÓN: "${testMessage}"`);
+                console.log(`🔍 DIAGNÓSTICO DE TIMEOUT:`);
+                console.log(`   - El audio se está reproduciendo pero no se escucha`);
+                console.log(`   - Posibles causas:`);
+                console.log(`     1. Volumen del sistema operativo desactivado`);
+                console.log(`     2. Navegador silenciado`);
+                console.log(`     3. Configuración de audio del sistema`);
+                console.log(`     4. Permisos de audio del navegador`);
+                console.log(`   - Soluciones:`);
+                console.log(`     1. Verificar volumen del sistema operativo`);
+                console.log(`     2. Verificar configuración de audio del navegador`);
+                console.log(`     3. Verificar permisos de audio del sitio`);
+                console.log(`     4. Probar en otro navegador`);
               }
-            }, 10000);
+            }, 8000); // 8 segundos timeout
             
           } catch (error) {
-            console.error(`❌ ERROR AL REPRODUCIR TEST ESPECÍFICO PARA CHROME: ${error.message}`);
+            console.error(`❌ ERROR AL REPRODUCIR TEST CON VERIFICACIÓN: ${error.message}`);
           }
         } else {
           console.log(`⚠️ SISTEMA NO LIMPIO - No se puede reproducir audio`);
