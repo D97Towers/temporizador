@@ -3278,6 +3278,24 @@
     function addToVoiceQueue(message, options = {}) {
       console.log(`📝 Agregando a cola de voz: "${message}"`);
       
+      // VERIFICACIÓN CRÍTICA: NUNCA agregar mensajes de error a la cola de voz
+      const errorPhrases = [
+        'Por favor seleccione un niño',
+        'Por favor seleccione un juego',
+        'El tiempo debe ser',
+        'El tiempo mínimo',
+        'El tiempo máximo',
+        'Error al',
+        'debe ser un número válido',
+        'Validation failed'
+      ];
+      
+      const isErrorMessage = errorPhrases.some(phrase => message.includes(phrase));
+      if (isErrorMessage) {
+        console.log(`🔇 BLOQUEADO: Mensaje de error detectado, no se agregará a la cola de voz: "${message}"`);
+        return;
+      }
+      
       // Validar que no se agreguen mensajes duplicados muy seguidos
       const now = Date.now();
       const lastMessage = voiceQueue[voiceQueue.length - 1];
@@ -3618,6 +3636,18 @@
     // Funciones auxiliares para sistema de alertas inteligente
     function showVoiceAlert(text, type, options) {
       console.log('🔊 showVoiceAlert llamado con:', { text, type, options });
+      
+      // VERIFICACIÓN CRÍTICA: NUNCA reproducir voz para errores
+      if (type === 'error' || type === 'danger') {
+        console.log('🔇 BLOQUEADO: showVoiceAlert cancelado porque el tipo es error/danger');
+        return;
+      }
+      
+      // VERIFICACIÓN CRÍTICA: NUNCA reproducir voz si voiceOnly es explícitamente false
+      if (options.voiceOnly === false) {
+        console.log('🔇 BLOQUEADO: showVoiceAlert cancelado porque voiceOnly es false');
+        return;
+      }
       
       if (options.consolidated && options.pendingAlerts) {
         // Para alertas consolidadas, usar el sistema de repetición
@@ -5829,6 +5859,24 @@
     
     // Función definitiva para agregar mensajes a la cola global
     function addToGlobalVoiceQueue(message, options = {}) {
+      // VERIFICACIÓN CRÍTICA: NUNCA agregar mensajes de error a la cola de voz global
+      const errorPhrases = [
+        'Por favor seleccione un niño',
+        'Por favor seleccione un juego',
+        'El tiempo debe ser',
+        'El tiempo mínimo',
+        'El tiempo máximo',
+        'Error al',
+        'debe ser un número válido',
+        'Validation failed'
+      ];
+      
+      const isErrorMessage = errorPhrases.some(phrase => message.includes(phrase));
+      if (isErrorMessage) {
+        console.log(`🔇 BLOQUEADO: Mensaje de error detectado en cola global, no se agregará a la cola de voz: "${message}"`);
+        return;
+      }
+      
       const queueItem = {
         message: message,
         options: options,
