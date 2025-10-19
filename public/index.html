@@ -615,14 +615,31 @@
         right: 20px;
         justify-content: center;
         z-index: 10;
-        max-width: 120px; /* Reducir tamaño del botón */
+        max-width: 100px; /* Reducir más el tamaño del botón */
       }
       
       .voice-toggle-btn {
-        min-width: 100px;
-        max-width: 120px;
-        padding: 6px 10px;
-        font-size: 11px;
+        min-width: 80px;
+        max-width: 100px;
+        padding: 6px 8px;
+        font-size: 10px; /* Texto más pequeño */
+      }
+      
+      /* En iPad vertical, ocultar texto y mostrar solo icono */
+      @media (max-height: 1024px) and (orientation: portrait) {
+        .voice-toggle-btn span {
+          display: none; /* Ocultar texto en iPad vertical */
+        }
+        
+        .voice-toggle-btn {
+          min-width: 50px;
+          max-width: 50px;
+          padding: 8px 6px;
+        }
+        
+        .voice-control {
+          max-width: 50px;
+        }
       }
     }
 
