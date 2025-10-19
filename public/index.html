@@ -3993,6 +3993,13 @@
     function showSmartAlert(text, type = 'success', sessionId = null, options = {}) {
       console.log(`🔔 showSmartAlert LLAMADA: "${text}" [${type}] sessionId: ${sessionId}`, options);
       
+      // VERIFICACIÓN CRÍTICA TEMPRANA: Si voiceOnly es false, desactivar voz inmediatamente
+      if (options.voiceOnly === false) {
+        console.log('🔇 VERIFICACIÓN TEMPRANA - VOZ DESACTIVADA por voiceOnly: false');
+        // Asegurar que la opción esté correctamente configurada
+        options = { ...options, voiceOnly: false, visualOnly: false };
+      }
+      
       // Verificar preferencias de alertas
       if (!shouldShowAlert(type, options)) {
         console.log(`🔇 Alerta suprimida por preferencias: ${text}`);
@@ -6155,19 +6162,21 @@
     }
     
     function determineAlertTypes(type, options) {
+      // VERIFICACIÓN CRÍTICA: Si voiceOnly es explícitamente false, desactivar voz inmediatamente
+      if (options.voiceOnly === false) {
+        console.log('🔇 VOZ DESACTIVADA EXPLÍCITAMENTE - Retornando sin voz');
+        return {
+          visual: alertPreferences.showVisualAlerts,
+          voice: false, // FORZAR A FALSE
+          browser: alertPreferences.showBrowserNotifications
+        };
+      }
+      
       const result = {
         visual: alertPreferences.showVisualAlerts && !options.voiceOnly,
         voice: alertPreferences.showVoiceAlerts && !options.voiceOnly && !options.visualOnly,
         browser: alertPreferences.showBrowserNotifications && !options.visualOnly
       };
-      
-      // Debug: Log para verificar por qué se activa la voz
-      if (options.voiceOnly === false) {
-        console.log('🔇 VOZ DESACTIVADA - options.voiceOnly:', options.voiceOnly, 'result.voice:', result.voice);
-        // FORZAR voz a false cuando voiceOnly es false
-        result.voice = false;
-        console.log('🔇 VOZ FORZADA A FALSE - result.voice:', result.voice);
-      }
       
       return result;
     }
