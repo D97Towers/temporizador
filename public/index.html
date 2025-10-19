@@ -5848,9 +5848,9 @@
       speakRobustAudio(queueItem.message, queueItem.options, queueItem.id);
     }
     
-    // Sistema de audio GARANTIZADO - REPRODUCCIÓN ASEGURADA
+    // Sistema de audio DIRECTO - BYPASEO COMPLETO DE COLA
     function speakRobustAudio(message, options = {}, messageId = 'unknown') {
-      console.log(`🔊 INICIANDO AUDIO GARANTIZADO: "${message}" (ID: ${messageId})`);
+      console.log(`🔊 INICIANDO AUDIO DIRECTO: "${message}" (ID: ${messageId})`);
       
       // Verificar que speechSynthesis esté disponible
       if (!('speechSynthesis' in window)) {
@@ -5861,71 +5861,69 @@
         return;
       }
       
-      // FORZAR LIMPIEZA COMPLETA DEL SISTEMA
-      window.speechSynthesis.cancel();
+      // BYPASEO COMPLETO - NO USAR COLA GLOBAL
+      console.log(`🚀 BYPASEANDO COLA GLOBAL - REPRODUCCIÓN DIRECTA`);
       
-      // Esperar un momento para limpieza
-      setTimeout(() => {
-        const utterance = new SpeechSynthesisUtterance(message);
+      // Crear utterance completamente independiente
+      const utterance = new SpeechSynthesisUtterance(message);
+      
+      // Configuración ultra básica
+      utterance.volume = 1.0;
+      utterance.rate = 0.8;
+      utterance.pitch = 1.0;
+      utterance.lang = 'es-ES';
+      
+      // NO configurar voz específica
+      console.log(`🎙️ Reproducción directa sin configuración de voz`);
+      
+      utterance.onstart = () => {
+        console.log(`🎤 REPRODUCIENDO DIRECTO: "${message}" (ID: ${messageId})`);
+      };
+      
+      utterance.onend = () => {
+        console.log(`✅ COMPLETADO DIRECTO: "${message}" (ID: ${messageId})`);
+        isGlobalVoicePlaying = false;
+        globalVoiceProcessing = false;
         
-        // Configuración ultra simple
-        utterance.volume = 1.0;
-        utterance.rate = 1.0;
-        utterance.pitch = 1.0;
-        utterance.lang = 'es-ES';
+        // Procesar siguiente mensaje después de delay
+        setTimeout(() => {
+          processGlobalVoiceQueue();
+        }, 2000); // 2 segundos entre mensajes
+      };
+      
+      utterance.onerror = (error) => {
+        console.log(`❌ ERROR EN AUDIO DIRECTO: ${error.error} - "${message}" (ID: ${messageId})`);
         
-        // NO seleccionar voz específica - usar default
-        console.log(`🎙️ Usando voz por defecto del sistema`);
+        // NO REINTENTAR - CONTINUAR CON EL SIGUIENTE
+        console.log(`🚫 NO REINTENTANDO - CONTINUANDO CON SIGUIENTE`);
+        isGlobalVoicePlaying = false;
+        globalVoiceProcessing = false;
+        setTimeout(() => {
+          processGlobalVoiceQueue();
+        }, 1000);
+      };
+      
+      // Reproducir inmediatamente sin delays
+      try {
+        console.log(`🔊 REPRODUCIENDO INMEDIATAMENTE: "${message}"`);
+        window.speechSynthesis.speak(utterance);
         
-        utterance.onstart = () => {
-          console.log(`🎤 REPRODUCIENDO: "${message}" (ID: ${messageId})`);
-        };
+        // Timeout de seguridad
+        setTimeout(() => {
+          if (isGlobalVoicePlaying) {
+            console.log(`⏰ TIMEOUT DE AUDIO DIRECTO: "${message}" (ID: ${messageId})`);
+            isGlobalVoicePlaying = false;
+            globalVoiceProcessing = false;
+            setTimeout(() => processGlobalVoiceQueue(), 1000);
+          }
+        }, 10000); // 10 segundos timeout
         
-        utterance.onend = () => {
-          console.log(`✅ COMPLETADO: "${message}" (ID: ${messageId})`);
-          isGlobalVoicePlaying = false;
-          globalVoiceProcessing = false;
-          
-          // Procesar siguiente mensaje después de delay
-          setTimeout(() => {
-            processGlobalVoiceQueue();
-          }, 3000); // 3 segundos entre mensajes
-        };
-        
-        utterance.onerror = (error) => {
-          console.log(`❌ ERROR EN AUDIO: ${error.error} - "${message}" (ID: ${messageId})`);
-          
-          // NO REINTENTAR - CONTINUAR CON EL SIGUIENTE
-          console.log(`🚫 NO REINTENTANDO - CONTINUANDO CON SIGUIENTE`);
-          isGlobalVoicePlaying = false;
-          globalVoiceProcessing = false;
-          setTimeout(() => {
-            processGlobalVoiceQueue();
-          }, 1000);
-        };
-        
-        // Reproducir con configuración mínima
-        try {
-          console.log(`🔊 INTENTANDO REPRODUCIR: "${message}"`);
-          window.speechSynthesis.speak(utterance);
-          
-          // Timeout de seguridad más largo
-          setTimeout(() => {
-            if (isGlobalVoicePlaying) {
-              console.log(`⏰ TIMEOUT DE AUDIO: "${message}" (ID: ${messageId})`);
-              isGlobalVoicePlaying = false;
-              globalVoiceProcessing = false;
-              setTimeout(() => processGlobalVoiceQueue(), 1000);
-            }
-          }, 15000); // 15 segundos timeout
-          
-        } catch (error) {
-          console.error(`❌ ERROR AL REPRODUCIR: ${error.message}`);
-          isGlobalVoicePlaying = false;
-          globalVoiceProcessing = false;
-          setTimeout(() => processGlobalVoiceQueue(), 1000);
-        }
-      }, 200); // 200ms de delay para limpieza
+      } catch (error) {
+        console.error(`❌ ERROR AL REPRODUCIR DIRECTO: ${error.message}`);
+        isGlobalVoicePlaying = false;
+        globalVoiceProcessing = false;
+        setTimeout(() => processGlobalVoiceQueue(), 1000);
+      }
     }
     
     // Función definitiva para limpiar la cola global
@@ -5937,9 +5935,9 @@
       console.log('🧹 COLA GLOBAL LIMPIADA');
     }
     
-    // Función de test de audio para verificar funcionamiento
+    // Función de test COMPLETAMENTE INDEPENDIENTE
     function testAudioSystem() {
-      console.log('🧪 INICIANDO TEST DE AUDIO SISTEMA');
+      console.log('🧪 INICIANDO TEST DE AUDIO INDEPENDIENTE');
       
       // Test 1: Verificar disponibilidad
       if (!('speechSynthesis' in window)) {
@@ -5947,59 +5945,47 @@
         return false;
       }
       
-      // Test 2: Verificar voces
-      const voices = window.speechSynthesis.getVoices();
-      console.log(`🎙️ Voces disponibles: ${voices.length}`);
+      // BYPASEO COMPLETO - NO USAR SISTEMA DE COLA
+      const testMessage = 'Test de audio independiente - ¿Puedes escucharme?';
+      console.log(`🔊 REPRODUCIENDO TEST INDEPENDIENTE: "${testMessage}"`);
       
-      if (voices.length === 0) {
-        console.warn('⚠️ No hay voces disponibles');
-        return false;
-      }
-      
-      // Test 3: Reproducir audio de prueba DIRECTAMENTE
-      const testMessage = 'Test de audio del sistema de voz - ¿Puedes escucharme?';
-      console.log(`🔊 Reproduciendo test DIRECTO: "${testMessage}"`);
-      
-      // Test directo sin cola global
+      // Crear utterance completamente independiente
       const utterance = new SpeechSynthesisUtterance(testMessage);
+      
+      // Configuración ultra básica
       utterance.volume = 1.0;
-      utterance.rate = 1.0;
+      utterance.rate = 0.8;
       utterance.pitch = 1.0;
       utterance.lang = 'es-ES';
       
-      // Seleccionar mejor voz
-      const spanishVoice = voices.find(voice => 
-        voice.lang.startsWith('es') && voice.name.includes('Paulina')
-      ) || voices.find(voice => voice.lang.startsWith('es')) || voices[0];
-      
-      if (spanishVoice) {
-        utterance.voice = spanishVoice;
-        console.log(`🎙️ Voz seleccionada para test: ${spanishVoice.name} (${spanishVoice.lang})`);
-      }
+      // NO configurar voz específica
+      console.log(`🎙️ Test independiente sin configuración de voz`);
       
       utterance.onstart = () => {
-        console.log(`🎤 TEST INICIADO: "${testMessage}"`);
+        console.log(`🎤 TEST INDEPENDIENTE INICIADO: "${testMessage}"`);
       };
       
       utterance.onend = () => {
-        console.log(`✅ TEST COMPLETADO: "${testMessage}"`);
+        console.log(`✅ TEST INDEPENDIENTE COMPLETADO: "${testMessage}"`);
       };
       
       utterance.onerror = (error) => {
-        console.log(`❌ ERROR EN TEST: ${error.error} - "${testMessage}"`);
+        console.log(`❌ ERROR EN TEST INDEPENDIENTE: ${error.error} - "${testMessage}"`);
       };
       
-      // Reproducir directamente
-      window.speechSynthesis.speak(utterance);
-      
-      // Test 4: También probar con cola global
-      console.log(`🔊 Probando también con cola global...`);
-      addToGlobalVoiceQueue('Test de cola global - ¿Puedes escucharme?', {
-        volume: 1.0,
-        rate: 1.0,
-        pitch: 1.0,
-        lang: 'es-ES'
-      });
+      // Reproducir inmediatamente
+      try {
+        console.log(`🔊 REPRODUCIENDO TEST INMEDIATAMENTE: "${testMessage}"`);
+        window.speechSynthesis.speak(utterance);
+        
+        // Timeout de seguridad
+        setTimeout(() => {
+          console.log(`⏰ TIMEOUT DE TEST INDEPENDIENTE: "${testMessage}"`);
+        }, 10000); // 10 segundos timeout
+        
+      } catch (error) {
+        console.error(`❌ ERROR AL REPRODUCIR TEST INDEPENDIENTE: ${error.message}`);
+      }
       
       return true;
     }
