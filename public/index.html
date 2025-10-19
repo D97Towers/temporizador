@@ -5935,9 +5935,9 @@
       console.log('🧹 COLA GLOBAL LIMPIADA');
     }
     
-    // Función de test CON DIAGNÓSTICO COMPLETO
+    // Función de test CON LIMPIEZA COMPLETA DEL SISTEMA
     function testAudioSystem() {
-      console.log('🧪 INICIANDO TEST DE AUDIO CON DIAGNÓSTICO');
+      console.log('🧪 INICIANDO TEST DE AUDIO CON LIMPIEZA COMPLETA');
       
       // Test 1: Verificar disponibilidad
       if (!('speechSynthesis' in window)) {
@@ -5945,74 +5945,76 @@
         return false;
       }
       
-      // Test 2: Diagnóstico completo del sistema
-      console.log(`🔍 DIAGNÓSTICO DEL SISTEMA:`);
-      console.log(`   - speechSynthesis.speaking: ${window.speechSynthesis.speaking}`);
-      console.log(`   - speechSynthesis.pending: ${window.speechSynthesis.pending}`);
-      console.log(`   - speechSynthesis.paused: ${window.speechSynthesis.paused}`);
+      // Test 2: DETENER TODOS LOS PROCESOS DE AUDIO
+      console.log(`🛑 DETENIENDO TODOS LOS PROCESOS DE AUDIO...`);
       
-      // Test 3: Limpiar sistema completamente
-      console.log(`🧹 LIMPIANDO SISTEMA COMPLETAMENTE...`);
+      // Detener cola global
+      if (typeof clearGlobalVoiceQueue === 'function') {
+        clearGlobalVoiceQueue();
+        console.log(`🧹 Cola global limpiada`);
+      }
+      
+      // Detener speechSynthesis completamente
       window.speechSynthesis.cancel();
+      console.log(`🧹 SpeechSynthesis cancelado`);
       
-      // Test 4: Esperar y verificar limpieza
+      // Esperar limpieza completa
       setTimeout(() => {
-        console.log(`🔍 ESTADO DESPUÉS DE LIMPIEZA:`);
+        console.log(`🔍 ESTADO DESPUÉS DE LIMPIEZA COMPLETA:`);
         console.log(`   - speechSynthesis.speaking: ${window.speechSynthesis.speaking}`);
         console.log(`   - speechSynthesis.pending: ${window.speechSynthesis.pending}`);
+        console.log(`   - speechSynthesis.paused: ${window.speechSynthesis.paused}`);
         
-        // Test 5: Reproducir con diagnóstico completo
-        const testMessage = 'Test de audio con diagnóstico - ¿Puedes escucharme?';
-        console.log(`🔊 REPRODUCIENDO CON DIAGNÓSTICO: "${testMessage}"`);
-        
-        const utterance = new SpeechSynthesisUtterance(testMessage);
-        
-        // Configuración ultra básica
-        utterance.volume = 1.0;
-        utterance.rate = 0.8;
-        utterance.pitch = 1.0;
-        utterance.lang = 'es-ES';
-        
-        console.log(`🎙️ Configuración: volume=${utterance.volume}, rate=${utterance.rate}, pitch=${utterance.pitch}, lang=${utterance.lang}`);
-        
-        utterance.onstart = () => {
-          console.log(`🎤 ✅ AUDIO INICIADO: "${testMessage}"`);
-        };
-        
-        utterance.onend = () => {
-          console.log(`✅ ✅ AUDIO COMPLETADO: "${testMessage}"`);
-        };
-        
-        utterance.onerror = (error) => {
-          console.log(`❌ ❌ ERROR EN AUDIO: ${error.error} - "${testMessage}"`);
-          console.log(`🔍 Detalles del error:`, error);
-        };
-        
-        utterance.onpause = () => {
-          console.log(`⏸️ AUDIO PAUSADO: "${testMessage}"`);
-        };
-        
-        utterance.onresume = () => {
-          console.log(`▶️ AUDIO REANUDADO: "${testMessage}"`);
-        };
-        
-        // Reproducir con diagnóstico
-        try {
-          console.log(`🔊 INTENTANDO REPRODUCIR CON DIAGNÓSTICO...`);
-          window.speechSynthesis.speak(utterance);
+        // Test 3: Reproducir SOLO si el sistema está limpio
+        if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
+          const testMessage = 'Test de audio limpio - ¿Puedes escucharme?';
+          console.log(`🔊 REPRODUCIENDO AUDIO LIMPIO: "${testMessage}"`);
           
-          // Verificar estado después de speak
-          setTimeout(() => {
-            console.log(`🔍 ESTADO DESPUÉS DE SPEAK:`);
-            console.log(`   - speechSynthesis.speaking: ${window.speechSynthesis.speaking}`);
-            console.log(`   - speechSynthesis.pending: ${window.speechSynthesis.pending}`);
-          }, 100);
+          const utterance = new SpeechSynthesisUtterance(testMessage);
           
-        } catch (error) {
-          console.error(`❌ ERROR AL REPRODUCIR: ${error.message}`);
+          // Configuración ultra básica
+          utterance.volume = 1.0;
+          utterance.rate = 0.8;
+          utterance.pitch = 1.0;
+          utterance.lang = 'es-ES';
+          
+          console.log(`🎙️ Configuración: volume=${utterance.volume}, rate=${utterance.rate}, pitch=${utterance.pitch}, lang=${utterance.lang}`);
+          
+          utterance.onstart = () => {
+            console.log(`🎤 ✅ AUDIO LIMPIO INICIADO: "${testMessage}"`);
+          };
+          
+          utterance.onend = () => {
+            console.log(`✅ ✅ AUDIO LIMPIO COMPLETADO: "${testMessage}"`);
+          };
+          
+          utterance.onerror = (error) => {
+            console.log(`❌ ❌ ERROR EN AUDIO LIMPIO: ${error.error} - "${testMessage}"`);
+            console.log(`🔍 Detalles del error:`, error);
+          };
+          
+          // Reproducir SOLO si el sistema está limpio
+          try {
+            console.log(`🔊 REPRODUCIENDO AUDIO LIMPIO...`);
+            window.speechSynthesis.speak(utterance);
+            
+            // Verificar estado después de speak
+            setTimeout(() => {
+              console.log(`🔍 ESTADO DESPUÉS DE SPEAK LIMPIO:`);
+              console.log(`   - speechSynthesis.speaking: ${window.speechSynthesis.speaking}`);
+              console.log(`   - speechSynthesis.pending: ${window.speechSynthesis.pending}`);
+            }, 100);
+            
+          } catch (error) {
+            console.error(`❌ ERROR AL REPRODUCIR AUDIO LIMPIO: ${error.message}`);
+          }
+        } else {
+          console.log(`⚠️ SISTEMA NO LIMPIO - No se puede reproducir audio`);
+          console.log(`   - speaking: ${window.speechSynthesis.speaking}`);
+          console.log(`   - pending: ${window.speechSynthesis.pending}`);
         }
         
-      }, 500); // 500ms de delay para limpieza
+      }, 1000); // 1 segundo de delay para limpieza completa
       
       return true;
     }
