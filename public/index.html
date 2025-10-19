@@ -3339,6 +3339,27 @@
         const voiceItem = voiceQueue.shift();
         console.log(`🎤 Reproduciendo: "${voiceItem.message}" (ID: ${voiceItem.id})`);
         
+        // VERIFICACIÓN CRÍTICA: Bloquear mensajes de error en playNextInQueue
+        const errorPhrases = [
+          'Validation failed',
+          'Por favor seleccione un niño',
+          'Por favor seleccione un juego',
+          'El tiempo debe ser',
+          'El tiempo mínimo',
+          'El tiempo máximo',
+          'Error al',
+          'debe ser un número válido',
+          'Test message'
+        ];
+        
+        const isErrorMessage = errorPhrases.some(phrase => voiceItem.message.includes(phrase));
+        if (isErrorMessage) {
+          console.log(`🔇 BLOQUEADO EN playNextInQueue: Mensaje de error detectado: "${voiceItem.message}"`);
+          // Continuar con el siguiente mensaje sin reproducir este
+          playNextInQueue();
+          return;
+        }
+        
         isVoicePlaying = true;
         
         // NO cancelar speechSynthesis aquí - respetar mensaje en curso
@@ -5923,6 +5944,29 @@
       const queueItem = globalVoiceQueue.shift();
       console.log(`🔄 PROCESANDO COLA GLOBAL: "${queueItem.message}" (ID: ${queueItem.id})`);
       
+      // VERIFICACIÓN CRÍTICA FINAL: Bloquear mensajes de error antes de reproducir
+      const errorPhrases = [
+        'Validation failed',
+        'Por favor seleccione un niño',
+        'Por favor seleccione un juego',
+        'El tiempo debe ser',
+        'El tiempo mínimo',
+        'El tiempo máximo',
+        'Error al',
+        'debe ser un número válido',
+        'Test message' // Bloquear también test messages
+      ];
+      
+      const isErrorMessage = errorPhrases.some(phrase => queueItem.message.includes(phrase));
+      if (isErrorMessage) {
+        console.log(`🔇 BLOQUEADO EN processGlobalVoiceQueue: Mensaje de error detectado: "${queueItem.message}"`);
+        isGlobalVoicePlaying = false;
+        globalVoiceProcessing = false;
+        // Continuar con el siguiente mensaje
+        setTimeout(() => processGlobalVoiceQueue(), 100);
+        return;
+      }
+      
       // Sistema de audio robusto y funcional
       speakRobustAudio(queueItem.message, queueItem.options, queueItem.id);
     }
@@ -5948,6 +5992,28 @@
     // SISTEMA DE AUDIO SIMPLE Y FUNCIONAL
     function speakRobustAudio(message, options = {}, messageId = 'unknown') {
       console.log(`🔊 Reproduciendo: "${message}" (ID: ${messageId})`);
+      
+      // VERIFICACIÓN CRÍTICA ABSOLUTA: Última línea de defensa contra mensajes de error
+      const errorPhrases = [
+        'Validation failed',
+        'Por favor seleccione un niño',
+        'Por favor seleccione un juego',
+        'El tiempo debe ser',
+        'El tiempo mínimo',
+        'El tiempo máximo',
+        'Error al',
+        'debe ser un número válido',
+        'Test message'
+      ];
+      
+      const isErrorMessage = errorPhrases.some(phrase => message.includes(phrase));
+      if (isErrorMessage) {
+        console.log(`🔇 BLOQUEADO EN speakRobustAudio: Mensaje de error detectado: "${message}"`);
+        isGlobalVoicePlaying = false;
+        globalVoiceProcessing = false;
+        setTimeout(() => processGlobalVoiceQueue(), 100);
+        return;
+      }
       
       // Verificar disponibilidad básica
       if (!('speechSynthesis' in window)) {
