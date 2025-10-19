@@ -5851,9 +5851,10 @@
       // Reemplazar símbolos problemáticos con palabras naturales
       let cleanedText = text
         .replace(/&/g, ' y ')  // & → y
-        .replace(/\(/g, ' ')   // ( → espacio
-        .replace(/\)/g, ' ')   // ) → espacio
+        .replace(/\(/g, ', ')   // ( → coma y espacio
+        .replace(/\)/g, '')     // ) → sin espacio
         .replace(/\s+/g, ' ')  // Múltiples espacios → un espacio
+        .replace(/,\s*,/g, ',') // Dobles comas → una coma
         .trim();
       
       console.log(`🧹 Texto limpiado: "${text}" → "${cleanedText}"`);
