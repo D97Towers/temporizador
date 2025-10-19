@@ -5964,11 +5964,45 @@
         return false;
       }
       
-      // Test 3: Reproducir audio de prueba
-      const testMessage = 'Test de audio del sistema de voz';
-      console.log(`🔊 Reproduciendo test: "${testMessage}"`);
+      // Test 3: Reproducir audio de prueba DIRECTAMENTE
+      const testMessage = 'Test de audio del sistema de voz - ¿Puedes escucharme?';
+      console.log(`🔊 Reproduciendo test DIRECTO: "${testMessage}"`);
       
-      addToGlobalVoiceQueue(testMessage, {
+      // Test directo sin cola global
+      const utterance = new SpeechSynthesisUtterance(testMessage);
+      utterance.volume = 1.0;
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      utterance.lang = 'es-ES';
+      
+      // Seleccionar mejor voz
+      const spanishVoice = voices.find(voice => 
+        voice.lang.startsWith('es') && voice.name.includes('Paulina')
+      ) || voices.find(voice => voice.lang.startsWith('es')) || voices[0];
+      
+      if (spanishVoice) {
+        utterance.voice = spanishVoice;
+        console.log(`🎙️ Voz seleccionada para test: ${spanishVoice.name} (${spanishVoice.lang})`);
+      }
+      
+      utterance.onstart = () => {
+        console.log(`🎤 TEST INICIADO: "${testMessage}"`);
+      };
+      
+      utterance.onend = () => {
+        console.log(`✅ TEST COMPLETADO: "${testMessage}"`);
+      };
+      
+      utterance.onerror = (error) => {
+        console.log(`❌ ERROR EN TEST: ${error.error} - "${testMessage}"`);
+      };
+      
+      // Reproducir directamente
+      window.speechSynthesis.speak(utterance);
+      
+      // Test 4: También probar con cola global
+      console.log(`🔊 Probando también con cola global...`);
+      addToGlobalVoiceQueue('Test de cola global - ¿Puedes escucharme?', {
         volume: 1.0,
         rate: 1.0,
         pitch: 1.0,
