@@ -3981,8 +3981,7 @@
     let isInitialized = false;
     let isFirstLoad = true;
     let alertedSessions = new Set(); // Para evitar alertas duplicadas
-    let pendingTimeAlerts = new Map(); // Para consolidar alertas de tiempo terminado
-    let timeAlertTimeout = null; // Para agrupar alertas cercanas en tiempo
+    // Sistema de alertas individuales - sin consolidación
     
     // SISTEMA DE COLA DE VOZ PARA EVITAR INTERRUPCIONES
     // (Variables ya declaradas anteriormente)
@@ -4048,12 +4047,7 @@
         timestamp: Date.now()
       });
       
-      console.log(`📊 Alertas pendientes: ${pendingTimeAlerts.size}`);
-      
-      // Cancelar timeout anterior si existe
-      if (timeAlertTimeout) {
-        clearTimeout(timeAlertTimeout);
-      }
+      console.log(`📊 Procesando alerta individual para: ${childName}`);
       
       // NO LLAMAR showConsolidatedTimeAlert aquí - solo se debe llamar cuando realmente termina el tiempo
       // timeAlertTimeout = setTimeout(() => {
@@ -4102,31 +4096,24 @@
       // Crear clave única usando nombre + padres para evitar duplicados
       const uniqueKey = `${childName}|${parentsInfo || 'sin_padres'}`;
       
-      // Agregar a la lista de alertas pendientes
-      pendingTimeAlerts.set(uniqueKey, { name: childName, parents: parentsInfo });
+      // Ya no necesitamos agregar a pendingTimeAlerts - procesamos inmediatamente
       
-      // Esperar un momento para consolidar múltiples alertas
-      setTimeout(() => {
-        if (pendingTimeAlerts.size === 0) return;
-        
-        const alerts = Array.from(pendingTimeAlerts.values());
-        const alertCount = alerts.length;
-        
-        console.log(`📊 ALERTAS A CONSOLIDAR:`, alerts);
-        
-        // NO generar mensaje consolidado visual aquí
-        // El mensaje de voz es suficiente y más detallado
-        // Si queremos alerta visual, ya se mostró en updateTimer con la alerta visual individual
-        
-        // Activar notificaciones de voz si están habilitadas
-        if (voiceNotificationsEnabled) {
-          console.log(`🔊 ACTIVANDO NOTIFICACIONES DE VOZ`);
-          speakAlertWithRepetitionFixed(alerts, alertCount);
-        }
-        
-        // Limpiar alertas pendientes
-        pendingTimeAlerts.clear();
-      }, 1000); // Esperar 1 segundo para consolidar
+      // PROCESAR INMEDIATAMENTE LA ALERTA INDIVIDUAL
+      console.log(`🔊 PROCESANDO ALERTA INDIVIDUAL PARA: ${childName}`);
+      
+      // Crear alerta individual para esta sesión específica
+      const individualAlert = {
+        name: childName,
+        parents: parentsInfo
+      };
+      
+      console.log(`📊 ALERTA INDIVIDUAL:`, individualAlert);
+      
+      // Activar notificaciones de voz si están habilitadas
+      if (voiceNotificationsEnabled) {
+        console.log(`🔊 ACTIVANDO NOTIFICACIÓN DE VOZ INDIVIDUAL`);
+        speakAlertWithRepetitionFixed([individualAlert], 1);
+      }
     }
     
     // FUNCIÓN PARA REPRODUCIR MENSAJE DE VOZ DIRECTAMENTE - URGENTE
@@ -6273,11 +6260,7 @@
     // Función para limpiar todas las alertas de sesiones
     function clearAllSessionAlerts() {
       alertedSessions.clear();
-      pendingTimeAlerts.clear();
-      if (timeAlertTimeout) {
-        clearTimeout(timeAlertTimeout);
-        timeAlertTimeout = null;
-      }
+      // Sistema de alertas individuales - no hay consolidación que limpiar
       const msg = document.getElementById('statusMessage');
       if (msg) {
         if (msg.timeoutId) {
