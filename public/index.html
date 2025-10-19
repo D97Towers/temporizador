@@ -6048,7 +6048,7 @@
           
           if (child) {
             if (child.fatherName && child.motherName) {
-              parentsInfo = `${child.fatherName} & ${child.motherName}`;
+              parentsInfo = `Papá: ${child.fatherName} & Mamá: ${child.motherName}`;
             } else if (child.fatherName) {
               parentsInfo = `Papá: ${child.fatherName}`;
             } else if (child.motherName) {
@@ -6068,19 +6068,12 @@
       if (childrenWithParents.length === 1) {
         const child = childrenWithParents[0];
         if (child.parents) {
-          // Mejorar estructura para que sea más natural
+          // Estructura natural: primero el mensaje, luego los padres
           if (child.parents.includes('&')) {
-            // Cuando hay papá y mamá: "Hola, david ha terminado su tiempo de juego. Papá: harrison, Mamá: maria, por favor recójanlo"
-            const parentsFormatted = child.parents.replace(/&/g, ', Mamá: ');
-            message = `Hola, ${child.name} ha terminado su tiempo de juego. Papá: ${parentsFormatted}, por favor recójanlo.`;
-          } else if (child.parents.includes('Papá:')) {
-            // Solo papá: "Hola, david ha terminado su tiempo de juego. Papá: fernando, por favor recógelo"
-            message = `Hola, ${child.name} ha terminado su tiempo de juego. ${child.parents}, por favor recógelo.`;
-          } else if (child.parents.includes('Mamá:')) {
-            // Solo mamá: "Hola, david ha terminado su tiempo de juego. Mamá: maria, por favor recógelo"
-            message = `Hola, ${child.name} ha terminado su tiempo de juego. ${child.parents}, por favor recógelo.`;
+            // Cuando hay papá y mamá: "Hola, david ha terminado su tiempo de juego. Papá: harrison y Mamá: maria, por favor recójanlo"
+            message = `Hola, ${child.name} ha terminado su tiempo de juego. ${child.parents.replace(/&/g, 'y')}, por favor recójanlo.`;
           } else {
-            // Formato genérico
+            // Solo papá o solo mamá: "Hola, david ha terminado su tiempo de juego. Papá: fernando, por favor recógelo"
             message = `Hola, ${child.name} ha terminado su tiempo de juego. ${child.parents}, por favor recógelo.`;
           }
         } else {
