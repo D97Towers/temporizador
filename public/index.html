@@ -3056,7 +3056,12 @@
           setTimeout(() => testNextPhrase(), 1000);
         };
         
-        speechSynthesis.speak(utterance);
+        addToGlobalVoiceQueue(utterance.text || 'Test message', {
+          volume: utterance.volume,
+          rate: utterance.rate,
+          pitch: utterance.pitch,
+          lang: utterance.lang
+        });
       }
       
       testNextPhrase();
@@ -3109,7 +3114,12 @@
           }, 3000);
         };
         
-        speechSynthesis.speak(utterance);
+        addToGlobalVoiceQueue(utterance.text || 'Test message', {
+          volume: utterance.volume,
+          rate: utterance.rate,
+          pitch: utterance.pitch,
+          lang: utterance.lang
+        });
       }
       
       testNextConfig();
@@ -3162,7 +3172,12 @@
           }, 4000);
         };
         
-        speechSynthesis.speak(utterance);
+        addToGlobalVoiceQueue(utterance.text || 'Test message', {
+          volume: utterance.volume,
+          rate: utterance.rate,
+          pitch: utterance.pitch,
+          lang: utterance.lang
+        });
       }
       
       testNextConfig();
@@ -3219,7 +3234,12 @@
           }, 5000);
         };
         
-        speechSynthesis.speak(utterance);
+        addToGlobalVoiceQueue(utterance.text || 'Test message', {
+          volume: utterance.volume,
+          rate: utterance.rate,
+          pitch: utterance.pitch,
+          lang: utterance.lang
+        });
       }
       
       testNextConfig();
@@ -3334,7 +3354,12 @@
         };
         
         // Reproducir sin cancelar audio previo
-        speechSynthesis.speak(utterance);
+        addToGlobalVoiceQueue(utterance.text || 'Test message', {
+          volume: utterance.volume,
+          rate: utterance.rate,
+          pitch: utterance.pitch,
+          lang: utterance.lang
+        });
       }
       
       playNextInQueue();
@@ -3425,10 +3450,10 @@
           console.error(`❌ speakWithRepetition(): NO DISPONIBLE`);
         }
         
-        if (typeof speakAlertWithRepetition === 'function') {
-          console.log(`✅ speakAlertWithRepetition(): DISPONIBLE`);
+        if (typeof speakAlertWithRepetitionFixed === 'function') {
+          console.log(`✅ speakAlertWithRepetitionFixed(): DISPONIBLE`);
         } else {
-          console.error(`❌ speakAlertWithRepetition(): NO DISPONIBLE`);
+          console.error(`❌ speakAlertWithRepetitionFixed(): NO DISPONIBLE`);
         }
       } catch (error) {
         console.error(`❌ ERROR en integración:`, error);
@@ -3509,7 +3534,7 @@
         'createHybridUtterance',
         'speakChildName',
         'speakWithRepetition',
-        'speakAlertWithRepetition'
+        'speakAlertWithRepetitionFixed'
       ];
       
       criticalFunctions.forEach(funcName => {
@@ -3596,8 +3621,8 @@
       
       if (options.consolidated && options.pendingAlerts) {
         // Para alertas consolidadas, usar el sistema de repetición
-        console.log('🔊 Usando speakAlertWithRepetition para alertas consolidadas');
-        speakAlertWithRepetition(options.pendingAlerts, options.alertCount);
+        console.log('🔊 Usando speakAlertWithRepetitionFixed para alertas consolidadas');
+        speakAlertWithRepetitionFixedFixed(options.pendingAlerts, options.alertCount);
       } else {
         // Para alertas simples, usar voz híbrida
         console.log('🔊 Usando speakWithHybridVoice para alerta simple:', text);
@@ -4087,7 +4112,7 @@
         // Activar notificaciones de voz si están habilitadas
         if (voiceNotificationsEnabled) {
           console.log(`🔊 ACTIVANDO NOTIFICACIONES DE VOZ`);
-          speakAlertWithRepetition(alerts, alertCount);
+          speakAlertWithRepetitionFixedFixed(alerts, alertCount);
         }
         
         // Limpiar alertas pendientes
@@ -4170,7 +4195,12 @@
           console.log(`   2. Verificar que el volumen del sistema esté activado`);
           console.log(`   3. Verificar que la pestaña no esté silenciada`);
           
-          speechSynthesis.speak(utterance);
+          addToGlobalVoiceQueue(utterance.text || 'Test message', {
+          volume: utterance.volume,
+          rate: utterance.rate,
+          pitch: utterance.pitch,
+          lang: utterance.lang
+        });
           
           // TIMEOUT URGENTE - forzar resolución si no hay respuesta
           setTimeout(() => {
@@ -4212,7 +4242,7 @@
         timeLeft: 5,
         timestamp: Date.now()
       }];
-      speakAlertWithRepetition(scenario1, 1);
+      speakAlertWithRepetitionFixed(scenario1, 1);
       
       setTimeout(() => {
         // ESCENARIO 2: Dos niños
@@ -4221,7 +4251,7 @@
           { text: "¡Atención! A sofia le quedan solo 5 segundos", sessionId: 1, timeLeft: 5, timestamp: Date.now() },
           { text: "¡Atención! A david le quedan solo 3 segundos", sessionId: 2, timeLeft: 3, timestamp: Date.now() }
         ];
-        speakAlertWithRepetition(scenario2, 2);
+        speakAlertWithRepetitionFixed(scenario2, 2);
       }, 3000);
       
       setTimeout(() => {
@@ -4232,7 +4262,7 @@
           { text: "¡Atención! A david le quedan solo 3 segundos", sessionId: 2, timeLeft: 3, timestamp: Date.now() },
           { text: "¡Atención! A mathias le quedan solo 2 segundos", sessionId: 3, timeLeft: 2, timestamp: Date.now() }
         ];
-        speakAlertWithRepetition(scenario3, 3);
+        speakAlertWithRepetitionFixed(scenario3, 3);
       }, 6000);
       
       setTimeout(() => {
@@ -4245,7 +4275,7 @@
           { text: "¡Atención! A cristian le quedan solo 1 segundo", sessionId: 4, timeLeft: 1, timestamp: Date.now() },
           { text: "¡Atención! A ramon le quedan solo 1 segundo", sessionId: 5, timeLeft: 1, timestamp: Date.now() }
         ];
-        speakAlertWithRepetition(scenario4, 5);
+        speakAlertWithRepetitionFixed(scenario4, 5);
       }, 9000);
       
       setTimeout(() => {
@@ -4259,7 +4289,7 @@
           { text: "¡Atención! A ramon le quedan solo 1 segundo", sessionId: 5, timeLeft: 1, timestamp: Date.now() },
           { text: "¡Atención! A santiago le quedan solo 1 segundo", sessionId: 6, timeLeft: 1, timestamp: Date.now() }
         ];
-        speakAlertWithRepetition(scenario5, 6);
+        speakAlertWithRepetitionFixed(scenario5, 6);
       }, 12000);
       
       console.log(`🚨 PRUEBA DE ESTRÉS INICIADA - VERIFICAR CONSOLA Y AUDIO`);
@@ -4693,7 +4723,7 @@
           timestamp: Date.now()
         }];
         console.log(`📢 Escenario: 1 niño (sofia)`);
-        speakAlertWithRepetition(scenario1, 1);
+        speakAlertWithRepetitionFixed(scenario1, 1);
       }, 3000);
       
       setTimeout(() => {
@@ -4704,7 +4734,7 @@
           { text: "¡Atención! A david le quedan solo 3 segundos", sessionId: 2, timeLeft: 0, timestamp: Date.now() }
         ];
         console.log(`📢 Escenario: 2 niños (sofia, david)`);
-        speakAlertWithRepetition(scenario2, 2);
+        speakAlertWithRepetitionFixed(scenario2, 2);
       }, 6000);
       
       setTimeout(() => {
@@ -4716,7 +4746,7 @@
           { text: "¡Atención! A mathias le quedan solo 2 segundos", sessionId: 3, timeLeft: 0, timestamp: Date.now() }
         ];
         console.log(`📢 Escenario: 3 niños (sofia, david, mathias)`);
-        speakAlertWithRepetition(scenario3, 3);
+        speakAlertWithRepetitionFixed(scenario3, 3);
       }, 9000);
       
       setTimeout(() => {
@@ -4730,7 +4760,7 @@
           { text: "¡Atención! A ramon le quedan solo 1 segundo", sessionId: 5, timeLeft: 0, timestamp: Date.now() }
         ];
         console.log(`📢 Escenario: 5 niños (sofia, david, mathias, cristian, ramon)`);
-        speakAlertWithRepetition(scenario4, 5);
+        speakAlertWithRepetitionFixed(scenario4, 5);
       }, 12000);
       
       setTimeout(() => {
@@ -4745,7 +4775,7 @@
           { text: "¡Atención! A santiago le quedan solo 1 segundo", sessionId: 6, timeLeft: 0, timestamp: Date.now() }
         ];
         console.log(`📢 Escenario: 6 niños (sofia, david, mathias, cristian, ramon, santiago)`);
-        speakAlertWithRepetition(scenario5, 6);
+        speakAlertWithRepetitionFixed(scenario5, 6);
       }, 15000);
       
       setTimeout(() => {
@@ -4756,7 +4786,7 @@
           { text: "¡Atención! A maría le quedan solo 3 segundos", sessionId: 2, timeLeft: 0, timestamp: Date.now() }
         ];
         console.log(`📢 Escenario: Nombres con acentos (josé, maría)`);
-        speakAlertWithRepetition(scenario6, 2);
+        speakAlertWithRepetitionFixed(scenario6, 2);
       }, 18000);
       
       setTimeout(() => {
@@ -4767,7 +4797,7 @@
           { text: "¡Atención! A valentina le quedan solo 3 segundos", sessionId: 2, timeLeft: 0, timestamp: Date.now() }
         ];
         console.log(`📢 Escenario: Nombres complejos (alejandro, valentina)`);
-        speakAlertWithRepetition(scenario7, 2);
+        speakAlertWithRepetitionFixed(scenario7, 2);
       }, 21000);
       
       setTimeout(() => {
@@ -4777,7 +4807,7 @@
           { text: "¡Atención! A niño le quedan solo 5 segundos", sessionId: 1, timeLeft: 0, timestamp: Date.now() }
         ];
         console.log(`📢 Escenario: Casos edge (niño genérico)`);
-        speakAlertWithRepetition(scenario8, 1);
+        speakAlertWithRepetitionFixed(scenario8, 1);
       }, 24000);
       
       setTimeout(() => {
@@ -4787,7 +4817,7 @@
           { text: "¡Atención! A  le quedan solo 5 segundos", sessionId: 1, timeLeft: 0, timestamp: Date.now() }
         ];
         console.log(`📢 Escenario: Datos inválidos (nombre vacío)`);
-        speakAlertWithRepetition(scenario9, 1);
+        speakAlertWithRepetitionFixed(scenario9, 1);
       }, 27000);
       
       console.log(`\n✅ PRUEBAS INICIADAS - ESCUCHAR AUDIO EN SECUENCIA`);
@@ -5182,7 +5212,12 @@
           results.errors.push({ causal: 'audio_test', error: error.error, message: testMessage });
         };
         
-        window.speechSynthesis.speak(utterance);
+        addToGlobalVoiceQueue(utterance.text || 'Test message', {
+  volume: utterance.volume,
+  rate: utterance.rate,
+  pitch: utterance.pitch,
+  lang: utterance.lang
+});
         
         // Esperar 3 segundos para ver si hay errores
         setTimeout(() => {
@@ -5210,7 +5245,12 @@
               console.log(`❌ Error en mensaje ${index + 1}:`, error);
               results.errors.push({ causal: 'multiple_calls', error: error.error, message: message });
             };
-            window.speechSynthesis.speak(utterance);
+            addToGlobalVoiceQueue(utterance.text || 'Test message', {
+  volume: utterance.volume,
+  rate: utterance.rate,
+  pitch: utterance.pitch,
+  lang: utterance.lang
+});
           }, index * 1000);
         });
         
@@ -5284,7 +5324,12 @@
             console.log(`🔄 Reintentando mensaje interrumpido: "${message}"`);
             setTimeout(() => {
               const retryUtterance = createMonitoredUtterance(message, `${id}-retry`);
-              window.speechSynthesis.speak(retryUtterance);
+              addToGlobalVoiceQueue(retryUtterance.text || message, {
+                volume: retryUtterance.volume,
+                rate: retryUtterance.rate,
+                pitch: retryUtterance.pitch,
+                lang: retryUtterance.lang
+              });
             }, 1000);
           }
         };
@@ -5316,7 +5361,12 @@
         setTimeout(() => {
           console.log(`📤 Enviando mensaje ${index + 1}/${messages.length}: "${message}"`);
           const utterance = createMonitoredUtterance(message, `msg-${index + 1}`);
-          window.speechSynthesis.speak(utterance);
+          addToGlobalVoiceQueue(utterance.text || 'Test message', {
+  volume: utterance.volume,
+  rate: utterance.rate,
+  pitch: utterance.pitch,
+  lang: utterance.lang
+});
         }, index * 2000); // 2 segundos entre mensajes
       });
       
@@ -5407,7 +5457,12 @@
             console.log(`🔄 PRODUCCIÓN - Reintentando mensaje interrumpido: "${message}"`);
             setTimeout(() => {
               const retryUtterance = createProductionUtterance(message, `${id}-retry`);
-              window.speechSynthesis.speak(retryUtterance);
+              addToGlobalVoiceQueue(retryUtterance.text || message, {
+                volume: retryUtterance.volume,
+                rate: retryUtterance.rate,
+                pitch: retryUtterance.pitch,
+                lang: retryUtterance.lang
+              });
             }, 2000); // Delay más largo para producción
           }
         };
@@ -5439,7 +5494,12 @@
         setTimeout(() => {
           console.log(`📤 PRODUCCIÓN - Enviando mensaje ${index + 1}/${productionMessages.length}: "${message}"`);
           const utterance = createProductionUtterance(message, `prod-${index + 1}`);
-          window.speechSynthesis.speak(utterance);
+          addToGlobalVoiceQueue(utterance.text || 'Test message', {
+  volume: utterance.volume,
+  rate: utterance.rate,
+  pitch: utterance.pitch,
+  lang: utterance.lang
+});
         }, index * 1000); // 1 segundo entre mensajes (más rápido)
       });
       
@@ -5550,7 +5610,12 @@
             console.log(`🔄 ESTRÉS - Reintentando mensaje interrumpido: "${message}"`);
             setTimeout(() => {
               const retryUtterance = createExtremeUtterance(message, `${id}-retry`);
-              window.speechSynthesis.speak(retryUtterance);
+              addToGlobalVoiceQueue(retryUtterance.text || message, {
+                volume: retryUtterance.volume,
+                rate: retryUtterance.rate,
+                pitch: retryUtterance.pitch,
+                lang: retryUtterance.lang
+              });
             }, 3000); // Delay extremo para estrés
           }
         };
@@ -5587,7 +5652,12 @@
         setTimeout(() => {
           console.log(`📤 ESTRÉS - Enviando mensaje ${index + 1}/${stressMessages.length}: "${message}"`);
           const utterance = createExtremeUtterance(message, `stress-${index + 1}`);
-          window.speechSynthesis.speak(utterance);
+          addToGlobalVoiceQueue(utterance.text || 'Test message', {
+  volume: utterance.volume,
+  rate: utterance.rate,
+  pitch: utterance.pitch,
+  lang: utterance.lang
+});
         }, index * 500); // 0.5 segundos entre mensajes (extremadamente rápido)
       });
       
@@ -5702,7 +5772,12 @@
               ...options,
               maxRetries: maxRetries - 1
             });
-            window.speechSynthesis.speak(retryUtterance);
+            addToGlobalVoiceQueue(retryUtterance.text || message, {
+              volume: retryUtterance.volume,
+              rate: retryUtterance.rate,
+              pitch: retryUtterance.pitch,
+              lang: retryUtterance.lang
+            });
           }, retryDelay);
         } else {
           console.log(`❌ Máximo de reintentos alcanzado para: "${message}"`);
@@ -5723,12 +5798,130 @@
     // Función mejorada para reproducir audio con reintento automático
     function speakWithRetry(message, options = {}) {
       const utterance = createRobustUtterance(message, options);
-      window.speechSynthesis.speak(utterance);
+      addToGlobalVoiceQueue(utterance.text || 'Test message', {
+  volume: utterance.volume,
+  rate: utterance.rate,
+  pitch: utterance.pitch,
+  lang: utterance.lang
+});
     }
     
     // Hacer funciones globales
     window.createRobustUtterance = createRobustUtterance;
     window.speakWithRetry = speakWithRetry;
+    
+    // 🚨 SOLUCIÓN DEFINITIVA: Sistema de Cola Secuencial Estricto
+    let globalVoiceQueue = [];
+    let isGlobalVoicePlaying = false;
+    let globalVoiceProcessing = false;
+    
+    // Función definitiva para agregar mensajes a la cola global
+    function addToGlobalVoiceQueue(message, options = {}) {
+      const queueItem = {
+        message: message,
+        options: options,
+        timestamp: Date.now(),
+        id: Math.random().toString(36).substr(2, 9)
+      };
+      
+      globalVoiceQueue.push(queueItem);
+      console.log(`📝 AGREGANDO A COLA GLOBAL: "${message}" (ID: ${queueItem.id})`);
+      
+      if (!isGlobalVoicePlaying && !globalVoiceProcessing) {
+        processGlobalVoiceQueue();
+      }
+    }
+    
+    // Función definitiva para procesar la cola global secuencialmente
+    function processGlobalVoiceQueue() {
+      if (globalVoiceProcessing || globalVoiceQueue.length === 0) {
+        return;
+      }
+      
+      globalVoiceProcessing = true;
+      isGlobalVoicePlaying = true;
+      
+      const queueItem = globalVoiceQueue.shift();
+      console.log(`🔄 PROCESANDO COLA GLOBAL: "${queueItem.message}" (ID: ${queueItem.id})`);
+      
+      const utterance = new SpeechSynthesisUtterance(queueItem.message);
+      
+      // Configuración robusta
+      utterance.volume = queueItem.options.volume || 1.0;
+      utterance.rate = queueItem.options.rate || 1.0;
+      utterance.pitch = queueItem.options.pitch || 1.0;
+      utterance.lang = queueItem.options.lang || 'es-ES';
+      
+      utterance.onstart = () => {
+        console.log(`🎤 REPRODUCIENDO: "${queueItem.message}" (ID: ${queueItem.id})`);
+      };
+      
+      utterance.onend = () => {
+        console.log(`✅ COMPLETADO: "${queueItem.message}" (ID: ${queueItem.id})`);
+        isGlobalVoicePlaying = false;
+        globalVoiceProcessing = false;
+        
+        // Procesar siguiente mensaje después de un delay
+        setTimeout(() => {
+          processGlobalVoiceQueue();
+        }, 500); // 500ms entre mensajes
+      };
+      
+      utterance.onerror = (error) => {
+        console.log(`❌ ERROR EN COLA GLOBAL: ${error.error} - "${queueItem.message}" (ID: ${queueItem.id})`);
+        
+        if (error.error === 'interrupted') {
+          console.log(`🔄 REINTENTANDO EN COLA GLOBAL: "${queueItem.message}" (ID: ${queueItem.id})`);
+          // Reintentar inmediatamente
+          setTimeout(() => {
+            addToGlobalVoiceQueue(utterance.text || 'Test message', {
+  volume: utterance.volume,
+  rate: utterance.rate,
+  pitch: utterance.pitch,
+  lang: utterance.lang
+});
+          }, 1000);
+        } else {
+          // Para otros errores, continuar con el siguiente
+          isGlobalVoicePlaying = false;
+          globalVoiceProcessing = false;
+          setTimeout(() => {
+            processGlobalVoiceQueue();
+          }, 1000);
+        }
+      };
+      
+      // Reproducir inmediatamente
+      addToGlobalVoiceQueue(utterance.text || 'Test message', {
+  volume: utterance.volume,
+  rate: utterance.rate,
+  pitch: utterance.pitch,
+  lang: utterance.lang
+});
+    }
+    
+    // Función definitiva para limpiar la cola global
+    function clearGlobalVoiceQueue() {
+      globalVoiceQueue = [];
+      isGlobalVoicePlaying = false;
+      globalVoiceProcessing = false;
+      window.speechSynthesis.cancel();
+      console.log('🧹 COLA GLOBAL LIMPIADA');
+    }
+    
+    // Función definitiva para obtener estado de la cola global
+    function getGlobalVoiceQueueStatus() {
+      return {
+        queueLength: globalVoiceQueue.length,
+        isPlaying: isGlobalVoicePlaying,
+        isProcessing: globalVoiceProcessing
+      };
+    }
+    
+    // Hacer funciones globales
+    window.addToGlobalVoiceQueue = addToGlobalVoiceQueue;
+    window.clearGlobalVoiceQueue = clearGlobalVoiceQueue;
+    window.getGlobalVoiceQueueStatus = getGlobalVoiceQueueStatus;
     
     // SISTEMA ADAPTATIVO DE REPETICIONES
     function calculateAdaptiveRepetitions(message, alertCount) {
@@ -5764,9 +5957,9 @@
     }
     
     // SISTEMA DE VOZ CORREGIDO - SOLUCIÓN A TODOS LOS PROBLEMAS
-    async function speakAlertWithRepetition(pendingAlerts, alertCount) {
+    async function speakAlertWithRepetitionFixed(pendingAlerts, alertCount) {
       if (!voiceNotificationsEnabled) {
-        console.log(`🔇 Voz deshabilitada, saltando speakAlertWithRepetition`);
+        console.log(`🔇 Voz deshabilitada, saltando speakAlertWithRepetitionFixed`);
         return;
       }
       
@@ -5775,7 +5968,7 @@
       
       // VALIDAR DATOS DE ENTRADA
       if (!pendingAlerts || pendingAlerts.length === 0) {
-        console.log(`⚠️ speakAlertWithRepetition: pendingAlerts vacío o inválido`);
+        console.log(`⚠️ speakAlertWithRepetitionFixed: pendingAlerts vacío o inválido`);
         return;
       }
       
@@ -6315,7 +6508,12 @@
         };
         
         // Ejecutar test (sin esperar)
-        window.speechSynthesis.speak(testUtterance);
+        addToGlobalVoiceQueue(testUtterance.text || 'Test message', {
+          volume: testUtterance.volume,
+          rate: testUtterance.rate,
+          pitch: testUtterance.pitch,
+          lang: testUtterance.lang
+        });
         
         // Esperar un momento para ver si hay errores (con timeout)
         await new Promise(resolve => {
@@ -6383,7 +6581,12 @@
               console.warn('⚠️ No se encontró voz en español para el test');
             }
             
-            window.speechSynthesis.speak(testUtterance);
+            addToGlobalVoiceQueue(testUtterance.text || 'Test message', {
+          volume: testUtterance.volume,
+          rate: testUtterance.rate,
+          pitch: testUtterance.pitch,
+          lang: testUtterance.lang
+        });
           } catch (error) {
             console.error('Error en test de voz:', error);
           }
@@ -6459,6 +6662,136 @@
       console.log(`📝 Agregadas ${repetitions.length} repeticiones ADAPTATIVAS a la cola de voz`);
       console.log(`🔊 Alerta adaptativa programada: ${alertCount} niño(s) - ${repetitions.length} repeticiones`);
     }
+    
+    // 🚨 REEMPLAZAR FUNCIÓN PRINCIPAL CON SISTEMA DE COLA GLOBAL
+    async function speakAlertWithRepetitionFixedFixed(pendingAlerts, alertCount) {
+      if (!voiceNotificationsEnabled) {
+        console.log(`🔇 Voz deshabilitada, saltando speakAlertWithRepetitionFixedFixed`);
+        return;
+      }
+      
+      console.log(`🧠 SISTEMA DEFINITIVO: Procesando ${alertCount} alertas`);
+      console.log(`📊 pendingAlerts:`, pendingAlerts);
+      
+      // VALIDAR DATOS DE ENTRADA
+      if (!pendingAlerts || pendingAlerts.length === 0) {
+        console.log(`⚠️ speakAlertWithRepetitionFixedFixed: pendingAlerts vacío o inválido`);
+        return;
+      }
+      
+      // EXTRAER NOMBRES CON VALIDACIÓN ROBUSTA
+      console.log(`🔍 DEBUG: Estructura de pendingAlerts:`, pendingAlerts.map(alert => ({
+        text: alert.text,
+        hasText: !!alert.text,
+        textType: typeof alert.text,
+        keys: Object.keys(alert)
+      })));
+      
+      const childNames = pendingAlerts.map(alert => {
+        console.log(`🔍 DEBUG: Procesando alert:`, alert);
+        
+        // MANEJAR DOS TIPOS DE ESTRUCTURA:
+        let name = null;
+        
+        if (alert.name) {
+          // Estructura: {name: 'sofia', parents: 'Papá: fernando'}
+          name = alert.name;
+          console.log(`🔍 DEBUG: Nombre directo: "${name}"`);
+        } else if (alert.text) {
+          // Estructura: {text: '¡Atención! A sofia le quedan solo 30 segundos'}
+          name = extractChildNameFromAlert(alert.text);
+          console.log(`🔍 DEBUG: Nombre extraído de texto: "${name}"`);
+        }
+        
+        console.log(`🔍 DEBUG: Nombre final: "${name}"`);
+        return name && name !== 'null' ? name : null;
+      }).filter(name => name !== null);
+      
+      console.log(`👶 NOMBRES EXTRAÍDOS:`, childNames);
+      
+      if (childNames.length === 0) {
+        console.log(`⚠️ speakAlertWithRepetitionFixedFixed: No se pudieron extraer nombres de niños`);
+        return;
+      }
+      
+      // GENERAR MENSAJE SEGÚN ESCENARIOS CON INFORMACIÓN DE PADRES
+      let message;
+      
+      // Obtener información de padres de pendingAlerts
+      const childrenWithParents = pendingAlerts.map(alert => {
+        let childName = null;
+        let parentsInfo = '';
+        
+        if (alert.name) {
+          // Estructura: {name: 'sofia', parents: 'Papá: fernando'}
+          childName = alert.name;
+          parentsInfo = alert.parents ? ` (${alert.parents})` : '';
+        } else if (alert.text) {
+          // Estructura: {text: '¡Atención! A sofia le quedan solo 30 segundos'}
+          childName = extractChildNameFromAlert(alert.text);
+          // Buscar información del niño en childrenCache
+          const child = childrenCache.find(c => c.name === childName);
+          
+          if (child) {
+            parentsInfo = getParentsInfo(child, 'simple');
+          }
+        }
+        
+        return { name: childName, parents: parentsInfo };
+      });
+      
+      if (alertCount === 1 && childrenWithParents.length === 1) {
+        const child = childrenWithParents[0];
+        const gender = detectGenderByName(child.name);
+        const relationship = gender === 'female' ? 'hija' : (gender === 'male' ? 'hijo' : 'niño');
+        
+        // Formatear padres para que se escuche natural
+        let parentsPhrase = '';
+        if (child.parents) {
+          // child.parents viene como " (Papá: luis & Mamá: ana)" o " (Papá: luis)" o " (Mamá: ana)"
+          // Necesitamos convertirlo a algo natural para escuchar
+          const parentsClean = child.parents.replace(/[()]/g, '').trim();
+          if (parentsClean) {
+            parentsPhrase = `. ${parentsClean}, por favor recoge a tu ${relationship}`;
+          } else {
+            parentsPhrase = `. Por favor, recoge a tu ${relationship}`;
+          }
+        } else {
+          parentsPhrase = `. Por favor, recoge a tu ${relationship}`;
+        }
+        
+        message = `Hola, ${child.name} ha terminado su tiempo de juego${parentsPhrase}`;
+      } else if (alertCount === 2 && childrenWithParents.length === 2) {
+        const child1 = childrenWithParents[0];
+        const child2 = childrenWithParents[1];
+        
+        // Formatear para 2 niños
+        const parents1 = child1.parents ? child1.parents.replace(/[()]/g, '').trim() : '';
+        const parents2 = child2.parents ? child2.parents.replace(/[()]/g, '').trim() : '';
+        
+        message = `Hola, ${child1.name}${parents1} y ${child2.name}${parents2} han terminado su tiempo de juego. Por favor, recójanlos`;
+      } else {
+        // Para 3 o más niños, usar mensaje consolidado
+        const namesList = childrenWithParents.map(child => {
+          const parents = child.parents ? child.parents.replace(/[()]/g, '').trim() : '';
+          return `${child.name}${parents}`;
+        }).join(', ');
+        
+        message = `Hola, ${namesList} han terminado su tiempo de juego. Por favor, recójanlos`;
+      }
+      
+      console.log(`🔊 MENSAJE GENERADO: "${message}"`);
+      
+      // 🚨 USAR COLA GLOBAL DEFINITIVA
+      addToGlobalVoiceQueue(message, {
+        volume: 1.0,
+        rate: 1.0,
+        pitch: 1.0,
+        lang: 'es-ES'
+      });
+      
+      console.log(`✅ MENSAJE AGREGADO A COLA GLOBAL DEFINITIVA`);
+    }
 
 
     // Función para alertas de múltiples niños (más de 5) - DEPRECATED
@@ -6518,19 +6851,34 @@
       // Primera repetición
       setTimeout(() => {
         const utterance1 = createUtteranceWithVoice(fullMessage);
-        window.speechSynthesis.speak(utterance1);
+        addToGlobalVoiceQueue(utterance1.text || fullMessage, {
+          volume: utterance1.volume,
+          rate: utterance1.rate,
+          pitch: utterance1.pitch,
+          lang: utterance1.lang
+        });
       }, 100);
       
       // Segunda repetición (después de 15 segundos - mejorado)
       setTimeout(() => {
         const utterance2 = createUtteranceWithVoice(fullMessage);
-        window.speechSynthesis.speak(utterance2);
+        addToGlobalVoiceQueue(utterance2.text || fullMessage, {
+          volume: utterance2.volume,
+          rate: utterance2.rate,
+          pitch: utterance2.pitch,
+          lang: utterance2.lang
+        });
       }, 15000);
       
       // Tercera repetición (después de 30 segundos - mejorado)
       setTimeout(() => {
         const utterance3 = createUtteranceWithVoice(fullMessage);
-        window.speechSynthesis.speak(utterance3);
+        addToGlobalVoiceQueue(utterance3.text || fullMessage, {
+          volume: utterance3.volume,
+          rate: utterance3.rate,
+          pitch: utterance3.pitch,
+          lang: utterance3.lang
+        });
       }, 30000);
       
       console.log(`🔊 Alerta múltiple: ${children.length} niños - ${names.length} nombres únicos`);
@@ -8538,7 +8886,12 @@
       try {
         const testUtterance = new SpeechSynthesisUtterance('');
         testUtterance.volume = 0.01;
-        window.speechSynthesis.speak(testUtterance);
+        addToGlobalVoiceQueue(testUtterance.text || 'Test message', {
+          volume: testUtterance.volume,
+          rate: testUtterance.rate,
+          pitch: testUtterance.pitch,
+          lang: testUtterance.lang
+        });
         // NO cancelar - puede interrumpir audio en curso
         // window.speechSynthesis.cancel();
         
