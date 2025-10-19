@@ -2954,6 +2954,17 @@
         });
       }
       
+      // MEJORA ADICIONAL: Ajustar configuración de voz según navegador
+      if (selectedVoice && browser !== 'safari') {
+        // Para navegadores no-Safari, aplicar ajustes adicionales de calidad
+        console.log(`🔧 Aplicando optimizaciones de pronunciación para ${browser}`);
+        
+        // Asegurar que la voz tenga la mejor configuración posible
+        if (selectedVoice.lang && !selectedVoice.lang.includes('es-ES')) {
+          console.log(`🌍 Ajustando idioma de voz de ${selectedVoice.lang} a es-ES`);
+        }
+      }
+      
       console.log('👩 Voz femenina seleccionada:', selectedVoice ? `${selectedVoice.name} (${selectedVoice.lang})` : 'ninguna');
       return selectedVoice;
     }
@@ -2973,9 +2984,9 @@
       // Ajustes específicos por navegador para maximizar sonido humano
       const browserAdjustments = {
         safari: { rate: 0.9, pitch: 1.1, volume: 0.8 },      // Safari ya excelente
-        firefox: { rate: 0.6, pitch: 1.2, volume: 0.95 },    // Firefox - parámetros más agresivos
-        chrome: { rate: 0.7, pitch: 1.15, volume: 0.9 },    // Chrome - parámetros balanceados
-        edge: { rate: 0.7, pitch: 1.15, volume: 0.9 },        // Edge - igual que Chrome
+        firefox: { rate: 0.65, pitch: 1.25, volume: 0.95 },   // Firefox - más lento y pitch más alto
+        chrome: { rate: 0.8, pitch: 1.2, volume: 0.85 },      // Chrome - velocidad media, pitch alto
+        edge: { rate: 0.8, pitch: 1.2, volume: 0.85 },         // Edge - igual que Chrome
         default: { rate: 0.75, pitch: 1.15, volume: 0.9 }   // Fallback universal
       };
       
@@ -2983,15 +2994,15 @@
       
       // POST-PROCESAMIENTO UNIVERSAL para sonido humano máximo
       if (browser === 'firefox') {
-        // Firefox - parámetros más agresivos para compensar limitaciones
-        params.rate = Math.max(params.rate * 0.85, 0.5); // Más lento para sonar humano
-        params.pitch = Math.min(params.pitch * 1.1, 1.4); // Pitch más alto
-        params.volume = Math.min(params.volume * 1.1, 1.0); // Volumen más alto
-      } else if (browser === 'chrome' || browser === 'edge') {
-        // Chrome/Edge - parámetros balanceados
-        params.rate = Math.max(params.rate * 0.9, 0.6); // Ligeramente más lento
-        params.pitch = Math.min(params.pitch * 1.05, 1.3); // Pitch ligeramente más alto
+        // Firefox - parámetros optimizados para sonido más natural
+        params.rate = Math.max(params.rate * 0.9, 0.55); // Más lento para sonar más humano
+        params.pitch = Math.min(params.pitch * 1.05, 1.35); // Pitch moderadamente más alto
         params.volume = Math.min(params.volume * 1.05, 1.0); // Volumen ligeramente más alto
+      } else if (browser === 'chrome' || browser === 'edge') {
+        // Chrome/Edge - parámetros optimizados para mejor pronunciación
+        params.rate = Math.max(params.rate * 0.95, 0.7); // Ligeramente más lento para claridad
+        params.pitch = Math.min(params.pitch * 1.08, 1.3); // Pitch ligeramente más alto para naturalidad
+        params.volume = Math.min(params.volume * 1.02, 1.0); // Volumen ligeramente más alto
       }
       
       return params;
@@ -6791,9 +6802,28 @@
     function createHybridUtterance(msg, alertCount = 1) {
       const hybridConfig = getHybridVoiceSystem();
       const utterance = new SpeechSynthesisUtterance(msg);
+      const browser = detectBrowser();
       
       // Aplicar configuración híbrida
       Object.assign(utterance, hybridConfig);
+      
+      // MEJORAS ADICIONALES PARA PRONUNCIACIÓN EN NAVEGADORES NO-SAFARI
+      if (browser !== 'safari') {
+        // Ajustes específicos para mejorar pronunciación en Chrome/Firefox/Edge
+        utterance.rate = Math.max(utterance.rate * 0.95, 0.6); // Ligeramente más lento para claridad
+        utterance.pitch = Math.min(utterance.pitch * 1.05, 1.3); // Pitch ligeramente más alto para naturalidad
+        utterance.volume = Math.min(utterance.volume * 1.02, 1.0); // Volumen ligeramente más alto
+        
+        // Asegurar idioma español
+        utterance.lang = 'es-ES';
+        
+        console.log(`🔧 Aplicando optimizaciones de pronunciación para ${browser}:`, {
+          rate: utterance.rate,
+          pitch: utterance.pitch,
+          volume: utterance.volume,
+          lang: utterance.lang
+        });
+      }
       
       // Ajustar según cantidad de niños
       if (alertCount > 3) {
