@@ -603,10 +603,10 @@
       color: #ff6b6b;
     }
 
-    /* Responsive para botón de voz */
-    @media (max-width: 768px) {
+    /* Responsive para botón de voz - iPad */
+    @media (max-width: 1024px) and (min-width: 769px) {
       .header {
-        padding-right: 140px; /* Reducir espacio para pantallas medianas */
+        padding-right: 160px; /* Más espacio para iPad */
       }
       
       .voice-control {
@@ -615,14 +615,37 @@
         right: 20px;
         justify-content: center;
         z-index: 10;
-        max-width: 120px; /* Reducir ancho en tablets */
+        max-width: 140px;
       }
       
       .voice-toggle-btn {
-        min-width: 100px;
-        max-width: 120px;
+        min-width: 120px;
+        max-width: 140px;
         padding: 8px 12px;
-        font-size: 13px;
+        font-size: 12px;
+      }
+    }
+
+    /* Responsive para botón de voz - Tablet */
+    @media (max-width: 768px) {
+      .header {
+        padding-right: 120px; /* Reducir espacio para tablets */
+      }
+      
+      .voice-control {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        justify-content: center;
+        z-index: 10;
+        max-width: 100px; /* Más compacto en tablets */
+      }
+      
+      .voice-toggle-btn {
+        min-width: 80px;
+        max-width: 100px;
+        padding: 6px 10px;
+        font-size: 11px;
       }
       
       /* FIX CRÍTICO: AJUSTAR history-toggle en tablet */
@@ -633,27 +656,29 @@
       }
     }
 
+    /* iPhone y móviles pequeños */
     @media (max-width: 480px) {
       .header {
-        padding-right: 80px; /* Reducir espacio para móviles */
+        padding-right: 70px; /* Reducir espacio para móviles */
         min-height: 100px; /* Reducir altura mínima en móviles */
       }
       
       .voice-control {
         position: absolute;
-        top: 20px;
-        right: 20px;
+        top: 15px; /* Mover más arriba */
+        right: 15px; /* Mover más a la derecha */
         justify-content: center;
         z-index: 10;
-        max-width: 60px; /* Botón más compacto en móviles */
+        max-width: 50px; /* Botón más compacto en móviles */
       }
       
       .voice-toggle-btn {
-        min-width: 60px;
-        max-width: 60px;
-        padding: 6px 8px;
-        font-size: 12px;
-        gap: 4px;
+        min-width: 50px;
+        max-width: 50px;
+        padding: 8px 6px;
+        font-size: 10px;
+        gap: 2px;
+        border-radius: 20px; /* Más redondo */
       }
       
       .voice-toggle-btn span {
@@ -661,8 +686,28 @@
       }
       
       .voice-toggle-btn i {
-        font-size: 16px;
+        font-size: 14px; /* Icono más pequeño */
       }
+    }
+
+    /* iPhone Plus y móviles medianos */
+    @media (max-width: 414px) {
+      .header {
+        padding-right: 60px; /* Aún menos espacio */
+      }
+      
+      .voice-control {
+        top: 10px;
+        right: 10px;
+        max-width: 45px;
+      }
+      
+      .voice-toggle-btn {
+        min-width: 45px;
+        max-width: 45px;
+        padding: 6px 4px;
+      }
+    }
       
       /* FIX CRÍTICO: AJUSTAR history-toggle en móvil */
       .history-toggle {
