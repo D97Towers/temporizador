@@ -4015,8 +4015,11 @@
       }
       
       // Mostrar alerta de voz si está habilitada
-      if (alertTypes.voice && voiceNotificationsEnabled) {
+      // VERIFICACIÓN ADICIONAL: Si voiceOnly es false, nunca activar la voz
+      if (alertTypes.voice && voiceNotificationsEnabled && options.voiceOnly !== false) {
         showVoiceAlert(text, type, options);
+      } else if (options.voiceOnly === false) {
+        console.log('🔇 VOZ DESACTIVADA EXPLÍCITAMENTE por voiceOnly: false');
       }
       
       // Mostrar notificación del navegador si está habilitada
