@@ -5855,6 +5855,7 @@
         .replace(/\)/g, '')     // ) → sin espacio
         .replace(/\s+/g, ' ')  // Múltiples espacios → un espacio
         .replace(/,\s*,/g, ',') // Dobles comas → una coma
+        .replace(/\s*,\s*/g, ', ') // Limpiar espacios alrededor de comas
         .trim();
       
       console.log(`🧹 Texto limpiado: "${text}" → "${cleanedText}"`);
@@ -6067,7 +6068,21 @@
       if (childrenWithParents.length === 1) {
         const child = childrenWithParents[0];
         if (child.parents) {
-          message = `Hola, ${child.name} (${child.parents}) ha terminado su tiempo de juego. Por favor, recógelo.`;
+          // Mejorar estructura cuando hay información de padres
+          if (child.parents.includes('&')) {
+            // Cuando hay papá y mamá: "mathias (papá: harrison & mamá: ximena)"
+            const parentsFormatted = child.parents.replace(/&/g, ' & mamá: ');
+            message = `Hola, ${child.name} (papá: ${parentsFormatted}) ha terminado su tiempo de juego. Por favor, recógelo.`;
+          } else if (child.parents.includes('Papá:')) {
+            // Solo papá: "sofia (papá: fernando)"
+            message = `Hola, ${child.name} (${child.parents}) ha terminado su tiempo de juego. Por favor, recógelo.`;
+          } else if (child.parents.includes('Mamá:')) {
+            // Solo mamá: "sofia (mamá: maria)"
+            message = `Hola, ${child.name} (${child.parents}) ha terminado su tiempo de juego. Por favor, recógelo.`;
+          } else {
+            // Formato genérico
+            message = `Hola, ${child.name} (${child.parents}) ha terminado su tiempo de juego. Por favor, recógelo.`;
+          }
         } else {
           message = `Hola, ${child.name} ha terminado su tiempo de juego. Por favor, recógelo.`;
         }
