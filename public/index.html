@@ -4023,6 +4023,25 @@
     function showSmartAlert(text, type = 'success', sessionId = null, options = {}) {
       console.log(`🔔 showSmartAlert LLAMADA: "${text}" [${type}] sessionId: ${sessionId}`, options);
       
+      // VERIFICACIÓN SUPREMA: BLOQUEAR ABSOLUTAMENTE CUALQUIER MENSAJE DE ERROR DE VOZ
+      const errorPhrases = [
+        'Validation failed',
+        'Por favor seleccione un niño',
+        'Por favor seleccione un juego',
+        'El tiempo debe ser',
+        'El tiempo mínimo',
+        'El tiempo máximo',
+        'Error al',
+        'debe ser un número válido'
+      ];
+      
+      const containsErrorPhrase = errorPhrases.some(phrase => text.includes(phrase));
+      if (containsErrorPhrase) {
+        console.log(`🔇 BLOQUEADO EN SHOWSMARTALERT: Mensaje contiene frase de error: "${text}"`);
+        type = 'error'; // Forzar tipo error
+        options = { ...options, voiceOnly: false }; // Forzar sin voz
+      }
+      
       // REGLA CRÍTICA: ERRORES NUNCA TIENEN VOZ - SIN EXCEPCIONES
       if (type === 'error' || type === 'danger') {
         console.log('🔇 TIPO ERROR DETECTADO - VOZ COMPLETAMENTE DESACTIVADA');
@@ -4033,7 +4052,7 @@
       if (options.voiceOnly === false) {
         console.log('🔇 VERIFICACIÓN TEMPRANA - VOZ DESACTIVADA por voiceOnly: false');
         // Asegurar que la opción esté correctamente configurada
-        options = { ...options, voiceOnly: false, visualOnly: false };
+        options = { ...options, voiceOnly: false };
       }
       
       // Verificar preferencias de alertas
