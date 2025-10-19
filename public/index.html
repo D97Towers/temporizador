@@ -5848,9 +5848,9 @@
       speakRobustAudio(queueItem.message, queueItem.options, queueItem.id);
     }
     
-    // Sistema de audio ULTRA ROBUSTO - SOLO UN MENSAJE A LA VEZ
+    // Sistema de audio DEFINITIVO - SIN BUCLES INFINITOS
     function speakRobustAudio(message, options = {}, messageId = 'unknown') {
-      console.log(`🔊 INICIANDO AUDIO ULTRA ROBUSTO: "${message}" (ID: ${messageId})`);
+      console.log(`🔊 INICIANDO AUDIO DEFINITIVO: "${message}" (ID: ${messageId})`);
       
       // Verificar que speechSynthesis esté disponible
       if (!('speechSynthesis' in window)) {
@@ -5861,21 +5861,14 @@
         return;
       }
       
-      // FORZAR CANCELACIÓN COMPLETA DE TODO EL AUDIO
+      // CANCELAR TODO EL AUDIO Y ESPERAR
       window.speechSynthesis.cancel();
       
-      // Esperar más tiempo para cancelación completa
+      // Esperar tiempo suficiente para cancelación completa
       setTimeout(() => {
-        // Verificar que no hay audio reproduciéndose
-        if (window.speechSynthesis.speaking) {
-          console.log(`🔄 AÚN HAY AUDIO REPRODUCIÉNDOSE, ESPERANDO...`);
-          setTimeout(() => speakRobustAudio(message, options, messageId), 500);
-          return;
-        }
-        
         const utterance = new SpeechSynthesisUtterance(message);
         
-        // Configuración ultra robusta
+        // Configuración simple y efectiva
         utterance.volume = options.volume || 1.0;
         utterance.rate = options.rate || 1.0;
         utterance.pitch = options.pitch || 1.0;
@@ -5901,36 +5894,29 @@
           isGlobalVoicePlaying = false;
           globalVoiceProcessing = false;
           
-          // Procesar siguiente mensaje después de un delay más largo
+          // Procesar siguiente mensaje después de delay
           setTimeout(() => {
             processGlobalVoiceQueue();
-          }, 1000); // 1 segundo entre mensajes para evitar conflictos
+          }, 2000); // 2 segundos entre mensajes
         };
         
         utterance.onerror = (error) => {
           console.log(`❌ ERROR EN AUDIO: ${error.error} - "${message}" (ID: ${messageId})`);
           
-          if (error.error === 'interrupted') {
-            console.log(`🔄 REINTENTANDO AUDIO: "${message}" (ID: ${messageId})`);
-            // Reintentar después de un delay más largo
-            setTimeout(() => {
-              speakRobustAudio(message, options, messageId);
-            }, 2000); // 2 segundos de delay para reintento
-          } else {
-            // Para otros errores, continuar con el siguiente
-            isGlobalVoicePlaying = false;
-            globalVoiceProcessing = false;
-            setTimeout(() => {
-              processGlobalVoiceQueue();
-            }, 1000);
-          }
+          // NO REINTENTAR - CONTINUAR CON EL SIGUIENTE
+          console.log(`🚫 NO REINTENTANDO - CONTINUANDO CON SIGUIENTE`);
+          isGlobalVoicePlaying = false;
+          globalVoiceProcessing = false;
+          setTimeout(() => {
+            processGlobalVoiceQueue();
+          }, 1000);
         };
         
-        // Reproducir con timeout de seguridad más corto
+        // Reproducir sin reintentos
         try {
           window.speechSynthesis.speak(utterance);
           
-          // Timeout de seguridad más corto - si no se reproduce en 5 segundos, continuar
+          // Timeout de seguridad
           setTimeout(() => {
             if (isGlobalVoicePlaying) {
               console.log(`⏰ TIMEOUT DE AUDIO: "${message}" (ID: ${messageId})`);
@@ -5939,7 +5925,7 @@
               globalVoiceProcessing = false;
               setTimeout(() => processGlobalVoiceQueue(), 1000);
             }
-          }, 5000); // 5 segundos timeout
+          }, 8000); // 8 segundos timeout
           
         } catch (error) {
           console.error(`❌ ERROR AL REPRODUCIR: ${error.message}`);
@@ -5947,7 +5933,7 @@
           globalVoiceProcessing = false;
           setTimeout(() => processGlobalVoiceQueue(), 1000);
         }
-      }, 500); // 500ms de delay para cancelación completa
+      }, 1000); // 1 segundo de delay para cancelación completa
     }
     
     // Función definitiva para limpiar la cola global
