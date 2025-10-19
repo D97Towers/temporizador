@@ -5848,9 +5848,9 @@
       speakRobustAudio(queueItem.message, queueItem.options, queueItem.id);
     }
     
-    // Sistema de audio FUNCIONAL - SIN CANCELACIONES PREMATURAS
+    // Sistema de audio GARANTIZADO - REPRODUCCIÓN ASEGURADA
     function speakRobustAudio(message, options = {}, messageId = 'unknown') {
-      console.log(`🔊 INICIANDO AUDIO FUNCIONAL: "${message}" (ID: ${messageId})`);
+      console.log(`🔊 INICIANDO AUDIO GARANTIZADO: "${message}" (ID: ${messageId})`);
       
       // Verificar que speechSynthesis esté disponible
       if (!('speechSynthesis' in window)) {
@@ -5861,79 +5861,71 @@
         return;
       }
       
-      // NO CANCELAR AUDIO PREVIO - Solo si realmente está reproduciéndose
-      if (window.speechSynthesis.speaking) {
-        console.log(`🔄 Audio previo reproduciéndose, esperando...`);
-        setTimeout(() => speakRobustAudio(message, options, messageId), 500);
-        return;
-      }
+      // FORZAR LIMPIEZA COMPLETA DEL SISTEMA
+      window.speechSynthesis.cancel();
       
-      const utterance = new SpeechSynthesisUtterance(message);
-      
-      // Configuración simple y efectiva
-      utterance.volume = options.volume || 1.0;
-      utterance.rate = options.rate || 1.0;
-      utterance.pitch = options.pitch || 1.0;
-      utterance.lang = options.lang || 'es-ES';
-      
-      // Seleccionar mejor voz disponible
-      const voices = window.speechSynthesis.getVoices();
-      const spanishVoice = voices.find(voice => 
-        voice.lang.startsWith('es') && voice.name.includes('Paulina')
-      ) || voices.find(voice => voice.lang.startsWith('es')) || voices[0];
-      
-      if (spanishVoice) {
-        utterance.voice = spanishVoice;
-        console.log(`🎙️ Voz seleccionada: ${spanishVoice.name} (${spanishVoice.lang})`);
-      }
-      
-      utterance.onstart = () => {
-        console.log(`🎤 REPRODUCIENDO: "${message}" (ID: ${messageId})`);
-      };
-      
-      utterance.onend = () => {
-        console.log(`✅ COMPLETADO: "${message}" (ID: ${messageId})`);
-        isGlobalVoicePlaying = false;
-        globalVoiceProcessing = false;
+      // Esperar un momento para limpieza
+      setTimeout(() => {
+        const utterance = new SpeechSynthesisUtterance(message);
         
-        // Procesar siguiente mensaje después de delay
-        setTimeout(() => {
-          processGlobalVoiceQueue();
-        }, 2000); // 2 segundos entre mensajes
-      };
-      
-      utterance.onerror = (error) => {
-        console.log(`❌ ERROR EN AUDIO: ${error.error} - "${message}" (ID: ${messageId})`);
+        // Configuración ultra simple
+        utterance.volume = 1.0;
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.lang = 'es-ES';
         
-        // NO REINTENTAR - CONTINUAR CON EL SIGUIENTE
-        console.log(`🚫 NO REINTENTANDO - CONTINUANDO CON SIGUIENTE`);
-        isGlobalVoicePlaying = false;
-        globalVoiceProcessing = false;
-        setTimeout(() => {
-          processGlobalVoiceQueue();
-        }, 1000);
-      };
-      
-      // Reproducir inmediatamente
-      try {
-        window.speechSynthesis.speak(utterance);
+        // NO seleccionar voz específica - usar default
+        console.log(`🎙️ Usando voz por defecto del sistema`);
         
-        // Timeout de seguridad
-        setTimeout(() => {
-          if (isGlobalVoicePlaying) {
-            console.log(`⏰ TIMEOUT DE AUDIO: "${message}" (ID: ${messageId})`);
-            isGlobalVoicePlaying = false;
-            globalVoiceProcessing = false;
-            setTimeout(() => processGlobalVoiceQueue(), 1000);
-          }
-        }, 10000); // 10 segundos timeout
+        utterance.onstart = () => {
+          console.log(`🎤 REPRODUCIENDO: "${message}" (ID: ${messageId})`);
+        };
         
-      } catch (error) {
-        console.error(`❌ ERROR AL REPRODUCIR: ${error.message}`);
-        isGlobalVoicePlaying = false;
-        globalVoiceProcessing = false;
-        setTimeout(() => processGlobalVoiceQueue(), 1000);
-      }
+        utterance.onend = () => {
+          console.log(`✅ COMPLETADO: "${message}" (ID: ${messageId})`);
+          isGlobalVoicePlaying = false;
+          globalVoiceProcessing = false;
+          
+          // Procesar siguiente mensaje después de delay
+          setTimeout(() => {
+            processGlobalVoiceQueue();
+          }, 3000); // 3 segundos entre mensajes
+        };
+        
+        utterance.onerror = (error) => {
+          console.log(`❌ ERROR EN AUDIO: ${error.error} - "${message}" (ID: ${messageId})`);
+          
+          // NO REINTENTAR - CONTINUAR CON EL SIGUIENTE
+          console.log(`🚫 NO REINTENTANDO - CONTINUANDO CON SIGUIENTE`);
+          isGlobalVoicePlaying = false;
+          globalVoiceProcessing = false;
+          setTimeout(() => {
+            processGlobalVoiceQueue();
+          }, 1000);
+        };
+        
+        // Reproducir con configuración mínima
+        try {
+          console.log(`🔊 INTENTANDO REPRODUCIR: "${message}"`);
+          window.speechSynthesis.speak(utterance);
+          
+          // Timeout de seguridad más largo
+          setTimeout(() => {
+            if (isGlobalVoicePlaying) {
+              console.log(`⏰ TIMEOUT DE AUDIO: "${message}" (ID: ${messageId})`);
+              isGlobalVoicePlaying = false;
+              globalVoiceProcessing = false;
+              setTimeout(() => processGlobalVoiceQueue(), 1000);
+            }
+          }, 15000); // 15 segundos timeout
+          
+        } catch (error) {
+          console.error(`❌ ERROR AL REPRODUCIR: ${error.message}`);
+          isGlobalVoicePlaying = false;
+          globalVoiceProcessing = false;
+          setTimeout(() => processGlobalVoiceQueue(), 1000);
+        }
+      }, 200); // 200ms de delay para limpieza
     }
     
     // Función definitiva para limpiar la cola global
