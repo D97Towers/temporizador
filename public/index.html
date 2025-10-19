@@ -40,7 +40,7 @@
       color: white;
       position: relative;
       padding-left: 80px;
-      padding-right: 180px; /* Espacio para el botón de voz */
+      padding-right: 200px; /* Más espacio para el botón de voz */
       min-height: 120px; /* Altura mínima para evitar superposición */
     }
 
@@ -572,18 +572,18 @@
       background: rgba(255, 255, 255, 0.1);
       border: 1px solid rgba(255, 255, 255, 0.3);
       color: white;
-      padding: 10px 16px;
+      padding: 8px 14px;
       border-radius: 25px;
       cursor: pointer;
       transition: all 0.3s ease;
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 14px;
+      gap: 6px;
+      font-size: 13px;
       font-weight: 500;
       backdrop-filter: blur(10px);
-      min-width: 140px;
-      max-width: 160px; /* Limitar ancho máximo */
+      min-width: 120px;
+      max-width: 140px; /* Reducir ancho máximo */
       justify-content: center;
       white-space: nowrap;
       overflow: hidden; /* Evitar desbordamiento de texto */
@@ -606,7 +606,7 @@
     /* Responsive para botón de voz - iPad */
     @media (max-width: 1024px) and (min-width: 769px) {
       .header {
-        padding-right: 160px; /* Más espacio para iPad */
+        padding-right: 200px; /* Mucho más espacio para iPad */
       }
       
       .voice-control {
@@ -615,14 +615,14 @@
         right: 20px;
         justify-content: center;
         z-index: 10;
-        max-width: 140px;
+        max-width: 120px; /* Reducir tamaño del botón */
       }
       
       .voice-toggle-btn {
-        min-width: 120px;
-        max-width: 140px;
-        padding: 8px 12px;
-        font-size: 12px;
+        min-width: 100px;
+        max-width: 120px;
+        padding: 6px 10px;
+        font-size: 11px;
       }
     }
 
@@ -717,7 +717,6 @@
         font-size: 12px;
         padding: 10px 12px;
       }
-    }
 
 
 
