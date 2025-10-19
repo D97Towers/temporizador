@@ -5935,9 +5935,9 @@
       console.log('🧹 COLA GLOBAL LIMPIADA');
     }
     
-    // Función de test COMPLETAMENTE INDEPENDIENTE
+    // Función de test CON DIAGNÓSTICO COMPLETO
     function testAudioSystem() {
-      console.log('🧪 INICIANDO TEST DE AUDIO INDEPENDIENTE');
+      console.log('🧪 INICIANDO TEST DE AUDIO CON DIAGNÓSTICO');
       
       // Test 1: Verificar disponibilidad
       if (!('speechSynthesis' in window)) {
@@ -5945,47 +5945,74 @@
         return false;
       }
       
-      // BYPASEO COMPLETO - NO USAR SISTEMA DE COLA
-      const testMessage = 'Test de audio independiente - ¿Puedes escucharme?';
-      console.log(`🔊 REPRODUCIENDO TEST INDEPENDIENTE: "${testMessage}"`);
+      // Test 2: Diagnóstico completo del sistema
+      console.log(`🔍 DIAGNÓSTICO DEL SISTEMA:`);
+      console.log(`   - speechSynthesis.speaking: ${window.speechSynthesis.speaking}`);
+      console.log(`   - speechSynthesis.pending: ${window.speechSynthesis.pending}`);
+      console.log(`   - speechSynthesis.paused: ${window.speechSynthesis.paused}`);
       
-      // Crear utterance completamente independiente
-      const utterance = new SpeechSynthesisUtterance(testMessage);
+      // Test 3: Limpiar sistema completamente
+      console.log(`🧹 LIMPIANDO SISTEMA COMPLETAMENTE...`);
+      window.speechSynthesis.cancel();
       
-      // Configuración ultra básica
-      utterance.volume = 1.0;
-      utterance.rate = 0.8;
-      utterance.pitch = 1.0;
-      utterance.lang = 'es-ES';
-      
-      // NO configurar voz específica
-      console.log(`🎙️ Test independiente sin configuración de voz`);
-      
-      utterance.onstart = () => {
-        console.log(`🎤 TEST INDEPENDIENTE INICIADO: "${testMessage}"`);
-      };
-      
-      utterance.onend = () => {
-        console.log(`✅ TEST INDEPENDIENTE COMPLETADO: "${testMessage}"`);
-      };
-      
-      utterance.onerror = (error) => {
-        console.log(`❌ ERROR EN TEST INDEPENDIENTE: ${error.error} - "${testMessage}"`);
-      };
-      
-      // Reproducir inmediatamente
-      try {
-        console.log(`🔊 REPRODUCIENDO TEST INMEDIATAMENTE: "${testMessage}"`);
-        window.speechSynthesis.speak(utterance);
+      // Test 4: Esperar y verificar limpieza
+      setTimeout(() => {
+        console.log(`🔍 ESTADO DESPUÉS DE LIMPIEZA:`);
+        console.log(`   - speechSynthesis.speaking: ${window.speechSynthesis.speaking}`);
+        console.log(`   - speechSynthesis.pending: ${window.speechSynthesis.pending}`);
         
-        // Timeout de seguridad
-        setTimeout(() => {
-          console.log(`⏰ TIMEOUT DE TEST INDEPENDIENTE: "${testMessage}"`);
-        }, 10000); // 10 segundos timeout
+        // Test 5: Reproducir con diagnóstico completo
+        const testMessage = 'Test de audio con diagnóstico - ¿Puedes escucharme?';
+        console.log(`🔊 REPRODUCIENDO CON DIAGNÓSTICO: "${testMessage}"`);
         
-      } catch (error) {
-        console.error(`❌ ERROR AL REPRODUCIR TEST INDEPENDIENTE: ${error.message}`);
-      }
+        const utterance = new SpeechSynthesisUtterance(testMessage);
+        
+        // Configuración ultra básica
+        utterance.volume = 1.0;
+        utterance.rate = 0.8;
+        utterance.pitch = 1.0;
+        utterance.lang = 'es-ES';
+        
+        console.log(`🎙️ Configuración: volume=${utterance.volume}, rate=${utterance.rate}, pitch=${utterance.pitch}, lang=${utterance.lang}`);
+        
+        utterance.onstart = () => {
+          console.log(`🎤 ✅ AUDIO INICIADO: "${testMessage}"`);
+        };
+        
+        utterance.onend = () => {
+          console.log(`✅ ✅ AUDIO COMPLETADO: "${testMessage}"`);
+        };
+        
+        utterance.onerror = (error) => {
+          console.log(`❌ ❌ ERROR EN AUDIO: ${error.error} - "${testMessage}"`);
+          console.log(`🔍 Detalles del error:`, error);
+        };
+        
+        utterance.onpause = () => {
+          console.log(`⏸️ AUDIO PAUSADO: "${testMessage}"`);
+        };
+        
+        utterance.onresume = () => {
+          console.log(`▶️ AUDIO REANUDADO: "${testMessage}"`);
+        };
+        
+        // Reproducir con diagnóstico
+        try {
+          console.log(`🔊 INTENTANDO REPRODUCIR CON DIAGNÓSTICO...`);
+          window.speechSynthesis.speak(utterance);
+          
+          // Verificar estado después de speak
+          setTimeout(() => {
+            console.log(`🔍 ESTADO DESPUÉS DE SPEAK:`);
+            console.log(`   - speechSynthesis.speaking: ${window.speechSynthesis.speaking}`);
+            console.log(`   - speechSynthesis.pending: ${window.speechSynthesis.pending}`);
+          }, 100);
+          
+        } catch (error) {
+          console.error(`❌ ERROR AL REPRODUCIR: ${error.message}`);
+        }
+        
+      }, 500); // 500ms de delay para limpieza
       
       return true;
     }
