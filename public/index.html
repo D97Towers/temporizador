@@ -6968,15 +6968,15 @@
     function validateSession(childId, gameId, duration) {
       // Solo validar duración aquí, los otros valores ya se validaron arriba
       if (isNaN(duration)) {
-        showStatusMessage('El tiempo debe ser un número válido', 'error');
+        showStatusMessage('El tiempo debe ser un número válido', 'error', null, { voiceOnly: false });
         return false;
       }
       if (duration < 1) {
-        showStatusMessage('El tiempo mínimo es 1 minuto', 'error');
+        showStatusMessage('El tiempo mínimo es 1 minuto', 'error', null, { voiceOnly: false });
         return false;
       }
       if (duration > 180) {
-        showStatusMessage('El tiempo máximo es 180 minutos', 'error');
+        showStatusMessage('El tiempo máximo es 180 minutos', 'error', null, { voiceOnly: false });
         return false;
       }
       return true;
@@ -8104,7 +8104,7 @@
         // Validar duración primero
         if (!durationInput || durationInput.trim() === '') {
           console.log('❌ Duración vacía o inválida');
-          showStatusMessage('Por favor ingrese un tiempo válido', 'error');
+          showStatusMessage('Por favor ingrese un tiempo válido', 'error', null, { voiceOnly: false });
           AppState.isStartingSession = false;
           return;
         }
@@ -8122,14 +8122,14 @@
         // VALIDAR INMEDIATAMENTE - NO HACER NADA MÁS SI FALTA ALGO
         if (!selectedChildId) {
           console.log('❌ No se seleccionó niño');
-          showStatusMessage('Por favor seleccione un niño', 'error');
+          showStatusMessage('Por favor seleccione un niño', 'error', null, { voiceOnly: false });
           AppState.isStartingSession = false;
           return;
         }
         
         if (!gameId) {
           console.log('❌ No se seleccionó juego');
-          showStatusMessage('Por favor seleccione un juego', 'error');
+          showStatusMessage('Por favor seleccione un juego', 'error', null, { voiceOnly: false });
           AppState.isStartingSession = false;
           return;
         }
@@ -8158,19 +8158,19 @@
       if (!child) {
           console.error('❌ Niño no encontrado en caché:', selectedChildId);
           console.error('👶 Niños disponibles:', childrenCache.map(c => `${c.id}:${c.name}`));
-          showStatusMessage('Error: Niño no encontrado. Por favor selecciona un niño válido.', 'error');
+          showStatusMessage('Error: Niño no encontrado. Por favor selecciona un niño válido.', 'error', null, { voiceOnly: false });
           document.getElementById('selectedChildId').value = '';
           AppState.isStartingSession = false;
-        return;
+          return;
       }
       
       if (!game) {
           console.error('❌ Juego no encontrado en caché:', gameId);
           console.error('🎮 Juegos disponibles:', gamesCache.map(g => `${g.id}:${g.name}`));
-          showStatusMessage('Error: Juego no encontrado. Por favor selecciona un juego válido.', 'error');
+          showStatusMessage('Error: Juego no encontrado. Por favor selecciona un juego válido.', 'error', null, { voiceOnly: false });
           document.getElementById('gameSelect').value = '';
           AppState.isStartingSession = false;
-        return;
+          return;
       }
         
         console.log('Validación exitosa - Iniciando sesión:', {
@@ -9175,13 +9175,13 @@
           showStatusMessage(`✅ Sesión iniciada: ${result.child.name} - ${result.game.name}`, 'success', null, { voiceOnly: false });
           console.log('🔔 ALERTA ENVIADA A showStatusMessage');
         } else {
-          // 4. Manejo de errores
-          showStatusMessage(`❌ Error: ${result.error}`, 'error');
+          // 4. Manejo de errores - Solo alerta visual, sin voz
+          showStatusMessage(`❌ Error: ${result.error}`, 'error', null, { voiceOnly: false });
         }
         
       } catch (error) {
         console.error('💥 Unexpected error in handleStartSession:', error);
-        showStatusMessage('❌ Error inesperado al iniciar sesión', 'error');
+        showStatusMessage('❌ Error inesperado al iniciar sesión', 'error', null, { voiceOnly: false });
       } finally {
         // 5. Limpieza garantizada
         showLoading('startBtn', false);
