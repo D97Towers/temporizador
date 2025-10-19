@@ -5892,12 +5892,7 @@
       };
       
       // Reproducir inmediatamente
-      addToGlobalVoiceQueue(utterance.text || 'Test message', {
-  volume: utterance.volume,
-  rate: utterance.rate,
-  pitch: utterance.pitch,
-  lang: utterance.lang
-});
+      window.speechSynthesis.speak(utterance);
     }
     
     // Función definitiva para limpiar la cola global
