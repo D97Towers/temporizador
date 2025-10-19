@@ -3993,6 +3993,12 @@
     function showSmartAlert(text, type = 'success', sessionId = null, options = {}) {
       console.log(`🔔 showSmartAlert LLAMADA: "${text}" [${type}] sessionId: ${sessionId}`, options);
       
+      // REGLA CRÍTICA: ERRORES NUNCA TIENEN VOZ - SIN EXCEPCIONES
+      if (type === 'error' || type === 'danger') {
+        console.log('🔇 TIPO ERROR DETECTADO - VOZ COMPLETAMENTE DESACTIVADA');
+        options = { ...options, voiceOnly: false };
+      }
+      
       // VERIFICACIÓN CRÍTICA TEMPRANA: Si voiceOnly es false, desactivar voz inmediatamente
       if (options.voiceOnly === false) {
         console.log('🔇 VERIFICACIÓN TEMPRANA - VOZ DESACTIVADA por voiceOnly: false');
@@ -4022,11 +4028,11 @@
       }
       
       // Mostrar alerta de voz si está habilitada
-      // VERIFICACIÓN ADICIONAL: Si voiceOnly es false, nunca activar la voz
-      if (alertTypes.voice && voiceNotificationsEnabled && options.voiceOnly !== false) {
+      // VERIFICACIÓN ADICIONAL: Si voiceOnly es false O es un error, nunca activar la voz
+      if (alertTypes.voice && voiceNotificationsEnabled && options.voiceOnly !== false && type !== 'error' && type !== 'danger') {
         showVoiceAlert(text, type, options);
-      } else if (options.voiceOnly === false) {
-        console.log('🔇 VOZ DESACTIVADA EXPLÍCITAMENTE por voiceOnly: false');
+      } else if (options.voiceOnly === false || type === 'error' || type === 'danger') {
+        console.log('🔇 VOZ DESACTIVADA EXPLÍCITAMENTE - Razón:', type === 'error' || type === 'danger' ? 'TIPO ERROR' : 'voiceOnly: false');
       }
       
       // Mostrar notificación del navegador si está habilitada
@@ -6162,7 +6168,17 @@
     }
     
     function determineAlertTypes(type, options) {
-      // VERIFICACIÓN CRÍTICA: Si voiceOnly es explícitamente false, desactivar voz inmediatamente
+      // REGLA CRÍTICA 1: ERRORES NUNCA TIENEN VOZ - SIN EXCEPCIONES
+      if (type === 'error' || type === 'danger') {
+        console.log('🔇 TIPO ERROR DETECTADO EN determineAlertTypes - VOZ FORZADA A FALSE');
+        return {
+          visual: alertPreferences.showVisualAlerts,
+          voice: false, // FORZAR A FALSE PARA ERRORES
+          browser: alertPreferences.showBrowserNotifications
+        };
+      }
+      
+      // REGLA CRÍTICA 2: Si voiceOnly es explícitamente false, desactivar voz inmediatamente
       if (options.voiceOnly === false) {
         console.log('🔇 VOZ DESACTIVADA EXPLÍCITAMENTE - Retornando sin voz');
         return {
