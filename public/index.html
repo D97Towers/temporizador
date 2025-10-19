@@ -6419,7 +6419,7 @@
         if (text.includes('terminó su tiempo') || text.includes('Tiempo terminado')) {
           timeoutDuration = 12000; // 12 segundos para alertas de tiempo terminado
         } else if (text.includes('30 segundos')) {
-          timeoutDuration = 15000; // 15 segundos para alertas de 30 segundos
+          timeoutDuration = 7000; // 7 segundos para alertas de 30 segundos
         } else {
           timeoutDuration = text.length > 50 ? 8000 : 6000; // Más tiempo para texto largo
         }
