@@ -5080,6 +5080,170 @@
     // Hacer función global
     window.testDetectCancellations = testDetectCancellations;
     
+    // PRUEBA EXHAUSTIVA: Verificar TODOS los posibles causales del error
+    function testAllPossibleCauses() {
+      console.log('🔍 PRUEBA EXHAUSTIVA: Verificar TODOS los posibles causales del error');
+      console.log('='.repeat(80));
+      
+      const results = {
+        speechSynthesis: {},
+        voices: {},
+        browser: {},
+        timing: {},
+        conflicts: {},
+        errors: []
+      };
+      
+      // 1. VERIFICAR SPEECH SYNTHESIS BÁSICO
+      console.log('\n📊 CAUSAL 1: Speech Synthesis Básico');
+      try {
+        results.speechSynthesis.available = 'speechSynthesis' in window;
+        results.speechSynthesis.speak = typeof window.speechSynthesis.speak === 'function';
+        results.speechSynthesis.cancel = typeof window.speechSynthesis.cancel === 'function';
+        results.speechSynthesis.getVoices = typeof window.speechSynthesis.getVoices === 'function';
+        console.log('✅ Speech Synthesis básico:', results.speechSynthesis);
+      } catch (error) {
+        results.errors.push({ causal: 'speechSynthesis_basic', error: error.message });
+        console.log('❌ Error en Speech Synthesis básico:', error);
+      }
+      
+      // 2. VERIFICAR VOCES
+      console.log('\n📊 CAUSAL 2: Voces Disponibles');
+      try {
+        const voices = window.speechSynthesis.getVoices();
+        results.voices.total = voices.length;
+        results.voices.spanish = voices.filter(v => v.lang.startsWith('es')).length;
+        results.voices.english = voices.filter(v => v.lang.startsWith('en')).length;
+        results.voices.default = voices.filter(v => v.default).length;
+        console.log('✅ Voces:', results.voices);
+      } catch (error) {
+        results.errors.push({ causal: 'voices', error: error.message });
+        console.log('❌ Error en voces:', error);
+      }
+      
+      // 3. VERIFICAR NAVEGADOR
+      console.log('\n📊 CAUSAL 3: Navegador y Permisos');
+      try {
+        results.browser.userAgent = navigator.userAgent;
+        results.browser.language = navigator.language;
+        results.browser.online = navigator.onLine;
+        results.browser.cookieEnabled = navigator.cookieEnabled;
+        results.browser.mediaDevices = 'mediaDevices' in navigator;
+        results.browser.permissions = 'permissions' in navigator;
+        console.log('✅ Navegador:', results.browser);
+      } catch (error) {
+        results.errors.push({ causal: 'browser', error: error.message });
+        console.log('❌ Error en navegador:', error);
+      }
+      
+      // 4. VERIFICAR TIMING Y CONCURRENCIA
+      console.log('\n📊 CAUSAL 4: Timing y Concurrencia');
+      try {
+        results.timing.voiceQueueLength = voiceQueue.length;
+        results.timing.isVoicePlaying = isVoicePlaying;
+        results.timing.voiceQueueProcessing = voiceQueueProcessing;
+        results.timing.voiceNotificationsEnabled = voiceNotificationsEnabled;
+        results.timing.voiceSystemActivated = voiceSystemActivated;
+        console.log('✅ Timing:', results.timing);
+      } catch (error) {
+        results.errors.push({ causal: 'timing', error: error.message });
+        console.log('❌ Error en timing:', error);
+      }
+      
+      // 5. VERIFICAR CONFLICTOS DE AUDIO
+      console.log('\n📊 CAUSAL 5: Conflictos de Audio');
+      try {
+        results.conflicts.audioContext = typeof AudioContext !== 'undefined';
+        results.conflicts.webAudio = typeof window.AudioContext !== 'undefined';
+        results.conflicts.mediaDevices = 'mediaDevices' in navigator;
+        results.conflicts.autoplay = document.querySelector('audio, video') !== null;
+        console.log('✅ Conflictos:', results.conflicts);
+      } catch (error) {
+        results.errors.push({ causal: 'conflicts', error: error.message });
+        console.log('❌ Error en conflictos:', error);
+      }
+      
+      // 6. PRUEBA DE AUDIO REAL
+      console.log('\n📊 CAUSAL 6: Prueba de Audio Real');
+      try {
+        const testMessage = 'Prueba de audio exhaustiva';
+        const utterance = new SpeechSynthesisUtterance(testMessage);
+        
+        utterance.onstart = () => {
+          console.log('✅ Audio iniciado correctamente');
+        };
+        
+        utterance.onend = () => {
+          console.log('✅ Audio terminado correctamente');
+        };
+        
+        utterance.onerror = (error) => {
+          console.log('❌ Error en audio:', error);
+          results.errors.push({ causal: 'audio_test', error: error.error, message: testMessage });
+        };
+        
+        window.speechSynthesis.speak(utterance);
+        
+        // Esperar 3 segundos para ver si hay errores
+        setTimeout(() => {
+          console.log('✅ Prueba de audio completada');
+        }, 3000);
+        
+      } catch (error) {
+        results.errors.push({ causal: 'audio_test', error: error.message });
+        console.log('❌ Error en prueba de audio:', error);
+      }
+      
+      // 7. VERIFICAR MÚLTIPLES LLAMADAS SIMULTÁNEAS
+      console.log('\n📊 CAUSAL 7: Múltiples Llamadas Simultáneas');
+      try {
+        const messages = [
+          'Primer mensaje de prueba',
+          'Segundo mensaje de prueba',
+          'Tercer mensaje de prueba'
+        ];
+        
+        messages.forEach((message, index) => {
+          setTimeout(() => {
+            const utterance = new SpeechSynthesisUtterance(message);
+            utterance.onerror = (error) => {
+              console.log(`❌ Error en mensaje ${index + 1}:`, error);
+              results.errors.push({ causal: 'multiple_calls', error: error.error, message: message });
+            };
+            window.speechSynthesis.speak(utterance);
+          }, index * 1000);
+        });
+        
+      } catch (error) {
+        results.errors.push({ causal: 'multiple_calls', error: error.message });
+        console.log('❌ Error en múltiples llamadas:', error);
+      }
+      
+      // 8. REPORTE FINAL
+      setTimeout(() => {
+        console.log('\n📊 REPORTE FINAL EXHAUSTIVO:');
+        console.log('='.repeat(80));
+        console.log('📋 TODOS LOS RESULTADOS:');
+        console.log(JSON.stringify(results, null, 2));
+        
+        if (results.errors.length === 0) {
+          console.log('✅ ÉXITO: No se detectaron errores en ningún causal');
+        } else {
+          console.log('❌ PROBLEMAS DETECTADOS:');
+          results.errors.forEach((error, index) => {
+            console.log(`${index + 1}. Causal: ${error.causal}, Error: ${error.error}`);
+          });
+        }
+        
+        console.log('='.repeat(80));
+      }, 10000);
+      
+      return 'Prueba exhaustiva iniciada - revisar consola en 10 segundos';
+    }
+    
+    // Hacer función global
+    window.testAllPossibleCauses = testAllPossibleCauses;
+    
     // SISTEMA ADAPTATIVO DE REPETICIONES
     function calculateAdaptiveRepetitions(message, alertCount) {
       if (!adaptiveAlertSystem.enabled) {
