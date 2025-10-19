@@ -2771,10 +2771,6 @@
     // Sistema de alertas de tiempo pendientes
     let pendingTimeAlerts = new Map(); // Almacenar alertas de tiempo pendientes
     
-    // Sistema de debouncing para alertas de 30 segundos (solo visuales)
-    let last30SecondAlert = 0; // Timestamp de la última alerta de 30 segundos
-    const DEBOUNCE_30_SECONDS = 12000; // 12 segundos de debouncing
-    
     // Asegurar que las variables estén disponibles globalmente
     window.voiceNotificationsEnabled = voiceNotificationsEnabled;
     window.browserNotificationsEnabled = browserNotificationsEnabled;
@@ -4165,24 +4161,7 @@
       
       console.log(`📊 Procesando alerta individual para: ${childName}`);
       
-      // DEBOUNCING PARA ALERTAS DE 30 SEGUNDOS (SOLO VISUALES)
-      const now = Date.now();
-      const is30SecondAlert = text.includes('30 segundos');
-      
-      if (is30SecondAlert) {
-        const timeSinceLastAlert = now - last30SecondAlert;
-        
-        if (timeSinceLastAlert < DEBOUNCE_30_SECONDS) {
-          console.log(`⏱️ DEBOUNCING: Alerta de 30 segundos suprimida (${Math.round(timeSinceLastAlert/1000)}s desde la última). Esperando ${Math.round((DEBOUNCE_30_SECONDS - timeSinceLastAlert)/1000)}s más.`);
-          return; // Suprimir alerta de 30 segundos
-        }
-        
-        // Actualizar timestamp de la última alerta de 30 segundos
-        last30SecondAlert = now;
-        console.log(`✅ DEBOUNCING: Alerta de 30 segundos aprobada (${Math.round(timeSinceLastAlert/1000)}s desde la última)`);
-      }
-      
-      // MOSTRAR ALERTA VISUAL INMEDIATAMENTE
+      // MOSTRAR ALERTA VISUAL INMEDIATAMENTE (SIN DEBOUNCING)
       showVisualAlert(text, 'warning', sessionId);
       
       // NO LLAMAR showConsolidatedTimeAlert aquí - solo se debe llamar cuando realmente termina el tiempo
