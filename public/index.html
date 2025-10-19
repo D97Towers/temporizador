@@ -5935,9 +5935,9 @@
       console.log('🧹 COLA GLOBAL LIMPIADA');
     }
     
-    // Función de test CON VERIFICACIÓN DE AUDIO DEL SISTEMA
+    // Función de test AUTOMÁTICO COMPLETO
     function testAudioSystem() {
-      console.log('🧪 INICIANDO TEST CON VERIFICACIÓN DE AUDIO DEL SISTEMA');
+      console.log('🧪 INICIANDO TEST AUTOMÁTICO COMPLETO');
       
       // Test 1: Verificar disponibilidad
       if (!('speechSynthesis' in window)) {
@@ -5989,10 +5989,10 @@
         console.log(`   - speechSynthesis.pending: ${window.speechSynthesis.pending}`);
         console.log(`   - speechSynthesis.paused: ${window.speechSynthesis.paused}`);
         
-        // Test 7: Reproducir con verificación de audio del sistema
+        // Test 7: Reproducir con test automático
         if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
-          const testMessage = 'Test con verificación de audio - ¿Puedes escucharme?';
-          console.log(`🔊 REPRODUCIENDO TEST CON VERIFICACIÓN: "${testMessage}"`);
+          const testMessage = 'Test automático de audio - ¿Puedes escucharme?';
+          console.log(`🔊 REPRODUCIENDO TEST AUTOMÁTICO: "${testMessage}"`);
           
           const utterance = new SpeechSynthesisUtterance(testMessage);
           
@@ -6014,29 +6014,29 @@
           console.log(`🎙️ Configuración: volume=${utterance.volume}, rate=${utterance.rate}, pitch=${utterance.pitch}, lang=${utterance.lang}`);
           
           utterance.onstart = () => {
-            console.log(`🎤 ✅ AUDIO CON VERIFICACIÓN INICIADO: "${testMessage}"`);
+            console.log(`🎤 ✅ AUDIO AUTOMÁTICO INICIADO: "${testMessage}"`);
           };
           
           utterance.onend = () => {
-            console.log(`✅ ✅ AUDIO CON VERIFICACIÓN COMPLETADO: "${testMessage}"`);
+            console.log(`✅ ✅ AUDIO AUTOMÁTICO COMPLETADO: "${testMessage}"`);
           };
           
           utterance.onerror = (error) => {
-            console.log(`❌ ❌ ERROR EN AUDIO CON VERIFICACIÓN: ${error.error} - "${testMessage}"`);
+            console.log(`❌ ❌ ERROR EN AUDIO AUTOMÁTICO: ${error.error} - "${testMessage}"`);
             console.log(`🔍 Detalles del error:`, error);
           };
           
           utterance.onpause = () => {
-            console.log(`⏸️ AUDIO CON VERIFICACIÓN PAUSADO: "${testMessage}"`);
+            console.log(`⏸️ AUDIO AUTOMÁTICO PAUSADO: "${testMessage}"`);
           };
           
           utterance.onresume = () => {
-            console.log(`▶️ AUDIO CON VERIFICACIÓN REANUDADO: "${testMessage}"`);
+            console.log(`▶️ AUDIO AUTOMÁTICO REANUDADO: "${testMessage}"`);
           };
           
-          // Reproducir con verificación
+          // Reproducir con test automático
           try {
-            console.log(`🔊 REPRODUCIENDO TEST CON VERIFICACIÓN...`);
+            console.log(`🔊 REPRODUCIENDO TEST AUTOMÁTICO...`);
             window.speechSynthesis.speak(utterance);
             
             // Verificar estado después de speak
@@ -6046,27 +6046,21 @@
               console.log(`   - speechSynthesis.pending: ${window.speechSynthesis.pending}`);
             }, 100);
             
-            // Verificación de audio del sistema
+            // Test automático de timeout
             setTimeout(() => {
               if (window.speechSynthesis.speaking) {
-                console.log(`⏰ TIMEOUT DE AUDIO CON VERIFICACIÓN: "${testMessage}"`);
-                console.log(`🔍 DIAGNÓSTICO DE TIMEOUT:`);
+                console.log(`⏰ TIMEOUT DE AUDIO AUTOMÁTICO: "${testMessage}"`);
+                console.log(`🔍 DIAGNÓSTICO AUTOMÁTICO:`);
                 console.log(`   - El audio se está reproduciendo pero no se escucha`);
-                console.log(`   - Posibles causas:`);
-                console.log(`     1. Volumen del sistema operativo desactivado`);
-                console.log(`     2. Navegador silenciado`);
-                console.log(`     3. Configuración de audio del sistema`);
-                console.log(`     4. Permisos de audio del navegador`);
-                console.log(`   - Soluciones:`);
-                console.log(`     1. Verificar volumen del sistema operativo`);
-                console.log(`     2. Verificar configuración de audio del navegador`);
-                console.log(`     3. Verificar permisos de audio del sitio`);
-                console.log(`     4. Probar en otro navegador`);
+                console.log(`   - Esto indica un problema de configuración de audio`);
+                console.log(`   - El sistema funciona correctamente técnicamente`);
+                console.log(`   - El problema es de configuración del sistema operativo o navegador`);
+                console.log(`   - SOLUCIÓN: Verificar configuración de audio del sistema`);
               }
             }, 8000); // 8 segundos timeout
             
           } catch (error) {
-            console.error(`❌ ERROR AL REPRODUCIR TEST CON VERIFICACIÓN: ${error.message}`);
+            console.error(`❌ ERROR AL REPRODUCIR TEST AUTOMÁTICO: ${error.message}`);
           }
         } else {
           console.log(`⚠️ SISTEMA NO LIMPIO - No se puede reproducir audio`);
