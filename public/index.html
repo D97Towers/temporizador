@@ -4161,6 +4161,9 @@
       
       console.log(`📊 Procesando alerta individual para: ${childName}`);
       
+      // MOSTRAR ALERTA VISUAL INMEDIATAMENTE
+      showVisualAlert(text, 'warning', sessionId);
+      
       // NO LLAMAR showConsolidatedTimeAlert aquí - solo se debe llamar cuando realmente termina el tiempo
       // timeAlertTimeout = setTimeout(() => {
       //   showConsolidatedTimeAlert();
