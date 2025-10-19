@@ -5844,6 +5844,22 @@
       speakRobustAudio(queueItem.message, queueItem.options, queueItem.id);
     }
     
+    // FUNCIÓN PARA LIMPIAR TEXTO PARA VOZ NATURAL
+    function cleanTextForVoice(text) {
+      if (!text || typeof text !== 'string') return text;
+      
+      // Reemplazar símbolos problemáticos con palabras naturales
+      let cleanedText = text
+        .replace(/&/g, ' y ')  // & → y
+        .replace(/\(/g, ' ')   // ( → espacio
+        .replace(/\)/g, ' ')   // ) → espacio
+        .replace(/\s+/g, ' ')  // Múltiples espacios → un espacio
+        .trim();
+      
+      console.log(`🧹 Texto limpiado: "${text}" → "${cleanedText}"`);
+      return cleanedText;
+    }
+    
     // SISTEMA DE AUDIO SIMPLE Y FUNCIONAL
     function speakRobustAudio(message, options = {}, messageId = 'unknown') {
       console.log(`🔊 Reproduciendo: "${message}" (ID: ${messageId})`);
@@ -5857,11 +5873,14 @@
         return;
       }
       
+      // Limpiar texto para voz natural
+      const cleanedMessage = cleanTextForVoice(message);
+      
       // NO cancelar - puede interrumpir audio en curso
       // window.speechSynthesis.cancel();
       
       // Crear utterance simple
-      const utterance = new SpeechSynthesisUtterance(message);
+      const utterance = new SpeechSynthesisUtterance(cleanedMessage);
       
       // Configuración básica
       utterance.volume = 1.0;
@@ -5871,18 +5890,18 @@
       
       // Eventos simples
       utterance.onstart = () => {
-        console.log(`🎤 Iniciando: "${message}"`);
+        console.log(`🎤 Iniciando: "${cleanedMessage}"`);
       };
       
       utterance.onend = () => {
-        console.log(`✅ Completado: "${message}"`);
+        console.log(`✅ Completado: "${cleanedMessage}"`);
         isGlobalVoicePlaying = false;
         globalVoiceProcessing = false;
         setTimeout(() => processGlobalVoiceQueue(), 1000);
       };
       
       utterance.onerror = (error) => {
-        console.log(`❌ Error: ${error.error} - "${message}"`);
+        console.log(`❌ Error: ${error.error} - "${cleanedMessage}"`);
         isGlobalVoicePlaying = false;
         globalVoiceProcessing = false;
         setTimeout(() => processGlobalVoiceQueue(), 1000);
