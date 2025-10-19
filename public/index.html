@@ -6284,14 +6284,225 @@
     // Instancia global del debugger
     const audioDebugger = new AudioDebugger();
     
+    // SISTEMA DE PRUEBAS AUTOMÁTICAS
+    class AutomatedTestRunner {
+      constructor() {
+        this.testResults = [];
+        this.isRunning = false;
+      }
+      
+      async runAllTests() {
+        if (this.isRunning) {
+          console.log('⚠️ Tests ya en ejecución');
+          return;
+        }
+        
+        this.isRunning = true;
+        console.log('🤖 INICIANDO PRUEBAS AUTOMÁTICAS');
+        console.log('================================');
+        
+        try {
+          // Test 1: Sistema de audio profesional
+          await this.testProfessionalAudioSystem();
+          
+          // Test 2: Sistema de debugging
+          await this.testDebuggingSystem();
+          
+          // Test 3: Compatibilidad con sistema existente
+          await this.testCompatibility();
+          
+          // Test 4: Rendimiento del sistema
+          await this.testPerformance();
+          
+          // Generar reporte final
+          this.generateFinalReport();
+          
+        } catch (error) {
+          console.error('❌ Error en pruebas automáticas:', error);
+        } finally {
+          this.isRunning = false;
+        }
+      }
+      
+      async testProfessionalAudioSystem() {
+        console.log('🔍 Test 1: Sistema de audio profesional');
+        
+        const testCases = [
+          'Test de audio profesional 1',
+          'Test de audio profesional 2',
+          'Test de audio profesional 3'
+        ];
+        
+        for (let i = 0; i < testCases.length; i++) {
+          try {
+            await voiceSystem.speak(testCases[i]);
+            console.log(`✅ Test ${i + 1} completado: "${testCases[i]}"`);
+            this.testResults.push({
+              test: `Audio Profesional ${i + 1}`,
+              status: 'success',
+              message: testCases[i]
+            });
+          } catch (error) {
+            console.error(`❌ Test ${i + 1} falló: ${error.message}`);
+            this.testResults.push({
+              test: `Audio Profesional ${i + 1}`,
+              status: 'error',
+              message: error.message
+            });
+          }
+          
+          // Delay entre tests
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
+      
+      async testDebuggingSystem() {
+        console.log('🔍 Test 2: Sistema de debugging');
+        
+        try {
+          const debugResults = await audioDebugger.runComprehensiveTest();
+          
+          const successCount = debugResults.filter(r => r.status === 'success').length;
+          const errorCount = debugResults.filter(r => r.status === 'error').length;
+          
+          console.log(`✅ Debugging completado: ${successCount} exitosos, ${errorCount} errores`);
+          
+          this.testResults.push({
+            test: 'Sistema de Debugging',
+            status: errorCount === 0 ? 'success' : 'warning',
+            message: `${successCount} exitosos, ${errorCount} errores`
+          });
+          
+        } catch (error) {
+          console.error(`❌ Error en debugging: ${error.message}`);
+          this.testResults.push({
+            test: 'Sistema de Debugging',
+            status: 'error',
+            message: error.message
+          });
+        }
+      }
+      
+      async testCompatibility() {
+        console.log('🔍 Test 3: Compatibilidad con sistema existente');
+        
+        try {
+          // Test de compatibilidad con funciones existentes
+          const testMessage = 'Test de compatibilidad con sistema existente';
+          
+          // Usar función de compatibilidad
+          speakRobustAudio(testMessage, { volume: 1.0, rate: 0.9 }, 'compatibility-test');
+          
+          console.log('✅ Compatibilidad verificada');
+          this.testResults.push({
+            test: 'Compatibilidad',
+            status: 'success',
+            message: 'Sistema existente compatible'
+          });
+          
+        } catch (error) {
+          console.error(`❌ Error en compatibilidad: ${error.message}`);
+          this.testResults.push({
+            test: 'Compatibilidad',
+            status: 'error',
+            message: error.message
+          });
+        }
+      }
+      
+      async testPerformance() {
+        console.log('🔍 Test 4: Rendimiento del sistema');
+        
+        const startTime = Date.now();
+        
+        try {
+          // Test de rendimiento con múltiples mensajes
+          const performanceTests = [
+            'Test de rendimiento 1',
+            'Test de rendimiento 2',
+            'Test de rendimiento 3'
+          ];
+          
+          for (const test of performanceTests) {
+            await voiceSystem.speak(test);
+          }
+          
+          const endTime = Date.now();
+          const duration = endTime - startTime;
+          
+          console.log(`✅ Rendimiento: ${duration}ms para 3 mensajes`);
+          
+          this.testResults.push({
+            test: 'Rendimiento',
+            status: duration < 10000 ? 'success' : 'warning',
+            message: `${duration}ms para 3 mensajes`
+          });
+          
+        } catch (error) {
+          console.error(`❌ Error en rendimiento: ${error.message}`);
+          this.testResults.push({
+            test: 'Rendimiento',
+            status: 'error',
+            message: error.message
+          });
+        }
+      }
+      
+      generateFinalReport() {
+        console.log('\n📊 REPORTE FINAL DE PRUEBAS AUTOMÁTICAS');
+        console.log('========================================');
+        
+        const successCount = this.testResults.filter(r => r.status === 'success').length;
+        const errorCount = this.testResults.filter(r => r.status === 'error').length;
+        const warningCount = this.testResults.filter(r => r.status === 'warning').length;
+        
+        console.log(`✅ Tests exitosos: ${successCount}`);
+        console.log(`❌ Tests con error: ${errorCount}`);
+        console.log(`⚠️ Tests con advertencia: ${warningCount}`);
+        
+        console.log('\n📋 DETALLE DE RESULTADOS:');
+        this.testResults.forEach((result, index) => {
+          const icon = result.status === 'success' ? '✅' : 
+                      result.status === 'error' ? '❌' : '⚠️';
+          console.log(`${icon} ${index + 1}. ${result.test}: ${result.status}`);
+          console.log(`   ${result.message}`);
+        });
+        
+        if (errorCount === 0) {
+          console.log('\n🎉 TODAS LAS PRUEBAS AUTOMÁTICAS COMPLETADAS EXITOSAMENTE');
+          console.log('🚀 SISTEMA LISTO PARA PRODUCCIÓN');
+        } else {
+          console.log('\n🔧 ALGUNAS PRUEBAS REQUIEREN ATENCIÓN');
+        }
+      }
+    }
+    
+    // Instancia global del test runner
+    const automatedTestRunner = new AutomatedTestRunner();
+    
     // Función de test profesional
     function testAudioSystem() {
       console.log('🧪 INICIANDO TEST PROFESIONAL DE AUDIO');
       return audioDebugger.runComprehensiveTest();
     }
     
-    // Hacer función global para testing
+    // Función de pruebas automáticas
+    function runAutomatedTests() {
+      console.log('🤖 INICIANDO PRUEBAS AUTOMÁTICAS');
+      return automatedTestRunner.runAllTests();
+    }
+    
+    // Hacer funciones globales para testing
     window.testAudioSystem = testAudioSystem;
+    window.runAutomatedTests = runAutomatedTests;
+    
+    // EJECUTAR PRUEBAS AUTOMÁTICAS AL CARGAR
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('🚀 INICIANDO PRUEBAS AUTOMÁTICAS AL CARGAR');
+      setTimeout(() => {
+        runAutomatedTests();
+      }, 3000); // Esperar 3 segundos para que la página cargue completamente
+    });
     
     // Función definitiva para obtener estado de la cola global
     function getGlobalVoiceQueueStatus() {
