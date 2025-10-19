@@ -5675,6 +5675,61 @@
     // Hacer función global
     window.testExtremeStressScenario = testExtremeStressScenario;
     
+    // SISTEMA DE REINTENTO AUTOMÁTICO PARA INTERRUPCIONES EXTERNAS
+    function createRobustUtterance(message, options = {}) {
+      const utterance = new SpeechSynthesisUtterance(message);
+      
+      // Configuración robusta
+      utterance.volume = options.volume || 1.0;
+      utterance.rate = options.rate || 1.0;
+      utterance.pitch = options.pitch || 1.0;
+      utterance.lang = options.lang || 'es-ES';
+      
+      // Sistema de reintento automático
+      let retryCount = 0;
+      const maxRetries = options.maxRetries || 3;
+      const retryDelay = options.retryDelay || 2000;
+      
+      utterance.onerror = (error) => {
+        console.log(`❌ Error en audio: ${error.error} - Mensaje: "${message}"`);
+        
+        if (error.error === 'interrupted' && retryCount < maxRetries) {
+          retryCount++;
+          console.log(`🔄 Reintentando audio (${retryCount}/${maxRetries}): "${message}"`);
+          
+          setTimeout(() => {
+            const retryUtterance = createRobustUtterance(message, {
+              ...options,
+              maxRetries: maxRetries - 1
+            });
+            window.speechSynthesis.speak(retryUtterance);
+          }, retryDelay);
+        } else {
+          console.log(`❌ Máximo de reintentos alcanzado para: "${message}"`);
+        }
+      };
+      
+      utterance.onstart = () => {
+        console.log(`🎤 Audio iniciado: "${message}"`);
+      };
+      
+      utterance.onend = () => {
+        console.log(`✅ Audio completado: "${message}"`);
+      };
+      
+      return utterance;
+    }
+    
+    // Función mejorada para reproducir audio con reintento automático
+    function speakWithRetry(message, options = {}) {
+      const utterance = createRobustUtterance(message, options);
+      window.speechSynthesis.speak(utterance);
+    }
+    
+    // Hacer funciones globales
+    window.createRobustUtterance = createRobustUtterance;
+    window.speakWithRetry = speakWithRetry;
+    
     // SISTEMA ADAPTATIVO DE REPETICIONES
     function calculateAdaptiveRepetitions(message, alertCount) {
       if (!adaptiveAlertSystem.enabled) {
