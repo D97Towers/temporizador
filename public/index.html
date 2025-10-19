@@ -2768,6 +2768,9 @@
       audioContaminationPrevention: true // Prevenir contaminación de audio
     };
     
+    // Sistema de alertas de tiempo pendientes
+    let pendingTimeAlerts = new Map(); // Almacenar alertas de tiempo pendientes
+    
     // Asegurar que las variables estén disponibles globalmente
     window.voiceNotificationsEnabled = voiceNotificationsEnabled;
     window.browserNotificationsEnabled = browserNotificationsEnabled;
@@ -7865,6 +7868,7 @@
           
           // SOLO ALERTAR UNA VEZ A LOS 30 SEGUNDOS - NO CADA SEGUNDO
           if (remainingSeconds === 30) {
+            console.log(`🚨 ALERTA DE 30 SEGUNDOS: ${childDisplayName}${parentsText}`);
             showStatusMessage(`¡Atención! A ${childDisplayName}${parentsText} le quedan solo 30 segundos`, 'warning', sessionId, { voiceOnly: false });
           }
         }
