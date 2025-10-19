@@ -5935,9 +5935,9 @@
       console.log('🧹 COLA GLOBAL LIMPIADA');
     }
     
-    // Función de test CON LIMPIEZA COMPLETA DEL SISTEMA
+    // Función de test AUTOMÁTICO CON DIAGNÓSTICO COMPLETO
     function testAudioSystem() {
-      console.log('🧪 INICIANDO TEST DE AUDIO CON LIMPIEZA COMPLETA');
+      console.log('🧪 INICIANDO TEST AUTOMÁTICO DE AUDIO');
       
       // Test 1: Verificar disponibilidad
       if (!('speechSynthesis' in window)) {
@@ -5945,8 +5945,25 @@
         return false;
       }
       
-      // Test 2: DETENER TODOS LOS PROCESOS DE AUDIO
-      console.log(`🛑 DETENIENDO TODOS LOS PROCESOS DE AUDIO...`);
+      // Test 2: Diagnóstico completo del sistema
+      console.log(`🔍 DIAGNÓSTICO COMPLETO:`);
+      console.log(`   - speechSynthesis.speaking: ${window.speechSynthesis.speaking}`);
+      console.log(`   - speechSynthesis.pending: ${window.speechSynthesis.pending}`);
+      console.log(`   - speechSynthesis.paused: ${window.speechSynthesis.paused}`);
+      
+      // Test 3: Verificar voces disponibles
+      const voices = window.speechSynthesis.getVoices();
+      console.log(`🎙️ Voces disponibles: ${voices.length}`);
+      
+      const spanishVoices = voices.filter(v => v.lang.startsWith('es'));
+      console.log(`🇪🇸 Voces en español: ${spanishVoices.length}`);
+      
+      if (spanishVoices.length > 0) {
+        console.log(`🎤 Primera voz en español: ${spanishVoices[0].name} (${spanishVoices[0].lang})`);
+      }
+      
+      // Test 4: Limpiar sistema completamente
+      console.log(`🧹 LIMPIANDO SISTEMA COMPLETAMENTE...`);
       
       // Detener cola global
       if (typeof clearGlobalVoiceQueue === 'function') {
@@ -5958,55 +5975,75 @@
       window.speechSynthesis.cancel();
       console.log(`🧹 SpeechSynthesis cancelado`);
       
-      // Esperar limpieza completa
+      // Test 5: Esperar y verificar limpieza
       setTimeout(() => {
-        console.log(`🔍 ESTADO DESPUÉS DE LIMPIEZA COMPLETA:`);
+        console.log(`🔍 ESTADO DESPUÉS DE LIMPIEZA:`);
         console.log(`   - speechSynthesis.speaking: ${window.speechSynthesis.speaking}`);
         console.log(`   - speechSynthesis.pending: ${window.speechSynthesis.pending}`);
         console.log(`   - speechSynthesis.paused: ${window.speechSynthesis.paused}`);
         
-        // Test 3: Reproducir SOLO si el sistema está limpio
+        // Test 6: Reproducir con diagnóstico completo
         if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
-          const testMessage = 'Test de audio limpio - ¿Puedes escucharme?';
-          console.log(`🔊 REPRODUCIENDO AUDIO LIMPIO: "${testMessage}"`);
+          const testMessage = 'Test automático de audio - ¿Puedes escucharme?';
+          console.log(`🔊 REPRODUCIENDO TEST AUTOMÁTICO: "${testMessage}"`);
           
           const utterance = new SpeechSynthesisUtterance(testMessage);
           
-          // Configuración ultra básica
+          // Configuración con voz específica
+          if (spanishVoices.length > 0) {
+            utterance.voice = spanishVoices[0];
+            console.log(`🎙️ Usando voz: ${spanishVoices[0].name} (${spanishVoices[0].lang})`);
+          }
+          
           utterance.volume = 1.0;
-          utterance.rate = 0.8;
+          utterance.rate = 1.0;
           utterance.pitch = 1.0;
           utterance.lang = 'es-ES';
           
           console.log(`🎙️ Configuración: volume=${utterance.volume}, rate=${utterance.rate}, pitch=${utterance.pitch}, lang=${utterance.lang}`);
           
           utterance.onstart = () => {
-            console.log(`🎤 ✅ AUDIO LIMPIO INICIADO: "${testMessage}"`);
+            console.log(`🎤 ✅ AUDIO AUTOMÁTICO INICIADO: "${testMessage}"`);
           };
           
           utterance.onend = () => {
-            console.log(`✅ ✅ AUDIO LIMPIO COMPLETADO: "${testMessage}"`);
+            console.log(`✅ ✅ AUDIO AUTOMÁTICO COMPLETADO: "${testMessage}"`);
           };
           
           utterance.onerror = (error) => {
-            console.log(`❌ ❌ ERROR EN AUDIO LIMPIO: ${error.error} - "${testMessage}"`);
+            console.log(`❌ ❌ ERROR EN AUDIO AUTOMÁTICO: ${error.error} - "${testMessage}"`);
             console.log(`🔍 Detalles del error:`, error);
           };
           
-          // Reproducir SOLO si el sistema está limpio
+          utterance.onpause = () => {
+            console.log(`⏸️ AUDIO AUTOMÁTICO PAUSADO: "${testMessage}"`);
+          };
+          
+          utterance.onresume = () => {
+            console.log(`▶️ AUDIO AUTOMÁTICO REANUDADO: "${testMessage}"`);
+          };
+          
+          // Reproducir con diagnóstico
           try {
-            console.log(`🔊 REPRODUCIENDO AUDIO LIMPIO...`);
+            console.log(`🔊 REPRODUCIENDO TEST AUTOMÁTICO...`);
             window.speechSynthesis.speak(utterance);
             
             // Verificar estado después de speak
             setTimeout(() => {
-              console.log(`🔍 ESTADO DESPUÉS DE SPEAK LIMPIO:`);
+              console.log(`🔍 ESTADO DESPUÉS DE SPEAK:`);
               console.log(`   - speechSynthesis.speaking: ${window.speechSynthesis.speaking}`);
               console.log(`   - speechSynthesis.pending: ${window.speechSynthesis.pending}`);
             }, 100);
             
+            // Timeout de seguridad
+            setTimeout(() => {
+              if (window.speechSynthesis.speaking) {
+                console.log(`⏰ TIMEOUT DE AUDIO AUTOMÁTICO: "${testMessage}"`);
+              }
+            }, 10000);
+            
           } catch (error) {
-            console.error(`❌ ERROR AL REPRODUCIR AUDIO LIMPIO: ${error.message}`);
+            console.error(`❌ ERROR AL REPRODUCIR TEST AUTOMÁTICO: ${error.message}`);
           }
         } else {
           console.log(`⚠️ SISTEMA NO LIMPIO - No se puede reproducir audio`);
