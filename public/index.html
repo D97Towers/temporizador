@@ -5506,6 +5506,175 @@
     // Hacer función global
     window.testProductionScenario = testProductionScenario;
     
+    // PRUEBA DE ESTRÉS EXTREMO: Simular condiciones extremas que causan interrupciones
+    function testExtremeStressScenario() {
+      console.log('💥 PRUEBA DE ESTRÉS EXTREMO: Simular condiciones extremas que causan interrupciones');
+      console.log('='.repeat(80));
+      
+      let interruptionCount = 0;
+      let successCount = 0;
+      const interruptionDetails = [];
+      
+      // Función para crear utterance con monitoreo extremo
+      function createExtremeUtterance(message, id) {
+        const utterance = new SpeechSynthesisUtterance(message);
+        
+        utterance.onstart = () => {
+          console.log(`🎤 ESTRÉS - Audio iniciado: "${message}" (ID: ${id})`);
+        };
+        
+        utterance.onend = () => {
+          console.log(`✅ ESTRÉS - Audio terminado: "${message}" (ID: ${id})`);
+          successCount++;
+        };
+        
+        utterance.onerror = (error) => {
+          interruptionCount++;
+          const detail = {
+            id: id,
+            message: message,
+            error: error.error,
+            timestamp: new Date().toISOString(),
+            stack: new Error().stack,
+            userAgent: navigator.userAgent,
+            language: navigator.language,
+            online: navigator.onLine,
+            memory: performance.memory ? performance.memory.usedJSHeapSize : 'N/A'
+          };
+          interruptionDetails.push(detail);
+          
+          console.log(`❌ ESTRÉS - INTERRUPCIÓN DETECTADA #${interruptionCount}:`, detail);
+          
+          // Si es 'interrupted', intentar reanudar con delay extremo
+          if (error.error === 'interrupted') {
+            console.log(`🔄 ESTRÉS - Reintentando mensaje interrumpido: "${message}"`);
+            setTimeout(() => {
+              const retryUtterance = createExtremeUtterance(message, `${id}-retry`);
+              window.speechSynthesis.speak(retryUtterance);
+            }, 3000); // Delay extremo para estrés
+          }
+        };
+        
+        utterance.onpause = () => {
+          console.log(`⏸️ ESTRÉS - Audio pausado: "${message}" (ID: ${id})`);
+        };
+        
+        utterance.onresume = () => {
+          console.log(`▶️ ESTRÉS - Audio reanudado: "${message}" (ID: ${id})`);
+        };
+        
+        return utterance;
+      }
+      
+      // Simular condiciones extremas de estrés
+      const stressMessages = [
+        '¡Atención! A sofia le quedan solo 30 segundos',
+        '¡Atención! A mathias le quedan solo 30 segundos',
+        '¡Atención! A cristian le quedan solo 30 segundos',
+        '¡Atención! A david le quedan solo 30 segundos',
+        '¡Atención! A martin le quedan solo 30 segundos',
+        '¡Atención! A ramon le quedan solo 30 segundos',
+        '¡Atención! A santiago le quedan solo 30 segundos',
+        '¡Atención! sofia, mathias, cristian, david, martin, ramon y santiago han terminado su tiempo de juego',
+        '¡Atención! Por favor, padres, recojan a sus hijos inmediatamente',
+        '¡Atención! Sistema de alertas activado para múltiples niños'
+      ];
+      
+      console.log('🚀 Iniciando simulación de condiciones extremas de estrés...');
+      
+      // Enviar mensajes con timing extremo (muy rápido)
+      stressMessages.forEach((message, index) => {
+        setTimeout(() => {
+          console.log(`📤 ESTRÉS - Enviando mensaje ${index + 1}/${stressMessages.length}: "${message}"`);
+          const utterance = createExtremeUtterance(message, `stress-${index + 1}`);
+          window.speechSynthesis.speak(utterance);
+        }, index * 500); // 0.5 segundos entre mensajes (extremadamente rápido)
+      });
+      
+      // Simular condiciones extremas de estrés
+      setTimeout(() => {
+        console.log('🖱️ ESTRÉS - Simulando interacción extrema del usuario...');
+        // Scroll extremo
+        for (let i = 0; i < 10; i++) {
+          setTimeout(() => {
+            window.scrollTo(0, Math.random() * 1000);
+          }, i * 100);
+        }
+      }, 1000);
+      
+      setTimeout(() => {
+        console.log('🔄 ESTRÉS - Simulando cambio de foco extremo...');
+        // Cambio de foco extremo
+        for (let i = 0; i < 5; i++) {
+          setTimeout(() => {
+            window.blur();
+            setTimeout(() => window.focus(), 100);
+          }, i * 200);
+        }
+      }, 2000);
+      
+      setTimeout(() => {
+        console.log('📱 ESTRÉS - Simulando notificaciones extremas...');
+        // Múltiples notificaciones
+        for (let i = 0; i < 3; i++) {
+          setTimeout(() => {
+            if ('Notification' in window) {
+              Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                  new Notification(`Notificación de estrés ${i + 1}`, {
+                    body: 'Esta notificación podría interrumpir el audio',
+                    icon: '/favicon.ico'
+                  });
+                }
+              });
+            }
+          }, i * 1000);
+        }
+      }, 3000);
+      
+      setTimeout(() => {
+        console.log('💾 ESTRÉS - Simulando carga de memoria...');
+        // Cargar memoria para simular estrés
+        const memoryStress = [];
+        for (let i = 0; i < 1000; i++) {
+          memoryStress.push(new Array(1000).fill(Math.random()));
+        }
+      }, 4000);
+      
+      // Reporte final después de 20 segundos
+      setTimeout(() => {
+        console.log('\n📊 REPORTE FINAL DE ESTRÉS EXTREMO:');
+        console.log('='.repeat(80));
+        console.log(`✅ Mensajes exitosos: ${successCount}`);
+        console.log(`❌ Interrupciones detectadas: ${interruptionCount}`);
+        console.log(`📊 Tasa de éxito: ${((successCount / (successCount + interruptionCount)) * 100).toFixed(1)}%`);
+        
+        if (interruptionDetails.length > 0) {
+          console.log('\n🔍 DETALLES DE INTERRUPCIONES EN ESTRÉS:');
+          interruptionDetails.forEach((detail, index) => {
+            console.log(`${index + 1}. ID: ${detail.id}, Error: ${detail.error}, Mensaje: "${detail.message}"`);
+            console.log(`   Timestamp: ${detail.timestamp}`);
+            console.log(`   Memory: ${detail.memory}`);
+            console.log(`   Online: ${detail.online}`);
+          });
+        }
+        
+        if (interruptionCount === 0) {
+          console.log('✅ ÉXITO: Sistema estable incluso en condiciones extremas de estrés');
+        } else {
+          console.log('❌ PROBLEMA: Se detectaron interrupciones en condiciones extremas de estrés');
+          console.log('🔍 Analizar detalles para identificar patrón de interrupciones en estrés');
+        }
+        
+        console.log('='.repeat(80));
+      }, 20000);
+      
+      return 'Prueba de estrés extremo iniciada - revisar consola en 20 segundos';
+    }
+    
+    // Hacer función global
+    window.testExtremeStressScenario = testExtremeStressScenario;
+    
     // SISTEMA ADAPTATIVO DE REPETICIONES
     function calculateAdaptiveRepetitions(message, alertCount) {
       if (!adaptiveAlertSystem.enabled) {
