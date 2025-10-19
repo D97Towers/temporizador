@@ -8936,22 +8936,12 @@
       console.log('🎤 Activando sistema de voz por interacción del usuario...');
       console.log('🔊 Estado actual:', { voiceSystemActivated, voiceNotificationsEnabled });
       
-      // Hacer un test rápido para activar el sistema - SIEMPRE en producción
+      // Simplemente marcar como activado sin reproducir ningún audio
+      // No necesitamos hacer un test de audio aquí, solo activar el sistema
       try {
-        const testUtterance = new SpeechSynthesisUtterance('');
-        testUtterance.volume = 0.01;
-        addToGlobalVoiceQueue(testUtterance.text || 'Test message', {
-          volume: testUtterance.volume,
-          rate: testUtterance.rate,
-          pitch: testUtterance.pitch,
-          lang: testUtterance.lang
-        });
-        // NO cancelar - puede interrumpir audio en curso
-        // window.speechSynthesis.cancel();
-        
         voiceSystemActivated = true;
         window.voiceSystemActivated = true; // Actualizar variable global
-        console.log('✅ Sistema de voz activado para producción');
+        console.log('✅ Sistema de voz activado para producción (sin audio de prueba)');
       } catch (error) {
         console.error('❌ Error activando sistema de voz:', error);
       }
