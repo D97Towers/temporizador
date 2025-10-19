@@ -5870,8 +5870,8 @@
         return;
       }
       
-      // Limpiar sistema antes de reproducir
-      window.speechSynthesis.cancel();
+      // NO cancelar - puede interrumpir audio en curso
+      // window.speechSynthesis.cancel();
       
       // Crear utterance simple
       const utterance = new SpeechSynthesisUtterance(message);
@@ -5917,7 +5917,8 @@
       globalVoiceQueue = [];
       isGlobalVoicePlaying = false;
       globalVoiceProcessing = false;
-      window.speechSynthesis.cancel();
+      // NO cancelar - puede interrumpir audio en curso
+      // window.speechSynthesis.cancel();
       console.log('🧹 COLA GLOBAL LIMPIADA');
     }
     
@@ -8273,8 +8274,8 @@
           timerIntervals.delete(sessionId);
         }
         
-        // 🚨 CRÍTICO: Cancelar todas las alertas de voz pendientes
-        window.speechSynthesis.cancel();
+        // 🚨 CRÍTICO: Limpiar cola sin cancelar audio en curso
+        // window.speechSynthesis.cancel(); // NO cancelar - puede interrumpir
         voiceQueue.length = 0;
         isVoicePlaying = false;
         voiceQueueProcessing = false;
