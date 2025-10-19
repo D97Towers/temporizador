@@ -3622,7 +3622,7 @@
       if (options.consolidated && options.pendingAlerts) {
         // Para alertas consolidadas, usar el sistema de repetición
         console.log('🔊 Usando speakAlertWithRepetitionFixed para alertas consolidadas');
-        speakAlertWithRepetitionFixedFixed(options.pendingAlerts, options.alertCount);
+        speakAlertWithRepetitionFixed(options.pendingAlerts, options.alertCount);
       } else {
         // Para alertas simples, usar voz híbrida
         console.log('🔊 Usando speakWithHybridVoice para alerta simple:', text);
@@ -4112,7 +4112,7 @@
         // Activar notificaciones de voz si están habilitadas
         if (voiceNotificationsEnabled) {
           console.log(`🔊 ACTIVANDO NOTIFICACIONES DE VOZ`);
-          speakAlertWithRepetitionFixedFixed(alerts, alertCount);
+          speakAlertWithRepetitionFixed(alerts, alertCount);
         }
         
         // Limpiar alertas pendientes
@@ -6742,135 +6742,7 @@
       console.log(`🔊 Alerta adaptativa programada: ${alertCount} niño(s) - ${repetitions.length} repeticiones`);
     }
     
-    // 🚨 REEMPLAZAR FUNCIÓN PRINCIPAL CON SISTEMA DE COLA GLOBAL
-    async function speakAlertWithRepetitionFixedFixed(pendingAlerts, alertCount) {
-      if (!voiceNotificationsEnabled) {
-        console.log(`🔇 Voz deshabilitada, saltando speakAlertWithRepetitionFixedFixed`);
-        return;
-      }
-      
-      console.log(`🧠 SISTEMA DEFINITIVO: Procesando ${alertCount} alertas`);
-      console.log(`📊 pendingAlerts:`, pendingAlerts);
-      
-      // VALIDAR DATOS DE ENTRADA
-      if (!pendingAlerts || pendingAlerts.length === 0) {
-        console.log(`⚠️ speakAlertWithRepetitionFixedFixed: pendingAlerts vacío o inválido`);
-        return;
-      }
-      
-      // EXTRAER NOMBRES CON VALIDACIÓN ROBUSTA
-      console.log(`🔍 DEBUG: Estructura de pendingAlerts:`, pendingAlerts.map(alert => ({
-        text: alert.text,
-        hasText: !!alert.text,
-        textType: typeof alert.text,
-        keys: Object.keys(alert)
-      })));
-      
-      const childNames = pendingAlerts.map(alert => {
-        console.log(`🔍 DEBUG: Procesando alert:`, alert);
-        
-        // MANEJAR DOS TIPOS DE ESTRUCTURA:
-        let name = null;
-        
-        if (alert.name) {
-          // Estructura: {name: 'sofia', parents: 'Papá: fernando'}
-          name = alert.name;
-          console.log(`🔍 DEBUG: Nombre directo: "${name}"`);
-        } else if (alert.text) {
-          // Estructura: {text: '¡Atención! A sofia le quedan solo 30 segundos'}
-          name = extractChildNameFromAlert(alert.text);
-          console.log(`🔍 DEBUG: Nombre extraído de texto: "${name}"`);
-        }
-        
-        console.log(`🔍 DEBUG: Nombre final: "${name}"`);
-        return name && name !== 'null' ? name : null;
-      }).filter(name => name !== null);
-      
-      console.log(`👶 NOMBRES EXTRAÍDOS:`, childNames);
-      
-      if (childNames.length === 0) {
-        console.log(`⚠️ speakAlertWithRepetitionFixedFixed: No se pudieron extraer nombres de niños`);
-        return;
-      }
-      
-      // GENERAR MENSAJE SEGÚN ESCENARIOS CON INFORMACIÓN DE PADRES
-      let message;
-      
-      // Obtener información de padres de pendingAlerts
-      const childrenWithParents = pendingAlerts.map(alert => {
-        let childName = null;
-        let parentsInfo = '';
-        
-        if (alert.name) {
-          // Estructura: {name: 'sofia', parents: 'Papá: fernando'}
-          childName = alert.name;
-          parentsInfo = alert.parents ? ` (${alert.parents})` : '';
-        } else if (alert.text) {
-          // Estructura: {text: '¡Atención! A sofia le quedan solo 30 segundos'}
-          childName = extractChildNameFromAlert(alert.text);
-          // Buscar información del niño en childrenCache
-          const child = childrenCache.find(c => c.name === childName);
-          
-          if (child) {
-            parentsInfo = getParentsInfo(child, 'simple');
-          }
-        }
-        
-        return { name: childName, parents: parentsInfo };
-      });
-      
-      if (alertCount === 1 && childrenWithParents.length === 1) {
-        const child = childrenWithParents[0];
-        const gender = detectGenderByName(child.name);
-        const relationship = gender === 'female' ? 'hija' : (gender === 'male' ? 'hijo' : 'niño');
-        
-        // Formatear padres para que se escuche natural
-        let parentsPhrase = '';
-        if (child.parents) {
-          // child.parents viene como " (Papá: luis & Mamá: ana)" o " (Papá: luis)" o " (Mamá: ana)"
-          // Necesitamos convertirlo a algo natural para escuchar
-          const parentsClean = child.parents.replace(/[()]/g, '').trim();
-          if (parentsClean) {
-            parentsPhrase = `. ${parentsClean}, por favor recoge a tu ${relationship}`;
-          } else {
-            parentsPhrase = `. Por favor, recoge a tu ${relationship}`;
-          }
-        } else {
-          parentsPhrase = `. Por favor, recoge a tu ${relationship}`;
-        }
-        
-        message = `Hola, ${child.name} ha terminado su tiempo de juego${parentsPhrase}`;
-      } else if (alertCount === 2 && childrenWithParents.length === 2) {
-        const child1 = childrenWithParents[0];
-        const child2 = childrenWithParents[1];
-        
-        // Formatear para 2 niños
-        const parents1 = child1.parents ? child1.parents.replace(/[()]/g, '').trim() : '';
-        const parents2 = child2.parents ? child2.parents.replace(/[()]/g, '').trim() : '';
-        
-        message = `Hola, ${child1.name}${parents1} y ${child2.name}${parents2} han terminado su tiempo de juego. Por favor, recójanlos`;
-      } else {
-        // Para 3 o más niños, usar mensaje consolidado
-        const namesList = childrenWithParents.map(child => {
-          const parents = child.parents ? child.parents.replace(/[()]/g, '').trim() : '';
-          return `${child.name}${parents}`;
-        }).join(', ');
-        
-        message = `Hola, ${namesList} han terminado su tiempo de juego. Por favor, recójanlos`;
-      }
-      
-      console.log(`🔊 MENSAJE GENERADO: "${message}"`);
-      
-      // 🚨 USAR COLA GLOBAL DEFINITIVA
-      addToGlobalVoiceQueue(message, {
-        volume: 1.0,
-        rate: 1.0,
-        pitch: 1.0,
-        lang: 'es-ES'
-      });
-      
-      console.log(`✅ MENSAJE AGREGADO A COLA GLOBAL DEFINITIVA`);
-    }
+    // FUNCIÓN DUPLICADA ELIMINADA - USAR SOLO speakAlertWithRepetitionFixed
 
 
     // Función para alertas de múltiples niños (más de 5) - DEPRECATED
