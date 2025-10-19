@@ -6415,6 +6415,8 @@
         // Alertas de warning con texto largo (nombres + padres) necesitan más tiempo
         if (text.includes('terminó su tiempo') || text.includes('Tiempo terminado')) {
           timeoutDuration = 12000; // 12 segundos para alertas de tiempo terminado
+        } else if (text.includes('30 segundos')) {
+          timeoutDuration = 15000; // 15 segundos para alertas de 30 segundos
         } else {
           timeoutDuration = text.length > 50 ? 8000 : 6000; // Más tiempo para texto largo
         }
@@ -6431,6 +6433,11 @@
       }, timeoutDuration);
       
       console.log(`✅ ALERTA VISUAL CONFIGURADA: "${text}" se ocultará en ${timeoutDuration}ms`);
+      
+      // Log específico para alertas de 30 segundos
+      if (text.includes('30 segundos')) {
+        console.log(`🚨 ALERTA DE 30 SEGUNDOS VISUAL: "${text}" - Debería ser visible por ${timeoutDuration}ms`);
+      }
     }
 
     // Función para ocultar manualmente el mensaje de estado
