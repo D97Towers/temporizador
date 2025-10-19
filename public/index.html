@@ -2882,8 +2882,8 @@
       
       console.log('🎙️ Todas las voces en español:', spanishVoices.map(v => ({ name: v.name, lang: v.lang, localService: v.localService })));
       
-      // Lista de nombres masculinos a excluir
-      const maleNames = ['eddy', 'carlos', 'juan', 'diego', 'male', 'men', 'man', 'masculino', 'antonio', 'miguel', 'pedro', 'jose', 'manuel', 'rafael', 'daniel', 'andres', 'roberto', 'fernando', 'eduardo', 'alejandro', 'sergio', 'pablo', 'mario', 'ricardo', 'alberto', 'enrique', 'ramon', 'javier', 'gabriel', 'luis', 'felipe', 'sebastian', 'adrian', 'david'];
+      // Lista de nombres masculinos a excluir (ampliada para Chrome)
+      const maleNames = ['eddy', 'carlos', 'juan', 'diego', 'male', 'men', 'man', 'masculino', 'antonio', 'miguel', 'pedro', 'jose', 'manuel', 'rafael', 'daniel', 'andres', 'roberto', 'fernando', 'eduardo', 'alejandro', 'sergio', 'pablo', 'mario', 'ricardo', 'alberto', 'enrique', 'ramon', 'javier', 'gabriel', 'luis', 'felipe', 'sebastian', 'adrian', 'david', 'paulina', 'paul', 'pablo', 'peter', 'patrick', 'philip', 'phillip'];
       
       // Función para verificar si una voz es masculina
       const isMaleVoice = (voiceName) => {
@@ -2916,7 +2916,11 @@
         const voiceName = voice.name.toLowerCase();
         const isNotMale = !isMaleVoice(voiceName);
         const isQuality = isQualityVoice(voice);
-        return isNotMale && isQuality;
+        
+        // ADICIONAL: Verificar que NO sea Paulina (es-MX) que suena masculina en Chrome
+        const isNotPaulinaMX = !(voiceName.includes('paulina') && voice.lang.includes('es-MX'));
+        
+        return isNotMale && isQuality && isNotPaulinaMX;
       });
       
       // FALLBACK 1: voces con nombres reales pero menos estricto
@@ -2925,7 +2929,8 @@
           const voiceName = voice.name.toLowerCase();
           const isNotMale = !isMaleVoice(voiceName);
           const isRealName = ['maria', 'monica', 'lucia', 'sofia', 'carmen', 'ana', 'laura', 'isabel', 'teresa', 'paula', 'claudia'].some(name => voiceName.includes(name));
-          return isNotMale && isRealName;
+          const isNotPaulinaMX = !(voiceName.includes('paulina') && voice.lang.includes('es-MX'));
+          return isNotMale && isRealName && isNotPaulinaMX;
         });
       }
       
@@ -2935,22 +2940,29 @@
           const voiceName = voice.name.toLowerCase();
           const isNotMale = !isMaleVoice(voiceName);
           const notObviouslyRobotic = !['robot', 'artificial', 'neural', 'tts', 'synthetic', 'digital', 'machine', 'auto', 'generated'].some(flag => voiceName.includes(flag));
-          return isNotMale && notObviouslyRobotic;
+          const isNotPaulinaMX = !(voiceName.includes('paulina') && voice.lang.includes('es-MX'));
+          return isNotMale && notObviouslyRobotic && isNotPaulinaMX;
         });
       }
       
       // Último recurso: usar primera voz disponible que NO sea claramente masculina
       if (!selectedVoice && spanishVoices.length > 0) {
         selectedVoice = spanishVoices.find(voice => {
-          return !isMaleVoice(voice.name);
+          const voiceName = voice.name.toLowerCase();
+          const isNotMale = !isMaleVoice(voiceName);
+          const isNotPaulinaMX = !(voiceName.includes('paulina') && voice.lang.includes('es-MX'));
+          return isNotMale && isNotPaulinaMX;
         }) || spanishVoices[0];
       }
       
-      // Verificar una vez más que la voz seleccionada no sea masculina
-      if (selectedVoice && isMaleVoice(selectedVoice.name)) {
-        console.warn('⚠️ Voz seleccionada es masculina, buscando alternativa...');
+      // Verificar una vez más que la voz seleccionada no sea masculina o Paulina (es-MX)
+      if (selectedVoice && (isMaleVoice(selectedVoice.name) || (selectedVoice.name.toLowerCase().includes('paulina') && selectedVoice.lang.includes('es-MX')))) {
+        console.warn('⚠️ Voz seleccionada es masculina o Paulina (es-MX), buscando alternativa...');
         selectedVoice = spanishVoices.find(voice => {
-          return !isMaleVoice(voice.name) && voice !== selectedVoice;
+          const voiceName = voice.name.toLowerCase();
+          const isNotMale = !isMaleVoice(voiceName);
+          const isNotPaulinaMX = !(voiceName.includes('paulina') && voice.lang.includes('es-MX'));
+          return isNotMale && isNotPaulinaMX && voice !== selectedVoice;
         });
       }
       
