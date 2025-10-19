@@ -5244,6 +5244,126 @@
     // Hacer función global
     window.testAllPossibleCauses = testAllPossibleCauses;
     
+    // PRUEBA DE ESCENARIO REAL: Simular uso real para detectar interrupciones
+    function testRealWorldScenario() {
+      console.log('🌍 PRUEBA DE ESCENARIO REAL: Simular uso real para detectar interrupciones');
+      console.log('='.repeat(80));
+      
+      let interruptionCount = 0;
+      let successCount = 0;
+      const interruptionDetails = [];
+      
+      // Función para crear utterance con monitoreo completo
+      function createMonitoredUtterance(message, id) {
+        const utterance = new SpeechSynthesisUtterance(message);
+        
+        utterance.onstart = () => {
+          console.log(`🎤 Audio iniciado: "${message}" (ID: ${id})`);
+        };
+        
+        utterance.onend = () => {
+          console.log(`✅ Audio terminado: "${message}" (ID: ${id})`);
+          successCount++;
+        };
+        
+        utterance.onerror = (error) => {
+          interruptionCount++;
+          const detail = {
+            id: id,
+            message: message,
+            error: error.error,
+            timestamp: new Date().toISOString(),
+            stack: new Error().stack
+          };
+          interruptionDetails.push(detail);
+          
+          console.log(`❌ INTERRUPCIÓN DETECTADA #${interruptionCount}:`, detail);
+          
+          // Si es 'interrupted', intentar reanudar
+          if (error.error === 'interrupted') {
+            console.log(`🔄 Reintentando mensaje interrumpido: "${message}"`);
+            setTimeout(() => {
+              const retryUtterance = createMonitoredUtterance(message, `${id}-retry`);
+              window.speechSynthesis.speak(retryUtterance);
+            }, 1000);
+          }
+        };
+        
+        utterance.onpause = () => {
+          console.log(`⏸️ Audio pausado: "${message}" (ID: ${id})`);
+        };
+        
+        utterance.onresume = () => {
+          console.log(`▶️ Audio reanudado: "${message}" (ID: ${id})`);
+        };
+        
+        return utterance;
+      }
+      
+      // Simular escenario real: múltiples mensajes con diferentes timings
+      const messages = [
+        'Primer mensaje: Prueba de estabilidad del sistema',
+        'Segundo mensaje: Verificación de cola de voz',
+        'Tercer mensaje: Simulación de alerta de tiempo',
+        'Cuarto mensaje: Prueba de mensaje largo para verificar estabilidad',
+        'Quinto mensaje: Verificación final del sistema'
+      ];
+      
+      console.log('🚀 Iniciando simulación de escenario real...');
+      
+      // Enviar mensajes con diferentes timings para simular uso real
+      messages.forEach((message, index) => {
+        setTimeout(() => {
+          console.log(`📤 Enviando mensaje ${index + 1}/${messages.length}: "${message}"`);
+          const utterance = createMonitoredUtterance(message, `msg-${index + 1}`);
+          window.speechSynthesis.speak(utterance);
+        }, index * 2000); // 2 segundos entre mensajes
+      });
+      
+      // Simular interacciones del usuario que podrían causar interrupciones
+      setTimeout(() => {
+        console.log('🖱️ Simulando interacción del usuario (scroll)...');
+        window.scrollTo(0, 100);
+        setTimeout(() => window.scrollTo(0, 0), 500);
+      }, 3000);
+      
+      setTimeout(() => {
+        console.log('🔄 Simulando cambio de foco de ventana...');
+        window.blur();
+        setTimeout(() => window.focus(), 1000);
+      }, 6000);
+      
+      // Reporte final después de 20 segundos
+      setTimeout(() => {
+        console.log('\n📊 REPORTE FINAL DE ESCENARIO REAL:');
+        console.log('='.repeat(80));
+        console.log(`✅ Mensajes exitosos: ${successCount}`);
+        console.log(`❌ Interrupciones detectadas: ${interruptionCount}`);
+        console.log(`📊 Tasa de éxito: ${((successCount / (successCount + interruptionCount)) * 100).toFixed(1)}%`);
+        
+        if (interruptionDetails.length > 0) {
+          console.log('\n🔍 DETALLES DE INTERRUPCIONES:');
+          interruptionDetails.forEach((detail, index) => {
+            console.log(`${index + 1}. ID: ${detail.id}, Error: ${detail.error}, Mensaje: "${detail.message}"`);
+          });
+        }
+        
+        if (interruptionCount === 0) {
+          console.log('✅ ÉXITO: Sistema estable en escenario real');
+        } else {
+          console.log('❌ PROBLEMA: Se detectaron interrupciones en escenario real');
+          console.log('🔍 Analizar detalles para identificar patrón de interrupciones');
+        }
+        
+        console.log('='.repeat(80));
+      }, 20000);
+      
+      return 'Prueba de escenario real iniciada - revisar consola en 20 segundos';
+    }
+    
+    // Hacer función global
+    window.testRealWorldScenario = testRealWorldScenario;
+    
     // SISTEMA ADAPTATIVO DE REPETICIONES
     function calculateAdaptiveRepetitions(message, alertCount) {
       if (!adaptiveAlertSystem.enabled) {
