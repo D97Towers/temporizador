@@ -6021,15 +6021,17 @@
       // GENERAR MENSAJE SEGÚN ESCENARIOS CON INFORMACIÓN DE PADRES
       let message;
       
-      // Obtener información de padres de pendingAlerts
-      const childrenWithParents = pendingAlerts.map(alert => {
+      // Obtener información de padres de pendingAlerts - SIN DUPLICADOS
+      const uniqueChildren = new Map();
+      
+      pendingAlerts.forEach(alert => {
         let childName = null;
         let parentsInfo = '';
         
         if (alert.name) {
           // Estructura: {name: 'sofia', parents: 'Papá: fernando'}
           childName = alert.name;
-          parentsInfo = alert.parents ? ` (${alert.parents})` : '';
+          parentsInfo = alert.parents || '';
         } else if (alert.text) {
           // Estructura: {text: '¡Atención! A sofia le quedan solo 30 segundos'}
           childName = extractChildNameFromAlert(alert.text);
@@ -6037,61 +6039,53 @@
           const child = childrenCache.find(c => c.name === childName);
           
           if (child) {
-            parentsInfo = getParentsInfo(child, 'simple');
+            if (child.fatherName && child.motherName) {
+              parentsInfo = `${child.fatherName} & ${child.motherName}`;
+            } else if (child.fatherName) {
+              parentsInfo = `Papá: ${child.fatherName}`;
+            } else if (child.motherName) {
+              parentsInfo = `Mamá: ${child.motherName}`;
+            }
           }
         }
         
-        return { name: childName, parents: parentsInfo };
+        if (childName && childName !== 'null') {
+          // Usar nombre como clave única para evitar duplicados
+          uniqueChildren.set(childName, { name: childName, parents: parentsInfo });
+        }
       });
       
-      if (alertCount === 1 && childrenWithParents.length === 1) {
+      const childrenWithParents = Array.from(uniqueChildren.values());
+      
+      if (childrenWithParents.length === 1) {
         const child = childrenWithParents[0];
-        const gender = detectGenderByName(child.name);
-        const relationship = gender === 'female' ? 'hija' : (gender === 'male' ? 'hijo' : 'niño');
-        
-        // Formatear padres para que se escuche natural
-        let parentsPhrase = '';
         if (child.parents) {
-          // child.parents viene como " (Papá: luis & Mamá: ana)" o " (Papá: luis)" o " (Mamá: ana)"
-          // Necesitamos convertirlo a algo natural para escuchar
-          const parentsClean = child.parents.replace(/[()]/g, '').trim();
-          if (parentsClean) {
-            parentsPhrase = `. ${parentsClean}, por favor recoge a tu ${relationship}`;
-          } else {
-            parentsPhrase = `. Por favor, recoge a tu ${relationship}`;
-          }
+          message = `Hola, ${child.name} (${child.parents}) ha terminado su tiempo de juego. Por favor, recógelo.`;
         } else {
-          parentsPhrase = `. Por favor, recoge a tu ${relationship}`;
+          message = `Hola, ${child.name} ha terminado su tiempo de juego. Por favor, recógelo.`;
         }
-        
-        message = `Hola, ${child.name} ha terminado su tiempo de juego${parentsPhrase}`;
-      } else if (alertCount === 2 && childrenWithParents.length === 2) {
+      } else if (childrenWithParents.length === 2) {
         const child1 = childrenWithParents[0];
         const child2 = childrenWithParents[1];
         
-        // Formatear para 2 niños
-        const parents1 = child1.parents ? child1.parents.replace(/[()]/g, '').trim() : '';
-        const parents2 = child2.parents ? child2.parents.replace(/[()]/g, '').trim() : '';
-        
         let fullMessage = `Hola, ${child1.name}`;
-        if (parents1) fullMessage += ` (${parents1})`;
+        if (child1.parents) fullMessage += ` (${child1.parents})`;
         fullMessage += ` y ${child2.name}`;
-        if (parents2) fullMessage += ` (${parents2})`;
-        fullMessage += ` han terminado su tiempo de juego. Por favor, recógelos`;
+        if (child2.parents) fullMessage += ` (${child2.parents})`;
+        fullMessage += ` han terminado su tiempo de juego. Por favor, recógelos.`;
         
         message = fullMessage;
-      } else if (alertCount <= 5 && childrenWithParents.length > 0) {
-        // LISTAR NOMBRES ESPECÍFICOS HASTA 5 CON PADRES
-        const names = childrenWithParents.slice(0, 5).map(child => {
-          const parentsClean = child.parents ? child.parents.replace(/[()]/g, '').trim() : '';
-          return parentsClean ? `${child.name} (${parentsClean})` : child.name;
+      } else if (childrenWithParents.length <= 5) {
+        // LISTAR NOMBRES ESPECÍFICOS HASTA 5
+        const names = childrenWithParents.map(child => {
+          return child.parents ? `${child.name} (${child.parents})` : child.name;
         });
         const lastChild = names.pop();
         const otherChildren = names.join(', ');
-        message = `Hola, ${otherChildren} y ${lastChild} han terminado su tiempo de juego. Por favor, recógelos`;
+        message = `Hola, ${otherChildren} y ${lastChild} han terminado su tiempo de juego. Por favor, recógelos.`;
       } else {
         // MENSAJE CONSOLIDADO PARA 6+ NIÑOS
-        message = `Hola, ${alertCount} niños han terminado su tiempo de juego. Por favor, recógelos`;
+        message = `Hola, ${childrenWithParents.length} niños han terminado su tiempo de juego. Por favor, recógelos.`;
       }
       
       console.log(`🔊 MENSAJE GENERADO: "${message}"`);
