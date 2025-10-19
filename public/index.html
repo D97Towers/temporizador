@@ -8196,7 +8196,7 @@
           }, 1000);
         }
         
-        showStatusMessage('Niño agregado exitosamente', 'success');
+        showStatusMessage('Niño agregado exitosamente', 'success', null, { voiceOnly: false });
       } catch (error) {
         console.error('Error adding child:', error);
             showStatusMessage('Error al agregar niño: ' + error.message, 'error');
@@ -8234,7 +8234,7 @@
           fetchSessionHistory()
         ]);
         
-        showStatusMessage('Juego agregado exitosamente', 'success');
+        showStatusMessage('Juego agregado exitosamente', 'success', null, { voiceOnly: false });
       } catch (error) {
         console.error('Error adding game:', error);
         showStatusMessage('Error al agregar juego: ' + error.message, 'error');
@@ -8529,7 +8529,7 @@
         // Reiniciar timers para usar los datos actualizados
         startTimers();
         
-        showStatusMessage('+' + additionalTime + ' min', 'success');
+        showStatusMessage('+' + additionalTime + ' min', 'success', null, { voiceOnly: false });
       } catch (error) {
         console.error('Error extending time:', error);
         showStatusMessage('Error al extender tiempo: ' + error.message, 'error');
@@ -8658,7 +8658,7 @@
         ]);
         
         closeEditChildModal();
-        showStatusMessage('Información del niño actualizada', 'success');
+        showStatusMessage('Información del niño actualizada', 'success', null, { voiceOnly: false });
       } catch (error) {
         console.error('Error editing child:', error);
         showStatusMessage('Error al editar niño: ' + error.message, 'error');
