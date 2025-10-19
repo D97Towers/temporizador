@@ -5364,6 +5364,148 @@
     // Hacer función global
     window.testRealWorldScenario = testRealWorldScenario;
     
+    // PRUEBA DE PRODUCCIÓN: Simular escenario exacto donde ocurren interrupciones
+    function testProductionScenario() {
+      console.log('🏭 PRUEBA DE PRODUCCIÓN: Simular escenario exacto donde ocurren interrupciones');
+      console.log('='.repeat(80));
+      
+      let interruptionCount = 0;
+      let successCount = 0;
+      const interruptionDetails = [];
+      
+      // Función para crear utterance con monitoreo completo de producción
+      function createProductionUtterance(message, id) {
+        const utterance = new SpeechSynthesisUtterance(message);
+        
+        utterance.onstart = () => {
+          console.log(`🎤 PRODUCCIÓN - Audio iniciado: "${message}" (ID: ${id})`);
+        };
+        
+        utterance.onend = () => {
+          console.log(`✅ PRODUCCIÓN - Audio terminado: "${message}" (ID: ${id})`);
+          successCount++;
+        };
+        
+        utterance.onerror = (error) => {
+          interruptionCount++;
+          const detail = {
+            id: id,
+            message: message,
+            error: error.error,
+            timestamp: new Date().toISOString(),
+            stack: new Error().stack,
+            userAgent: navigator.userAgent,
+            language: navigator.language,
+            online: navigator.onLine
+          };
+          interruptionDetails.push(detail);
+          
+          console.log(`❌ PRODUCCIÓN - INTERRUPCIÓN DETECTADA #${interruptionCount}:`, detail);
+          
+          // Si es 'interrupted', intentar reanudar con delay
+          if (error.error === 'interrupted') {
+            console.log(`🔄 PRODUCCIÓN - Reintentando mensaje interrumpido: "${message}"`);
+            setTimeout(() => {
+              const retryUtterance = createProductionUtterance(message, `${id}-retry`);
+              window.speechSynthesis.speak(retryUtterance);
+            }, 2000); // Delay más largo para producción
+          }
+        };
+        
+        utterance.onpause = () => {
+          console.log(`⏸️ PRODUCCIÓN - Audio pausado: "${message}" (ID: ${id})`);
+        };
+        
+        utterance.onresume = () => {
+          console.log(`▶️ PRODUCCIÓN - Audio reanudado: "${message}" (ID: ${id})`);
+        };
+        
+        return utterance;
+      }
+      
+      // Simular escenario de producción: alertas de tiempo real
+      const productionMessages = [
+        '¡Atención! A sofia le quedan solo 30 segundos',
+        '¡Atención! A mathias le quedan solo 30 segundos',
+        '¡Atención! A cristian le quedan solo 30 segundos',
+        '¡Atención! sofia, mathias y cristian han terminado su tiempo de juego',
+        '¡Atención! Por favor, padres, recojan a sus hijos inmediatamente'
+      ];
+      
+      console.log('🚀 Iniciando simulación de escenario de producción...');
+      
+      // Enviar mensajes con timing de producción (más rápido)
+      productionMessages.forEach((message, index) => {
+        setTimeout(() => {
+          console.log(`📤 PRODUCCIÓN - Enviando mensaje ${index + 1}/${productionMessages.length}: "${message}"`);
+          const utterance = createProductionUtterance(message, `prod-${index + 1}`);
+          window.speechSynthesis.speak(utterance);
+        }, index * 1000); // 1 segundo entre mensajes (más rápido)
+      });
+      
+      // Simular interacciones reales de producción
+      setTimeout(() => {
+        console.log('🖱️ PRODUCCIÓN - Simulando interacción del usuario (scroll)...');
+        window.scrollTo(0, 200);
+        setTimeout(() => window.scrollTo(0, 0), 300);
+      }, 2000);
+      
+      setTimeout(() => {
+        console.log('🔄 PRODUCCIÓN - Simulando cambio de foco de ventana...');
+        window.blur();
+        setTimeout(() => window.focus(), 500);
+      }, 4000);
+      
+      setTimeout(() => {
+        console.log('📱 PRODUCCIÓN - Simulando notificación del sistema...');
+        // Simular notificación que podría interrumpir audio
+        if ('Notification' in window) {
+          Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+              new Notification('Notificación del sistema', {
+                body: 'Esta notificación podría interrumpir el audio',
+                icon: '/favicon.ico'
+              });
+            }
+          });
+        }
+      }, 6000);
+      
+      // Reporte final después de 15 segundos
+      setTimeout(() => {
+        console.log('\n📊 REPORTE FINAL DE PRODUCCIÓN:');
+        console.log('='.repeat(80));
+        console.log(`✅ Mensajes exitosos: ${successCount}`);
+        console.log(`❌ Interrupciones detectadas: ${interruptionCount}`);
+        console.log(`📊 Tasa de éxito: ${((successCount / (successCount + interruptionCount)) * 100).toFixed(1)}%`);
+        
+        if (interruptionDetails.length > 0) {
+          console.log('\n🔍 DETALLES DE INTERRUPCIONES EN PRODUCCIÓN:');
+          interruptionDetails.forEach((detail, index) => {
+            console.log(`${index + 1}. ID: ${detail.id}, Error: ${detail.error}, Mensaje: "${detail.message}"`);
+            console.log(`   Timestamp: ${detail.timestamp}`);
+            console.log(`   User Agent: ${detail.userAgent}`);
+            console.log(`   Language: ${detail.language}`);
+            console.log(`   Online: ${detail.online}`);
+          });
+        }
+        
+        if (interruptionCount === 0) {
+          console.log('✅ ÉXITO: Sistema estable en escenario de producción');
+        } else {
+          console.log('❌ PROBLEMA: Se detectaron interrupciones en escenario de producción');
+          console.log('🔍 Analizar detalles para identificar patrón de interrupciones en producción');
+        }
+        
+        console.log('='.repeat(80));
+      }, 15000);
+      
+      return 'Prueba de producción iniciada - revisar consola en 15 segundos';
+    }
+    
+    // Hacer función global
+    window.testProductionScenario = testProductionScenario;
+    
     // SISTEMA ADAPTATIVO DE REPETICIONES
     function calculateAdaptiveRepetitions(message, alertCount) {
       if (!adaptiveAlertSystem.enabled) {
