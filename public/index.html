@@ -6184,8 +6184,9 @@
         const now = Date.now();
         const timeSinceLastActivity = now - lastVoiceActivityTime;
         
-        // Si han pasado más de 10 segundos sin actividad y hay mensajes en cola
-        if (timeSinceLastActivity > 10000 && globalVoiceQueue.length > 0) {
+        // FIX #3: Aumentado de 10s a 25s para dar margen a mensajes muy largos (8+ niños)
+        // Si han pasado más de 25 segundos sin actividad y hay mensajes en cola
+        if (timeSinceLastActivity > 25000 && globalVoiceQueue.length > 0) {
           console.log(`🚨 WATCHDOG: Sistema de voz bloqueado detectado. Reseteando...`);
           console.log(`📊 Estado antes del reset:`, {
             queueLength: globalVoiceQueue.length,
@@ -6311,88 +6312,8 @@
       return cleanedText;
     }
     
-    // SISTEMA DE AUDIO ROBUSTO Y FUNCIONAL CON VOZ HÍBRIDA
-    function speakRobustAudio(message, options = {}, messageId = 'unknown') {
-      console.log(`🔊 Reproduciendo: "${message}" (ID: ${messageId})`);
-      
-      // VERIFICACIÓN CRÍTICA ABSOLUTA: Última línea de defensa contra mensajes de error
-      const errorPhrases = [
-        'Validation failed',
-        'Por favor seleccione un niño',
-        'Por favor seleccione un juego',
-        'El tiempo debe ser',
-        'El tiempo mínimo',
-        'El tiempo máximo',
-        'Error al',
-        'debe ser un número válido',
-        'Test message'
-      ];
-      
-      const isErrorMessage = errorPhrases.some(phrase => message.includes(phrase));
-      if (isErrorMessage) {
-        console.log(`🔇 BLOQUEADO EN speakRobustAudio: Mensaje de error detectado: "${message}"`);
-        isGlobalVoicePlaying = false;
-        globalVoiceProcessing = false;
-        setTimeout(() => processGlobalVoiceQueue(), 100);
-        return;
-      }
-      
-      // Verificar disponibilidad básica
-      if (!('speechSynthesis' in window)) {
-        console.error('❌ SpeechSynthesis no disponible');
-        isGlobalVoicePlaying = false;
-        globalVoiceProcessing = false;
-        setTimeout(() => processGlobalVoiceQueue(), 1000);
-        return;
-      }
-      
-      // Limpiar texto para voz natural
-      const cleanedMessage = cleanTextForVoice(message);
-      
-      // NO cancelar - puede interrumpir audio en curso
-      // window.speechSynthesis.cancel();
-      
-      // USAR createHybridUtterance para tener la mejor configuración de voz
-      const alertCount = options.alertCount || 1;
-      const utterance = createHybridUtterance(cleanedMessage, alertCount);
-      
-      // Guardar el onstart original de createHybridUtterance
-      const originalOnStart = utterance.onstart;
-      
-      // Eventos optimizados
-      utterance.onstart = () => {
-        console.log(`🎤 Iniciando: "${cleanedMessage}"`);
-        // Ejecutar también el onstart original que incluye takeAudioDeviceControl
-        if (originalOnStart) originalOnStart();
-      };
-      
-      utterance.onend = () => {
-        console.log(`✅ Completado: "${cleanedMessage}"`);
-        lastVoiceActivityTime = Date.now();
-        isGlobalVoicePlaying = false;
-        globalVoiceProcessing = false;
-        setTimeout(() => processGlobalVoiceQueue(), 1000);
-      };
-      
-      utterance.onerror = (error) => {
-        console.log(`❌ Error: ${error.error} - "${cleanedMessage}"`);
-        lastVoiceActivityTime = Date.now();
-        isGlobalVoicePlaying = false;
-        globalVoiceProcessing = false;
-        // En caso de error, reintentar después de un tiempo
-        setTimeout(() => processGlobalVoiceQueue(), 1500);
-      };
-      
-      // Reproducir
-      try {
-        window.speechSynthesis.speak(utterance);
-      } catch (error) {
-        console.error(`❌ Error al reproducir: ${error.message}`);
-        isGlobalVoicePlaying = false;
-        globalVoiceProcessing = false;
-        setTimeout(() => processGlobalVoiceQueue(), 1000);
-      }
-    }
+    // NOTA: speakRobustAudio se movió después de createHybridUtterance (línea ~7171)
+    // para resolver dependencia de orden de definición
     
     // Función definitiva para limpiar la cola global
     function clearGlobalVoiceQueue() {
@@ -7168,6 +7089,92 @@
       };
       
       return utterance;
+    }
+
+    // SISTEMA DE AUDIO ROBUSTO Y FUNCIONAL CON VOZ HÍBRIDA
+    // NOTA: Esta función se movió aquí para que esté después de createHybridUtterance
+    function speakRobustAudio(message, options = {}, messageId = 'unknown') {
+      console.log(`🔊 Reproduciendo: "${message}" (ID: ${messageId})`);
+      
+      // VERIFICACIÓN CRÍTICA ABSOLUTA: Última línea de defensa contra mensajes de error
+      const errorPhrases = [
+        'Validation failed',
+        'Por favor seleccione un niño',
+        'Por favor seleccione un juego',
+        'El tiempo debe ser',
+        'El tiempo mínimo',
+        'El tiempo máximo',
+        'Error al',
+        'debe ser un número válido',
+        'Test message'
+      ];
+      
+      const isErrorMessage = errorPhrases.some(phrase => message.includes(phrase));
+      if (isErrorMessage) {
+        console.log(`🔇 BLOQUEADO EN speakRobustAudio: Mensaje de error detectado: "${message}"`);
+        isGlobalVoicePlaying = false;
+        globalVoiceProcessing = false;
+        setTimeout(() => processGlobalVoiceQueue(), 100);
+        return;
+      }
+      
+      // Verificar disponibilidad básica
+      if (!('speechSynthesis' in window)) {
+        console.error('❌ SpeechSynthesis no disponible');
+        isGlobalVoicePlaying = false;
+        globalVoiceProcessing = false;
+        setTimeout(() => processGlobalVoiceQueue(), 1000);
+        return;
+      }
+      
+      // Limpiar texto para voz natural
+      const cleanedMessage = cleanTextForVoice(message);
+      
+      // NO cancelar - puede interrumpir audio en curso
+      // window.speechSynthesis.cancel();
+      
+      // USAR createHybridUtterance para tener la mejor configuración de voz
+      const alertCount = options.alertCount || 1;
+      const utterance = createHybridUtterance(cleanedMessage, alertCount);
+      
+      // Guardar el onstart original de createHybridUtterance
+      const originalOnStart = utterance.onstart;
+      
+      // Eventos optimizados
+      utterance.onstart = () => {
+        console.log(`🎤 Iniciando: "${cleanedMessage}"`);
+        // FIX #2: Actualizar tiempo de actividad cuando INICIA la reproducción
+        lastVoiceActivityTime = Date.now();
+        // Ejecutar también el onstart original que incluye takeAudioDeviceControl
+        if (originalOnStart) originalOnStart();
+      };
+      
+      utterance.onend = () => {
+        console.log(`✅ Completado: "${cleanedMessage}"`);
+        lastVoiceActivityTime = Date.now();
+        isGlobalVoicePlaying = false;
+        globalVoiceProcessing = false;
+        setTimeout(() => processGlobalVoiceQueue(), 1000);
+      };
+      
+      utterance.onerror = (error) => {
+        console.log(`❌ Error: ${error.error} - "${cleanedMessage}"`);
+        lastVoiceActivityTime = Date.now();
+        isGlobalVoicePlaying = false;
+        globalVoiceProcessing = false;
+        // En caso de error, reintentar después de un tiempo
+        setTimeout(() => processGlobalVoiceQueue(), 1500);
+      };
+      
+      // Reproducir
+      try {
+        window.speechSynthesis.speak(utterance);
+      } catch (error) {
+        console.error(`❌ Error al reproducir: ${error.message}`);
+        isGlobalVoicePlaying = false;
+        globalVoiceProcessing = false;
+        setTimeout(() => processGlobalVoiceQueue(), 1000);
+      }
     }
 
     // Función para repetir mensajes 3 veces (mejorada para producción)
