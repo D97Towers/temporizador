@@ -2849,6 +2849,12 @@
     // Sistema de alertas de tiempo pendientes
     let pendingTimeAlerts = new Map(); // Almacenar alertas de tiempo pendientes
     
+    // Variables para control de audio en iOS/Bluetooth
+    let audioContextForBluetooth = null;
+    let isAudioContextPrepared = false;
+    let musicAppDetected = false;
+    let lastAudioRouteCheck = 0;
+    
     // Asegurar que las variables estén disponibles globalmente
     window.voiceNotificationsEnabled = voiceNotificationsEnabled;
     window.browserNotificationsEnabled = browserNotificationsEnabled;
@@ -2897,6 +2903,163 @@
       
       return parentsInfo;
     }
+
+    // ========================================
+    // SISTEMA DE AUDIO PARA iOS/BLUETOOTH
+    // ========================================
+
+    // Función para preparar AudioContext para Bluetooth (iOS)
+    function prepareAudioContextForBluetooth() {
+      if (isAudioContextPrepared) {
+        console.log('🎵 Audio Context ya está preparado');
+        return audioContextForBluetooth;
+      }
+
+      try {
+        // Crear AudioContext
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) {
+          console.log('⚠️ AudioContext no disponible');
+          return null;
+        }
+
+        audioContextForBluetooth = new AudioContext();
+        
+        // Crear un tono silencioso para "reservar" el dispositivo de audio
+        const oscillator = audioContextForBluetooth.createOscillator();
+        const gainNode = audioContextForBluetooth.createGain();
+        
+        // Configurar como silencioso
+        gainNode.gain.value = 0.001; // Casi inaudible
+        oscillator.frequency.value = 20000; // Frecuencia muy alta (casi inaudible)
+        
+        // Conectar
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContextForBluetooth.destination);
+        
+        // Reproducir brevemente
+        oscillator.start(audioContextForBluetooth.currentTime);
+        oscillator.stop(audioContextForBluetooth.currentTime + 0.01);
+        
+        isAudioContextPrepared = true;
+        console.log('✅ Audio Context preparado para Bluetooth');
+        
+        return audioContextForBluetooth;
+      } catch (error) {
+        console.log('⚠️ Error preparando Audio Context:', error.message);
+        return null;
+      }
+    }
+
+    // Función para detectar si hay música reproduciéndose
+    async function detectMusicAppPlaying() {
+      try {
+        // Intentar detectar si hay audio de otras aplicaciones
+        if ('mediaSession' in navigator && navigator.mediaSession.playbackState) {
+          const playbackState = navigator.mediaSession.playbackState;
+          musicAppDetected = (playbackState === 'playing');
+          console.log(`🎵 Estado de reproducción de música: ${playbackState}`);
+          return musicAppDetected;
+        }
+        
+        // Fallback: detectar por Audio Context
+        if (audioContextForBluetooth) {
+          const state = audioContextForBluetooth.state;
+          if (state === 'suspended') {
+            musicAppDetected = true;
+            console.log('🎵 Audio Context suspendido - posible música reproduciéndose');
+            return true;
+          }
+        }
+        
+        return false;
+      } catch (error) {
+        console.log('⚠️ Error detectando música:', error.message);
+        return false;
+      }
+    }
+
+    // Función para intentar tomar control del dispositivo de audio
+    async function takeAudioDeviceControl() {
+      try {
+        // Preparar Audio Context si no está listo
+        if (!audioContextForBluetooth || audioContextForBluetooth.state === 'closed') {
+          prepareAudioContextForBluetooth();
+        }
+
+        // Intentar reanudar Audio Context
+        if (audioContextForBluetooth && audioContextForBluetooth.state === 'suspended') {
+          await audioContextForBluetooth.resume();
+          console.log('🔊 Audio Context reanudado');
+        }
+
+        // Reproducir un tono breve para "activar" el dispositivo Bluetooth
+        if (audioContextForBluetooth && audioContextForBluetooth.state === 'running') {
+          const oscillator = audioContextForBluetooth.createOscillator();
+          const gainNode = audioContextForBluetooth.createGain();
+          
+          // Tono audible pero breve para "despertar" Bluetooth
+          oscillator.frequency.value = 800;
+          gainNode.gain.value = 0.3;
+          gainNode.gain.exponentialRampToValueAtTime(
+            0.01, 
+            audioContextForBluetooth.currentTime + 0.1
+          );
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContextForBluetooth.destination);
+          
+          oscillator.start(audioContextForBluetooth.currentTime);
+          oscillator.stop(audioContextForBluetooth.currentTime + 0.1);
+          
+          console.log('🔊 Señal de audio enviada para activar Bluetooth');
+        }
+
+        return true;
+      } catch (error) {
+        console.log('⚠️ Error tomando control de audio:', error.message);
+        return false;
+      }
+    }
+
+    // Función para verificar y mostrar alerta si hay conflicto de audio
+    async function checkAudioConflict() {
+      const now = Date.now();
+      
+      // Limitar verificaciones (no más de una cada 2 segundos)
+      if (now - lastAudioRouteCheck < 2000) {
+        return false;
+      }
+      
+      lastAudioRouteCheck = now;
+      
+      // Detectar si hay música
+      const hasMusicPlaying = await detectMusicAppPlaying();
+      
+      if (hasMusicPlaying) {
+        console.log('⚠️ Música detectada - El audio de la app podría no salir por Bluetooth');
+        
+        // Mostrar alerta visual discreta (sin interrumpir)
+        showSmartAlert(
+          '🎵 Música detectada: El audio podría salir por las bocinas del dispositivo en lugar del bafle Bluetooth',
+          'info',
+          null,
+          { 
+            voiceOnly: false,
+            timeout: 5000,
+            position: 'bottom'
+          }
+        );
+        
+        return true;
+      }
+      
+      return false;
+    }
+
+    // ========================================
+    // FIN SISTEMA DE AUDIO PARA iOS/BLUETOOTH
+    // ========================================
 
     // Función para detectar género por nombre - FUNCIÓN SIMPLE Y ESTABLE
     function detectGenderByName(name) {
@@ -4290,6 +4453,11 @@
       const uniqueKey = `${childName}|${parentsInfo || 'sin_padres'}`;
       
       // Ya no necesitamos agregar a pendingTimeAlerts - procesamos inmediatamente
+      
+      // MEJORA PARA iOS/BLUETOOTH: Verificar conflictos de audio antes de hablar
+      checkAudioConflict().catch(err => {
+        console.log('⚠️ Error verificando conflicto de audio:', err.message);
+      });
       
       // PROCESAR INMEDIATAMENTE LA ALERTA INDIVIDUAL
       console.log(`🔊 PROCESANDO ALERTA INDIVIDUAL PARA: ${childName}`);
@@ -6854,6 +7022,11 @@
         icon.className = 'fas fa-volume-up';
         voiceStatus.textContent = 'Voz Activada';
         
+        // MEJORA PARA iOS/BLUETOOTH: Intentar tomar control del dispositivo de audio
+        takeAudioDeviceControl().catch(err => {
+          console.log('⚠️ No se pudo tomar control de audio en toggle:', err.message);
+        });
+        
         // Hacer un test rápido para verificar que funciona - USANDO LA MISMA VOZ Y PARÁMETROS OPTIMIZADOS
         setTimeout(() => {
           try {
@@ -6931,6 +7104,16 @@
         utterance.rate = Math.max(utterance.rate * 0.9, 0.5);
         utterance.volume = Math.min(utterance.volume * 1.1, 1.0);
       }
+      
+      // MEJORA PARA iOS/BLUETOOTH: Preparar audio context antes de hablar
+      utterance.onstart = () => {
+        console.log(`🎤 Iniciando reproducción de voz: "${msg}"`);
+        
+        // Intentar tomar control del dispositivo de audio
+        takeAudioDeviceControl().catch(err => {
+          console.log('⚠️ No se pudo tomar control de audio:', err.message);
+        });
+      };
       
       return utterance;
     }
@@ -9073,6 +9256,10 @@
       try {
         voiceSystemActivated = true;
         window.voiceSystemActivated = true; // Actualizar variable global
+        
+        // MEJORA PARA iOS/BLUETOOTH: Preparar Audio Context en la primera interacción
+        prepareAudioContextForBluetooth();
+        
         console.log('✅ Sistema de voz activado para producción (sin audio de prueba)');
       } catch (error) {
         console.error('❌ Error activando sistema de voz:', error);
