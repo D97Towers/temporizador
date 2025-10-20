@@ -2818,8 +2818,8 @@
     // Variables globales críticas para el sistema de voz
     let voiceNotificationsEnabled = true; // Control de notificaciones de voz
     let browserNotificationsEnabled = false; // Control de notificaciones del navegador
-    let voicePermissionsGranted = false; // Estado de permisos de voz
-    let voiceSystemActivated = false; // Estado de activación del sistema de voz
+    let voicePermissionsGranted = true; // Estado de permisos de voz - SIEMPRE TRUE
+    let voiceSystemActivated = true; // Estado de activación del sistema de voz - SIEMPRE TRUE
     
     // Sistema de cola de voz para evitar interrupciones
     let voiceQueue = []; // Cola de mensajes de voz pendientes
@@ -4302,11 +4302,9 @@
       
       console.log(`📊 ALERTA INDIVIDUAL:`, individualAlert);
       
-      // Activar notificaciones de voz si están habilitadas
-      if (voiceNotificationsEnabled) {
-        console.log(`🔊 ACTIVANDO NOTIFICACIÓN DE VOZ INDIVIDUAL`);
-        speakAlertWithRepetitionFixed([individualAlert], 1);
-      }
+      // Activar notificaciones de voz SIEMPRE
+      console.log(`🔊 ACTIVANDO NOTIFICACIÓN DE VOZ INDIVIDUAL`);
+      speakAlertWithRepetitionFixed([individualAlert], 1);
     }
     
     // FUNCIÓN PARA REPRODUCIR MENSAJE DE VOZ DIRECTAMENTE - URGENTE
@@ -6238,10 +6236,12 @@
     
     // SISTEMA DE VOZ CORREGIDO - SOLUCIÓN A TODOS LOS PROBLEMAS
     async function speakAlertWithRepetitionFixed(pendingAlerts, alertCount) {
-      if (!voiceNotificationsEnabled) {
-        console.log(`🔇 Voz deshabilitada, saltando speakAlertWithRepetitionFixed`);
-        return;
-      }
+      // FORZAR ACTIVACIÓN DEL SISTEMA DE VOZ
+      voiceNotificationsEnabled = true;
+      voiceSystemActivated = true;
+      voicePermissionsGranted = true;
+      
+      console.log(`🔊 PROCESANDO ALERTA DE VOZ (forzado activo)`);
       
       console.log(`🧠 SISTEMA CORREGIDO: Procesando ${alertCount} alertas`);
       console.log(`📊 pendingAlerts:`, pendingAlerts);
@@ -6685,8 +6685,8 @@
         
         if (!hasSpeechSynthesis) {
           console.warn('⚠️ Speech Synthesis no soportado en este navegador');
-          voiceNotificationsEnabled = false;
-          // NO mostrar alerta durante inicialización para evitar errores
+          // NO desactivar voz - mantener habilitada
+          console.log('🔧 Manteniendo voz habilitada a pesar de la falta de soporte');
           return;
         }
         
@@ -6754,8 +6754,8 @@
           await testVoiceSystem();
         } catch (error) {
           console.warn('⚠️ Test de voz falló (continuando):', error);
-          voiceNotificationsEnabled = false;
-          voiceSystemActivated = false;
+          // NO desactivar voz - mantener habilitada
+          console.log('🔧 Manteniendo voz habilitada a pesar del error de test');
         }
         
         voicePermissionsGranted = true;
@@ -6794,11 +6794,9 @@
         };
         
         testUtterance.onerror = (event) => {
-          console.warn('⚠️ Error en sistema de voz (continuando sin voz):', event.error);
-          voiceNotificationsEnabled = false;
-          voiceSystemActivated = false;
-          // NO bloquear la aplicación por errores de voz
-          console.log('🔧 Sistema de voz deshabilitado, aplicación continúa normalmente');
+          console.warn('⚠️ Error en sistema de voz (continuando):', event.error);
+          // NO desactivar voz - mantener habilitada
+          console.log('🔧 Manteniendo voz habilitada a pesar del error');
           // Resolver inmediatamente para no bloquear
           return true;
         };
@@ -6829,20 +6827,20 @@
         
       } catch (error) {
         console.error('❌ Fallo en test de voz:', error);
-        voiceNotificationsEnabled = false;
-        return false;
+        // NO desactivar voz - mantener habilitada
+        console.log('🔧 Manteniendo voz habilitada a pesar del error');
+        return true; // Cambiar a true para no bloquear
       }
     }
 
     // Control de notificaciones de voz (mejorado para producción)
     function toggleVoiceNotifications() {
-      if (!voicePermissionsGranted) {
-        showStatusMessage('⚠️ Primero inicialice los permisos de notificaciones', 'warning');
-        return;
-      }
-      
       // Activar sistema de voz en esta interacción del usuario
       activateVoiceSystemOnUserInteraction();
+      
+      // Establecer permisos como concedidos al activar
+      voicePermissionsGranted = true;
+      window.voicePermissionsGranted = true;
       
       voiceNotificationsEnabled = !voiceNotificationsEnabled;
       window.voiceNotificationsEnabled = voiceNotificationsEnabled; // Actualizar variable global
@@ -8955,8 +8953,8 @@
              console.log('Initializing voice notification system (non-blocking)...');
              initializeNotificationPermissions().catch(error => {
                console.warn('⚠️ Voice system failed (app continues normally):', error);
-               voiceNotificationsEnabled = false;
-               voiceSystemActivated = false;
+               // NO desactivar voz - mantener habilitada
+               console.log('🔧 Manteniendo voz habilitada a pesar del error de inicialización');
              });
         
              // Solicitar permisos de notificación
