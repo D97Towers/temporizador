@@ -6169,9 +6169,55 @@
     let globalVoiceQueue = [];
     let isGlobalVoicePlaying = false;
     let globalVoiceProcessing = false;
+    let lastVoiceActivityTime = Date.now();
+    let voiceWatchdogTimer = null;
+    
+    // Función watchdog para detectar y resetear estado bloqueado
+    function startVoiceWatchdog() {
+      // Limpiar watchdog anterior si existe
+      if (voiceWatchdogTimer) {
+        clearInterval(voiceWatchdogTimer);
+      }
+      
+      // Verificar cada 5 segundos si el sistema está bloqueado
+      voiceWatchdogTimer = setInterval(() => {
+        const now = Date.now();
+        const timeSinceLastActivity = now - lastVoiceActivityTime;
+        
+        // Si han pasado más de 10 segundos sin actividad y hay mensajes en cola
+        if (timeSinceLastActivity > 10000 && globalVoiceQueue.length > 0) {
+          console.log(`🚨 WATCHDOG: Sistema de voz bloqueado detectado. Reseteando...`);
+          console.log(`📊 Estado antes del reset:`, {
+            queueLength: globalVoiceQueue.length,
+            isPlaying: isGlobalVoicePlaying,
+            isProcessing: globalVoiceProcessing,
+            timeSinceLastActivity: timeSinceLastActivity
+          });
+          
+          // Resetear estado
+          isGlobalVoicePlaying = false;
+          globalVoiceProcessing = false;
+          
+          // Intentar procesar cola nuevamente
+          setTimeout(() => {
+            console.log(`🔄 WATCHDOG: Reintentando procesar cola...`);
+            processGlobalVoiceQueue();
+          }, 500);
+          
+          // Actualizar tiempo de actividad
+          lastVoiceActivityTime = now;
+        }
+      }, 5000);
+    }
+    
+    // Iniciar watchdog
+    startVoiceWatchdog();
     
     // Función definitiva para agregar mensajes a la cola global
     function addToGlobalVoiceQueue(message, options = {}) {
+      // Actualizar tiempo de actividad
+      lastVoiceActivityTime = Date.now();
+      
       // VERIFICACIÓN CRÍTICA: NUNCA agregar mensajes de error a la cola de voz global
       const errorPhrases = [
         'Por favor seleccione un niño',
@@ -6210,6 +6256,9 @@
       if (globalVoiceProcessing || globalVoiceQueue.length === 0) {
         return;
       }
+      
+      // Actualizar tiempo de actividad
+      lastVoiceActivityTime = Date.now();
       
       globalVoiceProcessing = true;
       isGlobalVoicePlaying = true;
@@ -6262,7 +6311,7 @@
       return cleanedText;
     }
     
-    // SISTEMA DE AUDIO SIMPLE Y FUNCIONAL
+    // SISTEMA DE AUDIO ROBUSTO Y FUNCIONAL CON VOZ HÍBRIDA
     function speakRobustAudio(message, options = {}, messageId = 'unknown') {
       console.log(`🔊 Reproduciendo: "${message}" (ID: ${messageId})`);
       
@@ -6303,22 +6352,23 @@
       // NO cancelar - puede interrumpir audio en curso
       // window.speechSynthesis.cancel();
       
-      // Crear utterance simple
-      const utterance = new SpeechSynthesisUtterance(cleanedMessage);
+      // USAR createHybridUtterance para tener la mejor configuración de voz
+      const alertCount = options.alertCount || 1;
+      const utterance = createHybridUtterance(cleanedMessage, alertCount);
       
-      // Configuración básica
-      utterance.volume = 1.0;
-      utterance.rate = 0.9;
-      utterance.pitch = 1.0;
-      utterance.lang = 'es-ES';
+      // Guardar el onstart original de createHybridUtterance
+      const originalOnStart = utterance.onstart;
       
-      // Eventos simples
+      // Eventos optimizados
       utterance.onstart = () => {
         console.log(`🎤 Iniciando: "${cleanedMessage}"`);
+        // Ejecutar también el onstart original que incluye takeAudioDeviceControl
+        if (originalOnStart) originalOnStart();
       };
       
       utterance.onend = () => {
         console.log(`✅ Completado: "${cleanedMessage}"`);
+        lastVoiceActivityTime = Date.now();
         isGlobalVoicePlaying = false;
         globalVoiceProcessing = false;
         setTimeout(() => processGlobalVoiceQueue(), 1000);
@@ -6326,9 +6376,11 @@
       
       utterance.onerror = (error) => {
         console.log(`❌ Error: ${error.error} - "${cleanedMessage}"`);
+        lastVoiceActivityTime = Date.now();
         isGlobalVoicePlaying = false;
         globalVoiceProcessing = false;
-        setTimeout(() => processGlobalVoiceQueue(), 1000);
+        // En caso de error, reintentar después de un tiempo
+        setTimeout(() => processGlobalVoiceQueue(), 1500);
       };
       
       // Reproducir
