@@ -2998,12 +2998,12 @@
           const oscillator = audioContextForBluetooth.createOscillator();
           const gainNode = audioContextForBluetooth.createGain();
           
-          // Tono audible pero breve para "despertar" Bluetooth
-          oscillator.frequency.value = 800;
-          gainNode.gain.value = 0.3;
+          // Tono muy suave para "despertar" Bluetooth (reducido para evitar "bet bet" molesto)
+          oscillator.frequency.value = 400;  // Frecuencia más baja (más suave)
+          gainNode.gain.value = 0.05;        // Volumen muy bajo (casi inaudible)
           gainNode.gain.exponentialRampToValueAtTime(
-            0.01, 
-            audioContextForBluetooth.currentTime + 0.1
+            0.001, 
+            audioContextForBluetooth.currentTime + 0.05  // Más corto
           );
           
           oscillator.connect(gainNode);
