@@ -3325,10 +3325,10 @@
       
       // Ajustes específicos por navegador para maximizar sonido humano
       const browserAdjustments = {
-        safari: { rate: 0.9, pitch: 1.1, volume: 0.8 },      // Safari ya excelente
+        safari: { rate: 0.9, pitch: 1.2, volume: 1.0 },      // Safari optimizado para resaltar sobre música
         firefox: { rate: 0.65, pitch: 1.25, volume: 0.95 },   // Firefox - más lento y pitch más alto
-        chrome: { rate: 0.8, pitch: 1.2, volume: 0.85 },      // Chrome - velocidad media, pitch alto
-        edge: { rate: 0.8, pitch: 1.2, volume: 0.85 },         // Edge - igual que Chrome
+        chrome: { rate: 0.8, pitch: 1.3, volume: 1.0 },      // Chrome optimizado para resaltar sobre música
+        edge: { rate: 0.8, pitch: 1.3, volume: 1.0 },         // Edge optimizado para resaltar sobre música
         default: { rate: 0.75, pitch: 1.15, volume: 0.9 }   // Fallback universal
       };
       
@@ -3453,7 +3453,7 @@
         utterance.lang = 'es-ES';
         utterance.rate = config.rate;
         utterance.pitch = config.pitch;
-        utterance.volume = 0.8;
+        utterance.volume = 1.0;  // Volumen máximo para resaltar sobre música
         
         const selectedVoice = getFemaleSpanishVoice();
         if (selectedVoice) {
@@ -7182,7 +7182,7 @@
         // Ajustes específicos para mejorar pronunciación en Chrome/Firefox/Edge
         utterance.rate = Math.max(utterance.rate * 0.95, 0.6); // Ligeramente más lento para claridad
         utterance.pitch = Math.min(utterance.pitch * 1.05, 1.3); // Pitch ligeramente más alto para naturalidad
-        utterance.volume = Math.min(utterance.volume * 1.02, 1.0); // Volumen ligeramente más alto
+        utterance.volume = Math.min(utterance.volume * 1.1, 1.0); // Volumen más alto para resaltar sobre música
         
         // Asegurar idioma español
         utterance.lang = 'es-ES';
