@@ -6265,20 +6265,28 @@
         clearInterval(voiceWatchdogTimer);
       }
       
-      // Verificar cada 5 segundos si el sistema está bloqueado
+      // OPTIMIZACIÓN: Verificar cada 3 segundos (más frecuente para detección rápida)
       voiceWatchdogTimer = setInterval(() => {
         const now = Date.now();
         const timeSinceLastActivity = now - lastVoiceActivityTime;
+        const queueLength = globalVoiceQueue.length;
         
-        // FIX #3: Aumentado de 10s a 25s para dar margen a mensajes muy largos (8+ niños)
-        // Si han pasado más de 25 segundos sin actividad y hay mensajes en cola
-        if (timeSinceLastActivity > 25000 && globalVoiceQueue.length > 0) {
+        // FIX #2: Timeout dinámico según cantidad de niños en cola
+        // Base: 25s para mensajes normales
+        // Extra: 2s adicionales por cada niño sobre 5 (para mensajes muy largos)
+        const baseTimeout = 25000;
+        const extraTimePerChild = queueLength > 5 ? (queueLength - 5) * 2000 : 0;
+        const dynamicTimeout = baseTimeout + extraTimePerChild;
+        
+        // Si han pasado más del timeout dinámico sin actividad y hay mensajes en cola
+        if (timeSinceLastActivity > dynamicTimeout && queueLength > 0) {
           console.log(`🚨 WATCHDOG: Sistema de voz bloqueado detectado. Reseteando...`);
           console.log(`📊 Estado antes del reset:`, {
-            queueLength: globalVoiceQueue.length,
+            queueLength: queueLength,
             isPlaying: isGlobalVoicePlaying,
             isProcessing: globalVoiceProcessing,
-            timeSinceLastActivity: timeSinceLastActivity
+            timeSinceLastActivity: timeSinceLastActivity,
+            dynamicTimeout: dynamicTimeout
           });
           
           // Resetear estado
@@ -6294,7 +6302,7 @@
           // Actualizar tiempo de actividad
           lastVoiceActivityTime = now;
         }
-      }, 5000);
+      }, 3000); // OPTIMIZACIÓN: Verificar cada 3s en lugar de 5s
     }
     
     // Iniciar watchdog
@@ -6582,8 +6590,37 @@
         const otherChildren = names.join(', ');
         message = `Hola, ${otherChildren} y ${lastChild} han terminado su tiempo de juego. Por favor, recógelos.`;
       } else {
-        // MENSAJE CONSOLIDADO PARA 6+ NIÑOS
-        message = `Hola, ${childrenWithParents.length} niños han terminado su tiempo de juego. Por favor, recógelos.`;
+        // OPTIMIZACIÓN: SISTEMA DE RESUMEN PRIMERO PARA 6+ NIÑOS
+        // En lugar de un mensaje genérico, dar resumen inmediato + detalles después
+        console.log(`📢 ACTIVANDO SISTEMA DE RESUMEN PRIMERO (${childrenWithParents.length} niños)`);
+        
+        // PARTE 1: Resumen inmediato (para captar atención rápidamente)
+        const summaryMessage = `Atención, ${childrenWithParents.length} niños han terminado su tiempo de juego.`;
+        
+        // PARTE 2: Lista de nombres (después de pausa)
+        const names = childrenWithParents.map(child => child.name);
+        const lastChild = names.pop();
+        const otherChildren = names.join(', ');
+        const detailsMessage = `Los niños son: ${otherChildren} y ${lastChild}. Por favor, recójanlos.`;
+        
+        // AGREGAR RESUMEN PRIMERO (inmediato, alta prioridad)
+        addToVoiceQueue(summaryMessage, { immediate: true, priority: 'high' });
+        console.log(`🔊 RESUMEN INMEDIATO: "${summaryMessage}"`);
+        
+        // AGREGAR DETALLES DESPUÉS (con pausa de 2s para que se escuche el resumen primero)
+        setTimeout(() => {
+          addToVoiceQueue(detailsMessage, { immediate: false, priority: 'normal' });
+          console.log(`🔊 DETALLES PROGRAMADOS: "${detailsMessage}"`);
+        }, 2000);
+        
+        // Marcar que el mensaje ya fue procesado (no continuar con el flujo normal)
+        message = null;
+      }
+      
+      // FIX #1: Verificar si message fue generado (puede ser null para 6+ niños)
+      if (!message) {
+        console.log(`✅ Mensaje consolidado ya procesado con sistema de resumen (6+ niños)`);
+        return; // Salir antes de continuar con repeticiones (ya se procesó en el bloque anterior)
       }
       
       console.log(`🔊 MENSAJE GENERADO: "${message}"`);
