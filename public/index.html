@@ -3057,6 +3057,52 @@
       return false;
     }
 
+    // Función para manejar cambios de orientación y reactivar Bluetooth
+    async function handleOrientationChange() {
+      console.log('🔄 Cambio de orientación/tamaño detectado - Reactivando audio Bluetooth');
+      
+      // Esperar a que iOS termine la transición de orientación
+      setTimeout(async () => {
+        try {
+          // Verificar si AudioContext fue suspendido
+          if (audioContextForBluetooth) {
+            console.log(`📊 Estado AudioContext: ${audioContextForBluetooth.state}`);
+            
+            // Si está suspendido, reanudar
+            if (audioContextForBluetooth.state === 'suspended') {
+              await audioContextForBluetooth.resume();
+              console.log('✅ AudioContext reanudado después de rotación');
+            }
+            
+            // Si está cerrado, recrear
+            if (audioContextForBluetooth.state === 'closed') {
+              console.log('🔄 AudioContext cerrado - Recreando...');
+              isAudioContextPrepared = false;
+              prepareAudioContextForBluetooth();
+            }
+          }
+          
+          // Retomar control del dispositivo Bluetooth
+          await takeAudioDeviceControl();
+          console.log('✅ Control de Bluetooth restablecido después de rotación');
+          
+        } catch (error) {
+          console.log('⚠️ Error al manejar cambio de orientación:', error.message);
+        }
+      }, 500); // 500ms para que iOS termine la animación de rotación
+    }
+
+    // Listener para cambios de orientación (específico para dispositivos móviles)
+    window.addEventListener('orientationchange', handleOrientationChange);
+
+    // Listener para cambios de tamaño de ventana (más universal, cubre todos los casos)
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      // Debounce para evitar múltiples ejecuciones
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(handleOrientationChange, 300);
+    });
+
     // ========================================
     // FIN SISTEMA DE AUDIO PARA iOS/BLUETOOTH
     // ========================================
