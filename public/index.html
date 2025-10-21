@@ -3152,10 +3152,50 @@
       return 'unknown';
     }
 
+    // Función para detectar si es iPad
+    function isIPad() {
+      return /iPad/.test(navigator.userAgent) || 
+             (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    }
+
     // Función helper para seleccionar voz femenina en español (optimizada por navegador)
     function getFemaleSpanishVoice() {
       const browser = detectBrowser();
       console.log('🌐 Navegador detectado:', browser);
+      
+      // DETECCIÓN ESPECÍFICA PARA iPAD: Usar exclusivamente Paulina (es-MX)
+      if (isIPad()) {
+        console.log('📱 iPad detectado - Forzando voz Paulina (es-MX)');
+        
+        let voices = window.speechSynthesis.getVoices();
+        if (voices.length === 0) {
+          console.log('🔄 Forzando carga de voces para iPad...');
+          window.speechSynthesis.getVoices();
+          voices = window.speechSynthesis.getVoices();
+        }
+        
+        // Buscar Paulina (es-MX) específicamente
+        const paulinaMX = voices.find(voice => 
+          voice.name.toLowerCase().includes('paulina') && 
+          voice.lang.includes('es-MX')
+        );
+        
+        if (paulinaMX) {
+          console.log('✅ Voz Paulina (es-MX) encontrada y seleccionada para iPad:', paulinaMX.name);
+          return paulinaMX;
+        } else {
+          console.warn('⚠️ Paulina (es-MX) no encontrada en iPad, usando fallback');
+          // Fallback: cualquier voz española disponible
+          const spanishVoice = voices.find(voice => voice.lang.startsWith('es'));
+          if (spanishVoice) {
+            console.log('🔄 Usando voz española de fallback:', spanishVoice.name);
+            return spanishVoice;
+          }
+        }
+      }
+      
+      // PARA OTROS DISPOSITIVOS: Mantener lógica original
+      console.log('💻 Dispositivo no-iPad - Usando lógica de selección estándar');
       
       // Intentar cargar voces si no están disponibles
       let voices = window.speechSynthesis.getVoices();
